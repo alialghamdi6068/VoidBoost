@@ -116,7 +116,7 @@ public final class VoidBoostScreen extends Screen {
         graphics.drawCenteredString(this.font, this.title, this.width / 2, 25, 0xFFFFFF);
         graphics.drawCenteredString(this.font, Component.literal(
                 VoidBoostConfig.get().ultimateLocked ? "Ultimate performance is locked" : "Client-side FPS & PvP optimization"), this.width / 2, 42, 0xAAAAAA);
-        graphics.drawCenteredString(this.font, Component.literal("Made by alialghamdi6068"), this.width / 2, 51, 0xAAAAAA);
+        graphics.drawCenteredString(this.font, Component.literal("Made by VoidFlame"), this.width / 2, 51, 0xAAAAAA);
         super.render(graphics, mouseX, mouseY, delta);
     }
 }
