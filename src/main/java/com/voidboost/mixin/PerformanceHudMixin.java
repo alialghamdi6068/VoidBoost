@@ -59,6 +59,6 @@ public abstract class PerformanceHudMixin {
         graphics.drawString(client.font, Component.literal("Frame: " + cachedFrameText), x, y + 28, 0xFFD0D0D0, false);
         graphics.drawString(client.font, Component.literal("RAM: " + cachedRamText), x, y + 41, 0xFFD0D0D0, false);
         graphics.drawString(client.font, Component.literal("Entities: " + cachedEntities), x, y + 54, 0xFFD0D0D0, false);
-        graphics.drawString(client.font, Component.literal("Particles/s: " + cachedParticles), x, y + 67, 0xFFD0D0D0, false);
+        graphics.drawString(client.font, Component.literal("Blocked/s: " + cachedParticles), x, y + 67, 0xFFD0D0D0, false);
     }
 }
