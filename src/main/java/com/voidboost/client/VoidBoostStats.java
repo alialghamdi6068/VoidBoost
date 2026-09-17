@@ -10,10 +10,12 @@ public final class VoidBoostStats {
     private VoidBoostStats() {}
 
     public static void particleAttempt() {
+        if (!VoidBoostConfig.get().performanceMonitor) return;
         particles++;
     }
 
     public static void frame() {
+        if (!VoidBoostConfig.get().performanceMonitor) return;
         long now = System.nanoTime();
         if (lastFrameNanos != 0L) {
             double ms = (now - lastFrameNanos) / 1_000_000.0;
