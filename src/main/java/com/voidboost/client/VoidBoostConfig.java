@@ -116,8 +116,9 @@ public final class VoidBoostConfig {
         INSTANCE.fogOptimization = true;
         INSTANCE.entityRenderOptimization = true;
         INSTANCE.dynamicRenderDistance = true;
-        INSTANCE.competitiveMode = true;
+        INSTANCE.competitiveMode = false;
         INSTANCE.maxFpsPreset = false;
+        // ULTIMATE FPS is a preset, not a lock. Every setting remains editable.
         INSTANCE.ultimateLocked = true;
         INSTANCE.targetFps = 240;
         INSTANCE.dynamicTargetFps = 240;
@@ -201,7 +202,6 @@ public final class VoidBoostConfig {
 
         try {
             boolean controlVanilla = INSTANCE.performanceMode
-                    || INSTANCE.ultimateLocked
                     || INSTANCE.disableParticles
                     || INSTANCE.reducedParticles
                     || !INSTANCE.entityShadows
@@ -218,13 +218,14 @@ public final class VoidBoostConfig {
 
             captureVanillaPerformanceOptions(client);
 
-            if (INSTANCE.performanceMode || INSTANCE.ultimateLocked) {
-                client.options.entityDistanceScaling().set(INSTANCE.ultimateLocked ? 0.5 : (INSTANCE.competitiveMode ? 0.65 : 0.75));
+            if (INSTANCE.performanceMode) {
+                client.options.entityDistanceScaling().set(INSTANCE.competitiveMode ? 0.65 : 0.75);
                 client.options.vignette().set(false);
                 client.options.ambientOcclusion().set(false);
                 client.options.chunkSectionFadeInTime().set(0.0);
+                // Never force a lower FPS cap. VoidBoost should optimize rendering,
+                // not make the player's existing FPS limit worse.
                 client.options.enableVsync().set(false);
-                client.options.framerateLimit().set(Math.max(60, Math.min(260, INSTANCE.targetFps)));
             }
 
             client.options.entityShadows().set(INSTANCE.entityShadows);
@@ -303,11 +304,8 @@ public final class VoidBoostConfig {
             fogStateCaptured = true;
             fogDisabledByVoidBoost = false;
         }
-
         if (disable == fogDisabledByVoidBoost) return;
 
-        // toggleFog() returns the new fog-enabled state. Use that return value
-        // instead of assuming Minecraft always starts with fog enabled.
         boolean fogEnabled = FogRenderer.toggleFog();
         boolean desiredFogEnabled = !disable;
         if (fogEnabled != desiredFogEnabled) {
@@ -319,7 +317,7 @@ public final class VoidBoostConfig {
     private static void updateDynamicRenderDistance(Minecraft client) {
         if (client.level == null) return;
         int current = client.options.renderDistance().get();
-        int target = Math.max(60, Math.min(260, INSTANCE.dynamicTargetFps));
+        int target = Math.max(60, Math.min(240, INSTANCE.dynamicTargetFps));
         int maxDistance = Math.max(4, INSTANCE.maxRenderDistance);
         int fps = client.getFps();
         int desired = Math.min(current, maxDistance);
