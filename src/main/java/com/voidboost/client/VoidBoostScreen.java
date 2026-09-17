@@ -60,12 +60,12 @@ public final class VoidBoostScreen extends Screen {
             scrollOffset = 0;
             VoidBoostConfig.applyBalancedPreset();
             rebuildWidgets();
-        }, false, true, "");
+        }, false, true, "Restore the recommended Balanced profile");
 
         addButton(right - 112, height - 70, 112, 40, "Done", "SAVE", () -> {
             VoidBoostConfig.save();
             Minecraft.getInstance().setScreen(parent);
-        }, true, true, "");
+        }, true, true, "Save and close VoidBoost");
     }
 
     private int contentTop() {
@@ -77,7 +77,11 @@ public final class VoidBoostScreen extends Screen {
     }
 
     private int maxScroll() {
-        return Math.max(0, page == 0 ? 190 : page == 1 ? 120 : 180);
+        return switch (page) {
+            case 0 -> 250;
+            case 1 -> 130;
+            default -> 170;
+        };
     }
 
     @Override
@@ -103,13 +107,14 @@ public final class VoidBoostScreen extends Screen {
 
     private void buildGeneral(int left, int right, int y) {
         int cardW = (right - left - 14) / 2;
-        addButton(left, y, cardW, 82, "Balanced", "STABLE", VoidBoostConfig::applyBalancedPreset, isPreset("balanced"), false, "Smooth visuals • reliable FPS");
-        addButton(left + cardW + 14, y, cardW, 82, "Competitive", "PVP", VoidBoostConfig::applyCompetitivePreset, isPreset("competitive"), false, "Low latency • competitive rendering");
-        addButton(left, y + 96, cardW, 82, "MAX FPS", "FAST", VoidBoostConfig::applyMaxFpsPreset, isPreset("max"), false, "Aggressive optimization • high FPS");
-        addButton(left + cardW + 14, y + 96, cardW, 82, "ULTIMATE FPS", "EXTREME", VoidBoostConfig::applyUltimateLockedPreset, isPreset("ultimate"), false, "Maximum cuts • lowest render load");
-        addSetting(left, y + 232, right, "Dynamic Render Distance", state("dynamic"), "Adaptive chunk distance", () -> toggle("dynamic"));
-        addSetting(left, y + 284, right, "Target FPS", VoidBoostConfig.get().dynamicTargetFps + " FPS", "Adaptive rendering target", this::cycleTargetFps);
-        addSetting(left, y + 336, right, "Performance Mode", state("performance"), "Apply optimized vanilla settings", () -> toggle("performance"));
+        addButton(left, y + 18, cardW, 82, "Balanced", "STABLE", VoidBoostConfig::applyBalancedPreset, isPreset("balanced"), false, "Smooth visuals • reliable FPS");
+        addButton(left + cardW + 14, y + 18, cardW, 82, "Competitive", "PVP", VoidBoostConfig::applyCompetitivePreset, isPreset("competitive"), false, "Low latency • competitive rendering");
+        addButton(left, y + 114, cardW, 82, "MAX FPS", "FAST", VoidBoostConfig::applyMaxFpsPreset, isPreset("max"), false, "Aggressive optimization • high FPS");
+        addButton(left + cardW + 14, y + 114, cardW, 82, "ULTIMATE FPS", "EXTREME", VoidBoostConfig::applyUltimateLockedPreset, isPreset("ultimate"), false, "Maximum cuts • lowest render load");
+        addButton(left, y + 210, right - left, 62, "Custom", "MANUAL", this::activateCustom, isPreset("custom"), false, "Keep your current settings and control every option");
+        addSetting(left, y + 290, right, "Dynamic Render Distance", state("dynamic"), "Adaptive chunk distance", () -> toggle("dynamic"));
+        addSetting(left, y + 342, right, "Target FPS", VoidBoostConfig.get().dynamicTargetFps + " FPS", "Adaptive rendering target", this::cycleTargetFps);
+        addSetting(left, y + 394, right, "Performance Mode", state("performance"), "Apply optimized vanilla settings", () -> toggle("performance"));
     }
 
     private void buildQuality(int left, int right, int y) {
@@ -127,7 +132,7 @@ public final class VoidBoostScreen extends Screen {
         addSetting(left, y + 130, right, "Performance Mode", state("performance"), "Apply optimized vanilla settings", () -> toggle("performance"));
         addSetting(left, y + 182, right, "Performance Monitor", state("monitor"), "Live FPS and frame diagnostics", () -> toggle("monitor"));
         addSetting(left, y + 234, right, "Dynamic Render Distance", state("dynamic"), "Adaptive chunk distance", () -> toggle("dynamic"));
-        addInfo(left, y + 338, right, modeName());
+        addInfo(left, y + 304, right, modeName());
     }
 
     private void addSetting(int left, int y, int right, String title, String value, String description, Runnable action) {
@@ -142,8 +147,18 @@ public final class VoidBoostScreen extends Screen {
         addRenderableWidget(new PremiumButton(x, y, width, height, title, value, description, action, selected, compact));
     }
 
+    private void activateCustom() {
+        VoidBoostConfig c = VoidBoostConfig.get();
+        c.maxFpsPreset = false;
+        c.competitiveMode = false;
+        c.ultimateLocked = false;
+        c.markDirty();
+        rebuildWidgets();
+    }
+
     private void toggle(String key) {
         VoidBoostConfig c = VoidBoostConfig.get();
+        if (c.ultimateLocked && !key.equals("performance")) return;
         switch (key) {
             case "particles" -> {
                 if (c.disableParticles) { c.disableParticles = false; c.reducedParticles = true; }
@@ -162,21 +177,29 @@ public final class VoidBoostScreen extends Screen {
         }
         c.maxFpsPreset = false;
         c.competitiveMode = false;
-        c.ultimateLocked = false;
+        if (!key.equals("performance")) c.ultimateLocked = false;
         c.markDirty();
         rebuildWidgets();
     }
 
     private void cycleTargetFps() {
         VoidBoostConfig c = VoidBoostConfig.get();
+        if (c.ultimateLocked) return;
         c.dynamicTargetFps = c.dynamicTargetFps >= 240 ? 60 : c.dynamicTargetFps + 30;
+        c.maxFpsPreset = false;
+        c.competitiveMode = false;
+        c.ultimateLocked = false;
         c.markDirty();
         rebuildWidgets();
     }
 
     private void cycleEntityDistance() {
         VoidBoostConfig c = VoidBoostConfig.get();
+        if (c.ultimateLocked) return;
         c.maxEntityDistance = c.maxEntityDistance >= 128 ? 32 : c.maxEntityDistance + 16;
+        c.maxFpsPreset = false;
+        c.competitiveMode = false;
+        c.ultimateLocked = false;
         c.markDirty();
         rebuildWidgets();
     }
@@ -198,22 +221,31 @@ public final class VoidBoostScreen extends Screen {
     }
 
     private static String modeName() {
-        VoidBoostConfig c = VoidBoostConfig.get();
-        if (c.maxRenderDistance <= 6 && c.competitiveMode) return "ULTIMATE FPS";
-        if (c.competitiveMode) return "COMPETITIVE";
-        if (c.maxFpsPreset) return "MAX FPS";
-        if (c.performanceMode) return "BALANCED";
+        if (isPresetStatic("ultimate")) return "ULTIMATE FPS";
+        if (isPresetStatic("competitive")) return "COMPETITIVE";
+        if (isPresetStatic("max")) return "MAX FPS";
+        if (isPresetStatic("balanced")) return "BALANCED";
         return "CUSTOM";
     }
 
-    private boolean isPreset(String name) {
+    private static boolean isPresetStatic(String name) {
         VoidBoostConfig c = VoidBoostConfig.get();
         return switch (name) {
-            case "competitive" -> c.competitiveMode && c.maxRenderDistance > 6;
-            case "max" -> c.maxFpsPreset;
-            case "ultimate" -> c.competitiveMode && c.maxRenderDistance <= 6;
-            default -> !c.competitiveMode && !c.maxFpsPreset;
+            case "ultimate" -> c.ultimateLocked;
+            case "competitive" -> c.competitiveMode && !c.maxFpsPreset && !c.ultimateLocked;
+            case "max" -> c.maxFpsPreset && !c.competitiveMode && !c.ultimateLocked;
+            case "balanced" -> !c.competitiveMode && !c.maxFpsPreset && !c.ultimateLocked
+                    && c.performanceMode && !c.disableParticles && c.reducedParticles
+                    && !c.entityShadows && !c.weatherEffects && c.animationOptimization
+                    && c.fogOptimization && c.entityRenderOptimization && c.dynamicRenderDistance
+                    && c.dynamicTargetFps == 120 && c.maxEntityDistance == 56 && c.maxRenderDistance == 10;
+            case "custom" -> !isPresetStatic("balanced") && !c.competitiveMode && !c.maxFpsPreset && !c.ultimateLocked;
+            default -> false;
         };
+    }
+
+    private boolean isPreset(String name) {
+        return isPresetStatic(name);
     }
 
     @Override
@@ -225,7 +257,7 @@ public final class VoidBoostScreen extends Screen {
         int sidebarRight = 180;
         int content = 202;
         int clipTop = 82;
-        int clipBottom = shellBottom;
+        int clipBottom = shellBottom - 48;
 
         g.fill(0, 0, width, height, BG);
         g.fill(shellX, shellTop, shellRight, shellBottom, SHELL);
@@ -254,8 +286,16 @@ public final class VoidBoostScreen extends Screen {
         g.fill(badgeX, 40, badgeX + 2, 64, perf ? ACCENT : BORDER);
         g.drawString(font, Component.literal(perf ? "OPTIMIZED" : "STANDARD"), badgeX + 12, 48, perf ? ACCENT : MUTED, false);
 
-        // Clip only the screen content vertically. Sidebar and footer controls remain visible and clickable.
+        int sectionY = contentTop();
         g.enableScissor(0, clipTop, width, clipBottom);
+        if (page == 0) {
+            g.drawString(font, Component.literal("PERFORMANCE PROFILES"), content, sectionY + 1, MUTED, false);
+            g.drawString(font, Component.literal("ADAPTIVE CONTROLS"), content, sectionY + 282, MUTED, false);
+        } else if (page == 1) {
+            g.drawString(font, Component.literal("VISUAL LOAD"), content, sectionY + 8, MUTED, false);
+        } else {
+            g.drawString(font, Component.literal("RENDER ENGINE"), content, sectionY + 8, MUTED, false);
+        }
         super.render(g, mouseX, mouseY, delta);
         g.disableScissor();
 
@@ -263,12 +303,13 @@ public final class VoidBoostScreen extends Screen {
             int scrollBottom = shellBottom - 50;
             g.drawString(font, Component.literal("SCROLL"), shellRight - 64, scrollBottom + 13, MUTED, false);
             g.fill(shellRight - 26, clipTop, shellRight - 23, scrollBottom, BORDER);
-            int track = scrollBottom - clipTop;
+            int track = Math.max(1, scrollBottom - clipTop);
             int thumbH = Math.max(28, track * track / (track + maxScroll()));
             int thumbY = clipTop + (int) ((track - thumbH) * (scrollOffset / Math.max(1, maxScroll())));
             g.fill(shellRight - 26, thumbY, shellRight - 23, thumbY + thumbH, ACCENT);
         }
 
+        g.fill(content, shellBottom - 49, shellRight - 12, shellBottom - 48, BORDER);
         g.drawString(font, Component.literal("VOIDBOOST  •  FABRIC  •  MINECRAFT 1.21.11"), content, shellBottom - 25, MUTED, false);
     }
 
