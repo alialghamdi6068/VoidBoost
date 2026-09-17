@@ -82,11 +82,11 @@ public final class VoidBoostScreen extends Screen {
     private void buildQuality(int left, int right, int top) {
         addHeader(left, top, "Quality", "Control visual effects that can affect rendering cost.");
         addSection(left, top + 48, right, "Visual Effects", "Lower-cost rendering without changing gameplay behavior.");
-        addToggleRow(left, top + 80, right, "Particles", "Reduce or disable non-essential particles.", "particles");
+        addToggleRow(left, top + 80, right, "Particles", "Cycle between all, reduced, and minimal particles.", "particles");
         addToggleRow(left, top + 115, right, "Entity Shadows", "Disable simple shadows beneath entities.", "shadows");
-        addToggleRow(left, top + 150, right, "Weather Effects", "Reduce weather rendering and cloud work.", "weather");
-        addToggleRow(left, top + 185, right, "Animation Optimization", "Reduce unnecessary view and animation work.", "animations");
-        addToggleRow(left, top + 220, right, "Fog Optimization", "Reduce fog work when performance mode is active.", "fog");
+        addToggleRow(left, top + 150, right, "Weather Effects", "Enable or disable weather and cloud rendering.", "weather");
+        addToggleRow(left, top + 185, right, "Animation Optimization", "Reduce unnecessary view animation work.", "animations");
+        addToggleRow(left, top + 220, right, "Fog Optimization", "Disable distance fog rendering when enabled.", "fog");
     }
 
     private void buildPerformance(int left, int right, int top) {
@@ -100,7 +100,7 @@ public final class VoidBoostScreen extends Screen {
             VoidBoostConfig.save();
             rebuildVoidBoostWidgets();
         });
-        addToggleRow(left, top + 150, right, "Performance Mode", "Applies VoidBoost's low-overhead rendering profile.", "performance");
+        addToggleRow(left, top + 150, right, "Performance Mode", "Apply low-overhead vanilla rendering settings.", "performance");
         addToggleRow(left, top + 185, right, "Performance Monitor", "Shows FPS, frame time, entities and particles per second.", "monitor");
 
         addSection(left, top + 230, right, "Status", "Current VoidBoost configuration.");
@@ -108,11 +108,9 @@ public final class VoidBoostScreen extends Screen {
     }
 
     private void addHeader(int left, int top, String title, String subtitle) {
-        // Header is drawn in render(); widgets start below it.
     }
 
     private void addSection(int left, int y, int right, String title, String subtitle) {
-        // Section labels are drawn in render(); this method keeps layout coordinates together.
     }
 
     private void addPreset(int x, int y, int width, String name, Runnable action) {
@@ -149,7 +147,16 @@ public final class VoidBoostScreen extends Screen {
         VoidBoostConfig c = VoidBoostConfig.get();
         if (c.ultimateLocked) return;
         switch (key) {
-            case "particles" -> { c.disableParticles = !c.disableParticles; c.reducedParticles = false; }
+            case "particles" -> {
+                if (c.disableParticles) {
+                    c.disableParticles = false;
+                    c.reducedParticles = true;
+                } else if (c.reducedParticles) {
+                    c.reducedParticles = false;
+                } else {
+                    c.disableParticles = true;
+                }
+            }
             case "dynamic" -> c.dynamicRenderDistance = !c.dynamicRenderDistance;
             case "entities" -> c.entityRenderOptimization = !c.entityRenderOptimization;
             case "shadows" -> c.entityShadows = !c.entityShadows;
@@ -166,7 +173,7 @@ public final class VoidBoostScreen extends Screen {
     private static String state(String key) {
         VoidBoostConfig c = VoidBoostConfig.get();
         return switch (key) {
-            case "particles" -> (c.disableParticles || c.reducedParticles) ? "ON" : "OFF";
+            case "particles" -> c.disableParticles ? "MINIMAL" : (c.reducedParticles ? "REDUCED" : "ALL");
             case "dynamic" -> c.dynamicRenderDistance ? "ON" : "OFF";
             case "entities" -> c.entityRenderOptimization ? "ON" : "OFF";
             case "shadows" -> c.entityShadows ? "ON" : "OFF";
@@ -202,34 +209,27 @@ public final class VoidBoostScreen extends Screen {
         graphics.drawString(this.font, Component.literal("VoidBoost"), left + 16, 48, 0xFFFFFFFF, false);
         graphics.drawString(this.font, Component.literal("Client Performance Suite"), left + 16, 62, 0xFF8E95A7, false);
 
-        String title = page == 0 ? "General" : page == 1 ? "Quality" : "Performance";
-        String subtitle = page == 0 ? "Presets and adaptive rendering" : page == 1 ? "Visual effects and quality controls" : "FPS-focused rendering controls";
-        graphics.drawString(this.font, Component.literal(title), contentLeft + 16, top, 0xFFFFFFFF, false);
-        graphics.drawString(this.font, Component.literal(subtitle), contentLeft + 16, top + 13, 0xFF8E95A7, false);
+        graphics.drawString(this.font, Component.literal(page == 0 ? "General" : page == 1 ? "Quality" : "Performance"), contentLeft + 16, top, 0xFFFFFFFF, false);
+        graphics.drawString(this.font, Component.literal(page == 0 ? "Presets and adaptive rendering" : page == 1 ? "Visual effects and quality controls" : "FPS-focused rendering controls"), contentLeft + 16, top + 13, 0xFF8E95A7, false);
 
         if (page == 0) {
             drawSection(graphics, contentLeft, top + 48, "Optimization Presets", "Presets change multiple settings at once.");
             drawSection(graphics, contentLeft, top + 150, "Dynamic Rendering", "Automatically adjusts render distance around your FPS target.");
-        } else if (page == 1) {
-            drawSection(graphics, contentLeft, top + 48, "Visual Effects", "Lower-cost rendering without changing gameplay behavior.");
-        } else {
-            drawSection(graphics, contentLeft, top + 48, "Rendering", "Client-side culling and performance controls.");
-            drawSection(graphics, contentLeft, top + 230, "Status", "Current VoidBoost configuration.");
-        }
-
-        if (page == 0) {
             drawRowText(graphics, contentLeft, top + 181, "Dynamic Render Distance", "Keeps FPS stable by adapting chunk distance.");
             drawRowText(graphics, contentLeft, top + 216, "Target FPS", "Preferred FPS target for adaptive rendering.");
         } else if (page == 1) {
-            drawRowText(graphics, contentLeft, top + 80, "Particles", "Reduce or disable non-essential particles.");
+            drawSection(graphics, contentLeft, top + 48, "Visual Effects", "Lower-cost rendering without changing gameplay behavior.");
+            drawRowText(graphics, contentLeft, top + 80, "Particles", "Cycle between all, reduced, and minimal particles.");
             drawRowText(graphics, contentLeft, top + 115, "Entity Shadows", "Disable simple shadows beneath entities.");
-            drawRowText(graphics, contentLeft, top + 150, "Weather Effects", "Reduce weather rendering and cloud work.");
-            drawRowText(graphics, contentLeft, top + 185, "Animation Optimization", "Reduce unnecessary view and animation work.");
-            drawRowText(graphics, contentLeft, top + 220, "Fog Optimization", "Reduce fog work when performance mode is active.");
+            drawRowText(graphics, contentLeft, top + 150, "Weather Effects", "Enable or disable weather and cloud rendering.");
+            drawRowText(graphics, contentLeft, top + 185, "Animation Optimization", "Reduce unnecessary view animation work.");
+            drawRowText(graphics, contentLeft, top + 220, "Fog Optimization", "Disable distance fog rendering when enabled.");
         } else {
+            drawSection(graphics, contentLeft, top + 48, "Rendering", "Client-side culling and performance controls.");
+            drawSection(graphics, contentLeft, top + 230, "Status", "Current VoidBoost configuration.");
             drawRowText(graphics, contentLeft, top + 80, "Entity Optimization", "Stop rendering distant entities beyond the configured range.");
             drawRowText(graphics, contentLeft, top + 115, "Entity Distance", "Maximum distance used by entity rendering optimization.");
-            drawRowText(graphics, contentLeft, top + 150, "Performance Mode", "Applies VoidBoost's low-overhead rendering profile.");
+            drawRowText(graphics, contentLeft, top + 150, "Performance Mode", "Apply low-overhead vanilla rendering settings.");
             drawRowText(graphics, contentLeft, top + 185, "Performance Monitor", "Shows FPS, frame time, entities and particles per second.");
         }
 
