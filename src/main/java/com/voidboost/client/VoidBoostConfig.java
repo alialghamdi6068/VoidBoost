@@ -5,14 +5,13 @@ import com.google.gson.GsonBuilder;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.FogRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.ParticleStatus;
 import net.minecraft.client.Options;
+import net.minecraft.client.ParticleStatus;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 
 public final class VoidBoostConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -32,7 +31,9 @@ public final class VoidBoostConfig {
     public boolean dynamicRenderDistance = true;
     public boolean competitiveMode = false;
     public boolean ultimateLocked = false;
+    public boolean maxFpsPreset = false;
     public int targetFps = 120;
+    public int dynamicTargetFps = 120;
     public int maxEntityDistance = 64;
     public int maxRenderDistance = 12;
 
@@ -53,9 +54,7 @@ public final class VoidBoostConfig {
     private static boolean fogDisabledByVoidBoost;
     private static int tickCounter;
 
-    public static VoidBoostConfig get() {
-        return INSTANCE;
-    }
+    public static VoidBoostConfig get() { return INSTANCE; }
 
     public static void load() {
         try {
@@ -65,9 +64,7 @@ public final class VoidBoostConfig {
                     VoidBoostConfig loaded = GSON.fromJson(reader, VoidBoostConfig.class);
                     if (loaded != null) INSTANCE = loaded;
                 }
-            } else {
-                save();
-            }
+            } else save();
         } catch (Exception ignored) {
             INSTANCE = new VoidBoostConfig();
         }
@@ -76,21 +73,20 @@ public final class VoidBoostConfig {
     public static void save() {
         try {
             Files.createDirectories(FILE.getParent());
-            try (Writer writer = Files.newBufferedWriter(FILE)) {
-                GSON.toJson(INSTANCE, writer);
-            }
-        } catch (IOException ignored) {
-        }
+            try (Writer writer = Files.newBufferedWriter(FILE)) { GSON.toJson(INSTANCE, writer); }
+        } catch (IOException ignored) { }
     }
 
     public static void tick(Minecraft client) {
         if (client.level == null) return;
         tickCounter++;
         applyVanillaPerformanceOptions(client);
-        if (INSTANCE.dynamicRenderDistance && tickCounter % 20 == 0) {
-            updateDynamicRenderDistance(client);
-        }
+        if (INSTANCE.dynamicRenderDistance && tickCounter % 20 == 0) updateDynamicRenderDistance(client);
     }
+
+    public static void applyBalancedPreset() { applyPreset("Balanced"); }
+    public static void applyCompetitivePreset() { applyPreset("Competitive"); }
+    public static void applyMaxFpsPreset() { applyPreset("MAX FPS"); }
 
     public static void applyUltimateLockedPreset() {
         INSTANCE.performanceMode = true;
@@ -104,8 +100,10 @@ public final class VoidBoostConfig {
         INSTANCE.entityRenderOptimization = true;
         INSTANCE.dynamicRenderDistance = true;
         INSTANCE.competitiveMode = true;
+        INSTANCE.maxFpsPreset = false;
         INSTANCE.ultimateLocked = true;
         INSTANCE.targetFps = 240;
+        INSTANCE.dynamicTargetFps = 240;
         INSTANCE.maxEntityDistance = 48;
         INSTANCE.maxRenderDistance = 8;
         save();
@@ -115,60 +113,37 @@ public final class VoidBoostConfig {
     public static void applyPreset(String preset) {
         switch (preset) {
             case "Balanced" -> {
-                INSTANCE.performanceMode = true;
-                INSTANCE.performanceMonitor = false;
-                INSTANCE.disableParticles = false;
-                INSTANCE.reducedParticles = true;
-                INSTANCE.entityShadows = false;
-                INSTANCE.weatherEffects = false;
-                INSTANCE.animationOptimization = true;
-                INSTANCE.fogOptimization = true;
-                INSTANCE.entityRenderOptimization = true;
-                INSTANCE.dynamicRenderDistance = true;
-                INSTANCE.competitiveMode = false;
-                INSTANCE.ultimateLocked = false;
-                INSTANCE.targetFps = 120;
-                INSTANCE.maxEntityDistance = 64;
-                INSTANCE.maxRenderDistance = 12;
+                INSTANCE.performanceMode = true; INSTANCE.performanceMonitor = false;
+                INSTANCE.disableParticles = false; INSTANCE.reducedParticles = true;
+                INSTANCE.entityShadows = false; INSTANCE.weatherEffects = false;
+                INSTANCE.animationOptimization = true; INSTANCE.fogOptimization = true;
+                INSTANCE.entityRenderOptimization = true; INSTANCE.dynamicRenderDistance = true;
+                INSTANCE.competitiveMode = false; INSTANCE.maxFpsPreset = false; INSTANCE.ultimateLocked = false;
+                INSTANCE.targetFps = 120; INSTANCE.dynamicTargetFps = 120;
+                INSTANCE.maxEntityDistance = 64; INSTANCE.maxRenderDistance = 12;
             }
             case "Competitive" -> {
-                INSTANCE.performanceMode = true;
-                INSTANCE.performanceMonitor = false;
-                INSTANCE.disableParticles = true;
-                INSTANCE.reducedParticles = false;
-                INSTANCE.entityShadows = false;
-                INSTANCE.weatherEffects = false;
-                INSTANCE.animationOptimization = true;
-                INSTANCE.fogOptimization = true;
-                INSTANCE.entityRenderOptimization = true;
-                INSTANCE.dynamicRenderDistance = true;
-                INSTANCE.competitiveMode = true;
-                INSTANCE.ultimateLocked = false;
-                INSTANCE.targetFps = 180;
-                INSTANCE.maxEntityDistance = 56;
-                INSTANCE.maxRenderDistance = 10;
+                INSTANCE.performanceMode = true; INSTANCE.performanceMonitor = false;
+                INSTANCE.disableParticles = true; INSTANCE.reducedParticles = false;
+                INSTANCE.entityShadows = false; INSTANCE.weatherEffects = false;
+                INSTANCE.animationOptimization = true; INSTANCE.fogOptimization = true;
+                INSTANCE.entityRenderOptimization = true; INSTANCE.dynamicRenderDistance = true;
+                INSTANCE.competitiveMode = true; INSTANCE.maxFpsPreset = false; INSTANCE.ultimateLocked = false;
+                INSTANCE.targetFps = 180; INSTANCE.dynamicTargetFps = 180;
+                INSTANCE.maxEntityDistance = 56; INSTANCE.maxRenderDistance = 10;
             }
             case "MAX FPS" -> {
-                INSTANCE.performanceMode = true;
-                INSTANCE.performanceMonitor = false;
-                INSTANCE.disableParticles = true;
-                INSTANCE.reducedParticles = false;
-                INSTANCE.entityShadows = false;
-                INSTANCE.weatherEffects = false;
-                INSTANCE.animationOptimization = true;
-                INSTANCE.fogOptimization = true;
-                INSTANCE.entityRenderOptimization = true;
-                INSTANCE.dynamicRenderDistance = true;
-                INSTANCE.competitiveMode = false;
-                INSTANCE.ultimateLocked = false;
-                INSTANCE.targetFps = 240;
-                INSTANCE.maxEntityDistance = 48;
-                INSTANCE.maxRenderDistance = 8;
+                INSTANCE.performanceMode = true; INSTANCE.performanceMonitor = false;
+                INSTANCE.disableParticles = true; INSTANCE.reducedParticles = false;
+                INSTANCE.entityShadows = false; INSTANCE.weatherEffects = false;
+                INSTANCE.animationOptimization = true; INSTANCE.fogOptimization = true;
+                INSTANCE.entityRenderOptimization = true; INSTANCE.dynamicRenderDistance = true;
+                INSTANCE.competitiveMode = false; INSTANCE.maxFpsPreset = true; INSTANCE.ultimateLocked = false;
+                INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 240;
+                INSTANCE.maxEntityDistance = 48; INSTANCE.maxRenderDistance = 8;
             }
-            case "ULTIMATE FPS" -> applyUltimateLockedPreset();
-            default -> {
-                return;
-            }
+            case "ULTIMATE FPS" -> { applyUltimateLockedPreset(); return; }
+            default -> { return; }
         }
         save();
         appliedOptionsSignature = Long.MIN_VALUE;
@@ -177,35 +152,22 @@ public final class VoidBoostConfig {
     private static void applyVanillaPerformanceOptions(Minecraft client) {
         long signature = optionsSignature();
         if (signature == appliedOptionsSignature) return;
-
         try {
-            boolean controlVanilla = INSTANCE.performanceMode
-                    || INSTANCE.ultimateLocked
-                    || INSTANCE.disableParticles
-                    || INSTANCE.reducedParticles
-                    || !INSTANCE.entityShadows
-                    || !INSTANCE.weatherEffects
-                    || INSTANCE.animationOptimization
-                    || INSTANCE.fogOptimization;
-
+            boolean controlVanilla = INSTANCE.performanceMode || INSTANCE.ultimateLocked || INSTANCE.disableParticles
+                    || INSTANCE.reducedParticles || !INSTANCE.entityShadows || !INSTANCE.weatherEffects
+                    || INSTANCE.animationOptimization || INSTANCE.fogOptimization;
             if (!controlVanilla) {
-                restoreVanillaPerformanceOptions(client);
-                syncFog(false);
-                appliedOptionsSignature = signature;
-                return;
+                restoreVanillaPerformanceOptions(client); syncFog(false); appliedOptionsSignature = signature; return;
             }
-
             captureVanillaPerformanceOptions(client);
-
             if (INSTANCE.performanceMode || INSTANCE.ultimateLocked) {
                 client.options.entityDistanceScaling().set(INSTANCE.ultimateLocked ? 0.5 : (INSTANCE.competitiveMode ? 0.65 : 0.75));
                 client.options.vignette().set(false);
                 client.options.ambientOcclusion().set(false);
                 client.options.chunkSectionFadeInTime().set(0.0);
                 client.options.enableVsync().set(false);
-                client.options.framerateLimit().set(260);
+                client.options.framerateLimit().set(Options.MAX_FPS_LIMIT);
             }
-
             client.options.entityShadows().set(INSTANCE.entityShadows);
             client.options.weatherRadius().set(INSTANCE.weatherEffects ? 32 : 0);
             client.options.cloudStatus().set(INSTANCE.weatherEffects ? CloudStatus.FANCY : CloudStatus.OFF);
@@ -213,9 +175,7 @@ public final class VoidBoostConfig {
             client.options.bobView().set(!INSTANCE.animationOptimization && !INSTANCE.competitiveMode);
             syncFog(INSTANCE.fogOptimization);
             appliedOptionsSignature = signature;
-        } catch (Exception ignored) {
-            appliedOptionsSignature = Long.MIN_VALUE;
-        }
+        } catch (Exception ignored) { appliedOptionsSignature = Long.MIN_VALUE; }
     }
 
     private static long optionsSignature() {
@@ -265,25 +225,20 @@ public final class VoidBoostConfig {
     }
 
     private static void syncFog(boolean disable) {
-        if (!fogStateCaptured) {
-            fogStateCaptured = true;
-            fogDisabledByVoidBoost = false;
-        }
-        if (disable != fogDisabledByVoidBoost) {
-            FogRenderer.toggleFog();
-            fogDisabledByVoidBoost = disable;
-        }
+        if (!fogStateCaptured) { fogStateCaptured = true; fogDisabledByVoidBoost = false; }
+        if (disable != fogDisabledByVoidBoost) { FogRenderer.toggleFog(); fogDisabledByVoidBoost = disable; }
     }
 
     private static void updateDynamicRenderDistance(Minecraft client) {
         if (client.level == null) return;
         int current = client.options.renderDistance().get();
+        int target = INSTANCE.dynamicTargetFps > 0 ? INSTANCE.dynamicTargetFps : INSTANCE.targetFps;
+        int fps = client.getFps();
         int desired = Math.max(4, Math.min(INSTANCE.maxRenderDistance, current));
+        if (fps < target - 10) desired = Math.max(4, current - 1);
+        else if (fps > target + 20) desired = Math.min(INSTANCE.maxRenderDistance, current + 1);
         if (desired != current) client.options.renderDistance().set(desired);
     }
 
-    public static void markDirty() {
-        appliedOptionsSignature = Long.MIN_VALUE;
-        save();
-    }
+    public static void markDirty() { appliedOptionsSignature = Long.MIN_VALUE; save(); }
 }
