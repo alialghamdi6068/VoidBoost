@@ -19,6 +19,7 @@ public final class VoidBoostConfig {
     public boolean dynamicRenderDistance = false;
     public int dynamicTargetFps = 120;
     public boolean maxFpsPreset = false;
+    public boolean competitiveMode = false;
     public boolean ultimateLocked = false;
     public boolean entityRenderOptimization = true;
     public boolean entityShadows = false;
@@ -27,6 +28,7 @@ public final class VoidBoostConfig {
     public boolean fogOptimization = true;
     public boolean performanceMode = false;
     public boolean performanceMonitor = false;
+    public int particleLimitPercent = 25;
     public int maxEntityDistance = 64;
     public int minRenderDistance = 4;
     public int maxRenderDistance = 16;
@@ -50,6 +52,7 @@ public final class VoidBoostConfig {
 
     private void sanitize() {
         dynamicTargetFps = Math.max(30, Math.min(500, dynamicTargetFps));
+        particleLimitPercent = Math.max(1, Math.min(100, particleLimitPercent));
         minRenderDistance = Math.max(2, Math.min(16, minRenderDistance));
         maxRenderDistance = Math.max(minRenderDistance, Math.min(32, maxRenderDistance));
         maxEntityDistance = Math.max(16, Math.min(256, maxEntityDistance));
@@ -71,10 +74,12 @@ public final class VoidBoostConfig {
 
     public static void applyUltimateLockedPreset() {
         INSTANCE.maxFpsPreset = true;
+        INSTANCE.competitiveMode = true;
         INSTANCE.ultimateLocked = true;
         INSTANCE.performanceMode = true;
         INSTANCE.disableParticles = true;
         INSTANCE.reducedParticles = false;
+        INSTANCE.particleLimitPercent = 1;
         INSTANCE.dynamicRenderDistance = true;
         INSTANCE.entityRenderOptimization = true;
         INSTANCE.entityShadows = false;
@@ -91,9 +96,11 @@ public final class VoidBoostConfig {
     public static void applyMaxFpsPreset() {
         if (INSTANCE.ultimateLocked) return;
         INSTANCE.maxFpsPreset = true;
+        INSTANCE.competitiveMode = false;
         INSTANCE.performanceMode = true;
         INSTANCE.disableParticles = true;
         INSTANCE.reducedParticles = false;
+        INSTANCE.particleLimitPercent = 1;
         INSTANCE.dynamicRenderDistance = true;
         INSTANCE.entityRenderOptimization = true;
         INSTANCE.entityShadows = false;
@@ -107,12 +114,35 @@ public final class VoidBoostConfig {
         INSTANCE.dynamicTargetFps = 144;
     }
 
+    public static void applyCompetitivePreset() {
+        if (INSTANCE.ultimateLocked) return;
+        INSTANCE.maxFpsPreset = false;
+        INSTANCE.competitiveMode = true;
+        INSTANCE.performanceMode = true;
+        INSTANCE.disableParticles = false;
+        INSTANCE.reducedParticles = true;
+        INSTANCE.particleLimitPercent = 20;
+        INSTANCE.dynamicRenderDistance = true;
+        INSTANCE.entityRenderOptimization = true;
+        INSTANCE.entityShadows = false;
+        INSTANCE.weatherEffects = false;
+        INSTANCE.animationOptimization = true;
+        INSTANCE.fogOptimization = true;
+        INSTANCE.performanceMonitor = false;
+        INSTANCE.maxEntityDistance = 64;
+        INSTANCE.minRenderDistance = 6;
+        INSTANCE.maxRenderDistance = 12;
+        INSTANCE.dynamicTargetFps = 120;
+    }
+
     public static void applyBalancedPreset() {
         if (INSTANCE.ultimateLocked) return;
         INSTANCE.maxFpsPreset = false;
+        INSTANCE.competitiveMode = false;
         INSTANCE.performanceMode = false;
         INSTANCE.disableParticles = false;
         INSTANCE.reducedParticles = true;
+        INSTANCE.particleLimitPercent = 60;
         INSTANCE.dynamicRenderDistance = false;
         INSTANCE.entityRenderOptimization = true;
         INSTANCE.entityShadows = true;
@@ -130,13 +160,16 @@ public final class VoidBoostConfig {
         try {
             if (INSTANCE.performanceMode || INSTANCE.ultimateLocked) {
                 client.options.entityShadows().set(INSTANCE.entityShadows);
-                client.options.entityDistanceScaling().set(INSTANCE.ultimateLocked ? 0.5 : 0.75);
+                client.options.entityDistanceScaling().set(INSTANCE.ultimateLocked ? 0.5 : (INSTANCE.competitiveMode ? 0.65 : 0.75));
                 client.options.weatherRadius().set(INSTANCE.weatherEffects ? 32 : 0);
                 client.options.cloudStatus().set(INSTANCE.weatherEffects ? CloudStatus.FANCY : CloudStatus.OFF);
                 client.options.particles().set(INSTANCE.disableParticles ? ParticleStatus.MINIMAL : ParticleStatus.DECREASED);
                 client.options.vignette().set(false);
                 client.options.ambientOcclusion().set(false);
                 client.options.chunkSectionFadeInTime().set(0.0);
+                if (INSTANCE.animationOptimization || INSTANCE.competitiveMode) {
+                    client.options.bobView().set(false);
+                }
             }
         } catch (Exception ignored) {
         }
@@ -144,6 +177,7 @@ public final class VoidBoostConfig {
 
     public static void tick(Minecraft client) {
         if (client == null) return;
+        VoidBoostStats.frame();
         applyVanillaPerformanceOptions(client);
         if (client.level == null || !INSTANCE.dynamicRenderDistance) return;
         if (++stableTicks < 20) return;
@@ -153,7 +187,7 @@ public final class VoidBoostConfig {
         if (now - lastSave < 500) return;
 
         double fps = client.getFps();
-        if (fps > 0) smoothedFps = smoothedFps * 0.80 + fps * 0.20;
+        if (fps > 0) smoothedFps = smoothedFps * 0.82 + fps * 0.18;
 
         int current = client.options.renderDistance().get();
         int next = current;
@@ -161,8 +195,8 @@ public final class VoidBoostConfig {
         int max = INSTANCE.maxRenderDistance;
         int target = INSTANCE.dynamicTargetFps;
 
-        if (smoothedFps < target - 18 && current > min) next = current - 1;
-        else if (smoothedFps > target + 28 && current < max) next = current + 1;
+        if (smoothedFps < target - 12 && current > min) next = current - 1;
+        else if (smoothedFps > target + 22 && current < max) next = current + 1;
 
         if (next != current) client.options.renderDistance().set(next);
     }
