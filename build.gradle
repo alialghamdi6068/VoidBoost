@@ -9,11 +9,11 @@ repositories {
 }
 
 loom {
-    splitEnvironmentSourceSets()
+    // VoidBoost is client-only; keep its Java sources in the main source set
+    // so Minecraft client classes are available during compilation.
     mods {
         voidboost {
             sourceSet sourceSets.main
-            sourceSet sourceSets.client
         }
     }
 }
