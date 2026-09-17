@@ -1,5 +1,6 @@
 package com.voidboost.mixin;
 
+import com.voidboost.client.VoidBoostAI;
 import com.voidboost.client.VoidBoostConfig;
 import com.voidboost.client.VoidBoostStats;
 import net.minecraft.client.DeltaTracker;
@@ -21,6 +22,7 @@ public abstract class PerformanceHudMixin {
     private static long cachedUsedMb;
     private static long cachedMaxMb;
     private static String cachedRamText = "0 / 0 MB";
+    private static String cachedAiText = "AI: IDLE";
     private static long nextHudUpdateNanos;
 
     @Inject(method = "render", at = @At("HEAD"))
@@ -47,18 +49,22 @@ public abstract class PerformanceHudMixin {
             cachedUsedMb = used / (1024L * 1024L);
             cachedMaxMb = runtime.maxMemory() / (1024L * 1024L);
             cachedRamText = cachedUsedMb + " / " + cachedMaxMb + " MB";
+            int aiLevel = VoidBoostAI.level();
+            int pressure = (int) Math.round(VoidBoostAI.pressure() * 100.0);
+            cachedAiText = "AI: TIER " + aiLevel + " • LOAD " + pressure + "%";
             nextHudUpdateNanos = now + 250_000_000L;
         }
 
         int x = 8;
         int y = 8;
-        graphics.fill(x - 5, y - 5, x + 154, y + 81, 0xB0101014);
-        graphics.fill(x - 5, y - 5, x + 154, y - 3, 0xFF6E8CFF);
+        graphics.fill(x - 5, y - 5, x + 168, y + 94, 0xB0101014);
+        graphics.fill(x - 5, y - 5, x + 168, y - 3, 0xFF6E8CFF);
         graphics.drawString(client.font, Component.literal("VoidBoost Monitor"), x, y + 2, 0xFFFFFFFF, false);
         graphics.drawString(client.font, Component.literal("FPS: " + cachedFps), x, y + 15, 0xFFFFFFFF, false);
         graphics.drawString(client.font, Component.literal("Frame: " + cachedFrameText), x, y + 28, 0xFFD0D0D0, false);
         graphics.drawString(client.font, Component.literal("RAM: " + cachedRamText), x, y + 41, 0xFFD0D0D0, false);
         graphics.drawString(client.font, Component.literal("Entities: " + cachedEntities), x, y + 54, 0xFFD0D0D0, false);
         graphics.drawString(client.font, Component.literal("Blocked/s: " + cachedParticles), x, y + 67, 0xFFD0D0D0, false);
+        graphics.drawString(client.font, Component.literal(cachedAiText), x, y + 80, 0xFFD0D0D0, false);
     }
 }
