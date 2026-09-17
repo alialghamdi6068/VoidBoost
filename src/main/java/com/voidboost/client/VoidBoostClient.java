@@ -4,6 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 
 public final class VoidBoostClient implements ClientModInitializer {
@@ -17,7 +18,7 @@ public final class VoidBoostClient implements ClientModInitializer {
         openMenuKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.voidboost.open_menu",
                 GLFW.GLFW_KEY_O,
-                "category.voidboost"
+                KeyMapping.Category.register("category.voidboost")
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
