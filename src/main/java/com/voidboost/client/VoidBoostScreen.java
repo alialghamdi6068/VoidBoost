@@ -29,10 +29,10 @@ public final class VoidBoostScreen extends Screen {
         rebuildWidgets();
     }
 
-    private void rebuildWidgets() {
+    @Override
+    protected void rebuildWidgets() {
         clearWidgets();
         int left = 30;
-        int sidebarRight = 176;
         int contentLeft = 196;
         int right = width - 30;
         int top = 78;
@@ -45,14 +45,14 @@ public final class VoidBoostScreen extends Screen {
         else if (page == 1) buildQuality(contentLeft, right, top);
         else buildPerformance(contentLeft, right, top);
 
-        addActionButton("Reset", left + 10, height - 46, 136, b -> {
+        addActionButton("Reset", left + 10, height - 46, 136, () -> {
             if (!VoidBoostConfig.get().ultimateLocked) {
                 VoidBoostConfig.applyBalancedPreset();
                 rebuildWidgets();
             }
         }, !VoidBoostConfig.get().ultimateLocked);
 
-        addActionButton("Done", right - 116, height - 46, 116, b -> {
+        addActionButton("Done", right - 116, height - 46, 116, () -> {
             VoidBoostConfig.save();
             Minecraft.getInstance().setScreen(parent);
         }, true);
@@ -68,38 +68,35 @@ public final class VoidBoostScreen extends Screen {
     }
 
     private void buildGeneral(int left, int right, int top) {
-        addPageHeader(left, top, "General", "Profiles and adaptive rendering controls");
-        addSection(left, top + 48, "Optimization Presets", "Start with a profile, then customize anything you need.");
-        addPreset(left, top + 86, 154, "Balanced", VoidBoostConfig::applyBalancedPreset);
-        addPreset(left + 164, top + 86, 154, "Competitive", VoidBoostConfig::applyCompetitivePreset);
-        addPreset(left, top + 116, 154, "MAX FPS", VoidBoostConfig::applyMaxFpsPreset);
-        addPreset(left + 164, top + 116, 154, "ULTIMATE FPS", VoidBoostConfig::applyUltimateLockedPreset);
+        addSection(left, top, "Optimization Presets", "Start with a profile, then customize anything you need.");
+        addPreset(left, top + 38, 154, "Balanced", VoidBoostConfig::applyBalancedPreset);
+        addPreset(left + 164, top + 38, 154, "Competitive", VoidBoostConfig::applyCompetitivePreset);
+        addPreset(left, top + 68, 154, "MAX FPS", VoidBoostConfig::applyMaxFpsPreset);
+        addPreset(left + 164, top + 68, 154, "ULTIMATE FPS", VoidBoostConfig::applyUltimateLockedPreset);
 
-        addSection(left, top + 166, "Dynamic Rendering", "Automatically adapts chunk distance around your FPS target.");
-        addRow(left, top + 208, right, "Dynamic Render Distance", "Adjust render distance while you play.", state("dynamic"), () -> toggle("dynamic"), editable());
-        addRow(left, top + 244, right, "Target FPS", "Adaptive rendering target.", String.valueOf(VoidBoostConfig.get().dynamicTargetFps), this::cycleTargetFps, editable());
+        addSection(left, top + 118, "Dynamic Rendering", "Automatically adapts chunk distance around your FPS target.");
+        addRow(left, top + 158, right, "Dynamic Render Distance", "Adjust render distance while you play.", state("dynamic"), () -> toggle("dynamic"), editable());
+        addRow(left, top + 194, right, "Target FPS", "Adaptive rendering target.", String.valueOf(VoidBoostConfig.get().dynamicTargetFps), this::cycleTargetFps, editable());
     }
 
     private void buildQuality(int left, int right, int top) {
-        addPageHeader(left, top, "Quality", "Visual controls that can reduce rendering cost");
-        addSection(left, top + 48, "Visual Effects", "Change expensive visual effects without changing gameplay.");
-        addRow(left, top + 90, right, "Particles", "All, reduced, or minimal particles.", state("particles"), () -> toggle("particles"), editable());
-        addRow(left, top + 126, right, "Entity Shadows", "Control shadows beneath entities.", state("shadows"), () -> toggle("shadows"), editable());
-        addRow(left, top + 162, right, "Weather Effects", "Control weather and cloud rendering.", state("weather"), () -> toggle("weather"), editable());
-        addRow(left, top + 198, right, "Animation Optimization", "Reduce unnecessary view animation work.", state("animations"), () -> toggle("animations"), editable());
-        addRow(left, top + 234, right, "Fog Optimization", "Reduce distance fog rendering.", state("fog"), () -> toggle("fog"), editable());
+        addSection(left, top, "Visual Effects", "Change expensive visual effects without changing gameplay.");
+        addRow(left, top + 42, right, "Particles", "All, reduced, or minimal particles.", state("particles"), () -> toggle("particles"), editable());
+        addRow(left, top + 78, right, "Entity Shadows", "Control shadows beneath entities.", state("shadows"), () -> toggle("shadows"), editable());
+        addRow(left, top + 114, right, "Weather Effects", "Control weather and cloud rendering.", state("weather"), () -> toggle("weather"), editable());
+        addRow(left, top + 150, right, "Animation Optimization", "Reduce unnecessary view animation work.", state("animations"), () -> toggle("animations"), editable());
+        addRow(left, top + 186, right, "Fog Optimization", "Reduce distance fog rendering.", state("fog"), () -> toggle("fog"), editable());
     }
 
     private void buildPerformance(int left, int right, int top) {
-        addPageHeader(left, top, "Performance", "Rendering, culling and live diagnostics");
-        addSection(left, top + 48, "Rendering", "Tune client-side systems with direct FPS impact.");
-        addRow(left, top + 90, right, "Entity Optimization", "Skip distant entity rendering beyond the selected range.", state("entities"), () -> toggle("entities"), editable());
-        addRow(left, top + 126, right, "Entity Distance", "Maximum distance for entity optimization.", String.valueOf(VoidBoostConfig.get().maxEntityDistance), this::cycleEntityDistance, editable());
-        addRow(left, top + 162, right, "Performance Mode", "Apply low-overhead vanilla rendering settings.", state("performance"), () -> toggle("performance"), editable());
-        addRow(left, top + 198, right, "Performance Monitor", "Display live FPS, frame time, RAM and render stats.", state("monitor"), () -> toggle("monitor"), editable());
+        addSection(left, top, "Rendering", "Tune client-side systems with direct FPS impact.");
+        addRow(left, top + 42, right, "Entity Optimization", "Skip distant entity rendering beyond the selected range.", state("entities"), () -> toggle("entities"), editable());
+        addRow(left, top + 78, right, "Entity Distance", "Maximum distance for entity optimization.", String.valueOf(VoidBoostConfig.get().maxEntityDistance), this::cycleEntityDistance, editable());
+        addRow(left, top + 114, right, "Performance Mode", "Apply low-overhead vanilla rendering settings.", state("performance"), () -> toggle("performance"), editable());
+        addRow(left, top + 150, right, "Performance Monitor", "Display live FPS, frame time, RAM and render stats.", state("monitor"), () -> toggle("monitor"), editable());
 
-        addSection(left, top + 248, "Current Profile", "The active configuration mode.");
-        addActionButton(modeName(), left, top + 286, 180, b -> {}, false);
+        addSection(left, top + 204, "Current Profile", "The active configuration mode.");
+        addActionButton(modeName(), left, top + 242, 180, () -> {}, false);
     }
 
     private boolean editable() {
@@ -120,10 +117,6 @@ public final class VoidBoostScreen extends Screen {
         c.maxEntityDistance = c.maxEntityDistance >= 128 ? 32 : c.maxEntityDistance + 16;
         c.markDirty();
         rebuildWidgets();
-    }
-
-    private void addPageHeader(int x, int y, String title, String subtitle) {
-        // Header is rendered in render().
     }
 
     private void addSection(int x, int y, String title, String subtitle) {
@@ -221,23 +214,16 @@ public final class VoidBoostScreen extends Screen {
 
         if (page == 0) {
             drawSection(g, contentLeft, top, "Optimization Presets", "Start with a profile, then customize anything you need.");
-            drawSection(g, contentLeft, top + 166, "Dynamic Rendering", "Automatically adapts chunk distance around your FPS target.");
-            drawRow(g, contentLeft, top + 208, right, "Dynamic Render Distance", "Adjust render distance while you play.");
-            drawRow(g, contentLeft, top + 244, right, "Target FPS", "Adaptive rendering target.");
+            drawSection(g, contentLeft, top + 118, "Dynamic Rendering", "Automatically adapts chunk distance around your FPS target.");
+            drawRow(g, contentLeft, top + 158, right);
+            drawRow(g, contentLeft, top + 194, right);
         } else if (page == 1) {
             drawSection(g, contentLeft, top, "Visual Effects", "Change expensive visual effects without changing gameplay.");
-            drawRow(g, contentLeft, top + 90, right, "Particles", "All, reduced, or minimal particles.");
-            drawRow(g, contentLeft, top + 126, right, "Entity Shadows", "Control shadows beneath entities.");
-            drawRow(g, contentLeft, top + 162, right, "Weather Effects", "Control weather and cloud rendering.");
-            drawRow(g, contentLeft, top + 198, right, "Animation Optimization", "Reduce unnecessary view animation work.");
-            drawRow(g, contentLeft, top + 234, right, "Fog Optimization", "Reduce distance fog rendering.");
+            for (int i = 0; i < 5; i++) drawRow(g, contentLeft, top + 42 + i * 36, right);
         } else {
             drawSection(g, contentLeft, top, "Rendering", "Tune client-side systems with direct FPS impact.");
-            drawRow(g, contentLeft, top + 90, right, "Entity Optimization", "Skip distant entity rendering beyond the selected range.");
-            drawRow(g, contentLeft, top + 126, right, "Entity Distance", "Maximum distance for entity optimization.");
-            drawRow(g, contentLeft, top + 162, right, "Performance Mode", "Apply low-overhead vanilla rendering settings.");
-            drawRow(g, contentLeft, top + 198, right, "Performance Monitor", "Display live FPS, frame time, RAM and render stats.");
-            drawSection(g, contentLeft, top + 248, "Current Profile", "The active configuration mode.");
+            for (int i = 0; i < 4; i++) drawRow(g, contentLeft, top + 42 + i * 36, right);
+            drawSection(g, contentLeft, top + 204, "Current Profile", "The active configuration mode.");
         }
 
         super.render(g, mouseX, mouseY, delta);
@@ -248,12 +234,10 @@ public final class VoidBoostScreen extends Screen {
         g.drawString(font, Component.literal(subtitle), x + 14, y + 17, MUTED, false);
     }
 
-    private void drawRow(GuiGraphics g, int x, int y, int right, String title, String description) {
+    private void drawRow(GuiGraphics g, int x, int y, int right) {
         g.fill(x + 6, y - 5, right - 10, y + 29, PANEL_ALT);
         g.fill(x + 6, y - 5, x + 8, y + 29, ACCENT);
         g.fill(x + 8, y + 28, right - 10, y + 29, BORDER);
-        g.drawString(font, Component.literal(title), x + 17, y + 1, TEXT, false);
-        g.drawString(font, Component.literal(description), x + 17, y + 14, MUTED, false);
         g.fill(right - 110, y - 3, right - 8, y + 28, BORDER);
     }
 }
