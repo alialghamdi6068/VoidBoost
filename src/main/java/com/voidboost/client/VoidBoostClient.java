@@ -9,6 +9,6 @@ public final class VoidBoostClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         VoidBoostConfig.load();
-        ClientTickEvents.END_CLIENT_TICK.register(client -> VoidBoostConfig.tick(client));
+        ClientTickEvents.END_CLIENT_TICK.register(VoidBoostConfig::tick);
     }
 }
