@@ -25,18 +25,19 @@ public abstract class PerformanceHudMixin {
         if (!c.performanceMonitor) return;
 
         Minecraft client = Minecraft.getInstance();
+        int x = 8;
+        int y = 8;
         int fps = client.getFps();
         double frameMs = VoidBoostStats.frameMs();
         int entities = client.level == null ? 0 : client.level.getEntityCount();
         int particles = VoidBoostStats.particlesPerSecond();
 
-        int x = 6;
-        int y = 6;
-        graphics.fill(x - 3, y - 3, x + 142, y + 64, 0x99000000);
-        graphics.drawString(client.font, Component.literal("VoidBoost Monitor"), x, y, 0xFFFFFF, false);
-        graphics.drawString(client.font, Component.literal("FPS: " + fps), x, y + 12, 0xFFFFFF, false);
-        graphics.drawString(client.font, Component.literal(String.format("Frame: %.1f ms", frameMs)), x, y + 24, 0xFFFFFF, false);
-        graphics.drawString(client.font, Component.literal("Entities: " + entities), x, y + 36, 0xFFFFFF, false);
-        graphics.drawString(client.font, Component.literal("Particles/s: " + particles), x, y + 48, 0xFFFFFF, false);
+        graphics.fill(x - 5, y - 5, x + 154, y + 68, 0xB0101014);
+        graphics.fill(x - 5, y - 5, x + 154, y - 3, 0xFF6E8CFF);
+        graphics.drawString(client.font, Component.literal("VoidBoost Monitor"), x, y + 2, 0xFFFFFFFF, false);
+        graphics.drawString(client.font, Component.literal("FPS: " + fps), x, y + 15, 0xFFFFFFFF, false);
+        graphics.drawString(client.font, Component.literal("Frame: " + String.format(java.util.Locale.ROOT, "%.1f", frameMs) + " ms"), x, y + 28, 0xFFD0D0D0, false);
+        graphics.drawString(client.font, Component.literal("Entities: " + entities), x, y + 41, 0xFFD0D0D0, false);
+        graphics.drawString(client.font, Component.literal("Particles/s: " + particles), x, y + 54, 0xFFD0D0D0, false);
     }
 }
