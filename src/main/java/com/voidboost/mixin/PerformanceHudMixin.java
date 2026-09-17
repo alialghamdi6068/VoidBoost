@@ -2,6 +2,7 @@ package com.voidboost.mixin;
 
 import com.voidboost.client.VoidBoostConfig;
 import com.voidboost.client.VoidBoostStats;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
@@ -10,10 +11,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import net.minecraft.client.DeltaTracker;
 
 @Mixin(Gui.class)
 public abstract class PerformanceHudMixin {
+    @Inject(method = "render", at = @At("HEAD"))
+    private void voidboost$measureFrame(GuiGraphics graphics, DeltaTracker tickCounter, CallbackInfo ci) {
+        VoidBoostStats.frame();
+    }
+
     @Inject(method = "render", at = @At("TAIL"))
     private void voidboost$renderMonitor(GuiGraphics graphics, DeltaTracker tickCounter, CallbackInfo ci) {
         VoidBoostConfig c = VoidBoostConfig.get();
