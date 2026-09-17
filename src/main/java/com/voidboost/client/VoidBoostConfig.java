@@ -105,7 +105,7 @@ public final class VoidBoostConfig {
         INSTANCE.dynamicRenderDistance = true;
         INSTANCE.competitiveMode = true;
         INSTANCE.maxFpsPreset = false;
-        INSTANCE.ultimateLocked = false;
+        INSTANCE.ultimateLocked = true;
         INSTANCE.targetFps = 240;
         INSTANCE.dynamicTargetFps = 240;
         INSTANCE.maxEntityDistance = 28;
@@ -167,6 +167,7 @@ public final class VoidBoostConfig {
             }
 
             captureVanillaPerformanceOptions(client);
+
             if (INSTANCE.performanceMode) {
                 double entityScale = INSTANCE.maxRenderDistance <= 4 ? 0.32 : INSTANCE.maxRenderDistance <= 6 ? 0.38 : INSTANCE.competitiveMode ? 0.45 : INSTANCE.maxFpsPreset ? 0.40 : 0.58;
                 client.options.entityDistanceScaling().set(entityScale);
@@ -181,7 +182,10 @@ public final class VoidBoostConfig {
                 if (client.options.renderDistance().get() > hardLimit) {
                     client.options.renderDistance().set(hardLimit);
                 }
+            } else {
+                restorePerformanceOnlyOptions(client);
             }
+
             client.options.entityShadows().set(INSTANCE.entityShadows);
             client.options.weatherRadius().set(INSTANCE.weatherEffects ? 32 : 0);
             client.options.cloudStatus().set(INSTANCE.weatherEffects ? CloudStatus.FANCY : CloudStatus.OFF);
@@ -232,6 +236,18 @@ public final class VoidBoostConfig {
         savedMaxFps = client.options.framerateLimit().get();
         savedRenderDistance = client.options.renderDistance().get();
         optionsCaptured = true;
+    }
+
+    private static void restorePerformanceOnlyOptions(Minecraft client) {
+        if (!optionsCaptured) return;
+        client.options.entityDistanceScaling().set(savedEntityDistanceScaling);
+        client.options.vignette().set(savedVignette);
+        client.options.ambientOcclusion().set(savedAmbientOcclusion);
+        client.options.chunkSectionFadeInTime().set(savedChunkSectionFadeInTime);
+        client.options.enableVsync().set(savedVsync);
+        client.options.biomeBlendRadius().set(savedBiomeBlendRadius);
+        client.options.mipmapLevels().set(savedMipmapLevels);
+        client.options.framerateLimit().set(savedMaxFps);
     }
 
     private static void restoreVanillaPerformanceOptions(Minecraft client) {
