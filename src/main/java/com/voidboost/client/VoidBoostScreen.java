@@ -8,7 +8,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
-/** Polished, scrollable client-side configuration screen for VoidBoost. */
+/** Premium, scrollable client-side configuration screen for VoidBoost. */
 public final class VoidBoostScreen extends Screen {
     private static final int BG = 0xFF07090E;
     private static final int SHELL = 0xFF0B0F17;
@@ -35,26 +35,25 @@ public final class VoidBoostScreen extends Screen {
     }
 
     @Override
-    protected void init() {
-        rebuildWidgets();
-    }
+    protected void init() { rebuildWidgets(); }
 
     @Override
     protected void rebuildWidgets() {
         clearWidgets();
-
         int sidebarX = 26;
         int contentX = 202;
         int right = width - 26;
         int top = contentTop();
 
         addNav(sidebarX + 10, 116, "General", 0);
-        addNav(sidebarX + 10, 158, "Quality", 1);
+        addNav(sidebarX + 10, 158, "Visual", 1);
         addNav(sidebarX + 10, 200, "Performance", 2);
+        addNav(sidebarX + 10, 242, "Advanced", 3);
 
         if (page == 0) buildGeneral(contentX, right, top);
-        else if (page == 1) buildQuality(contentX, right, top);
-        else buildPerformance(contentX, right, top);
+        else if (page == 1) buildVisual(contentX, right, top);
+        else if (page == 2) buildPerformance(contentX, right, top);
+        else buildAdvanced(contentX, right, top);
 
         addButton(sidebarX + 10, height - 70, 72, 40, "Reset", "", () -> {
             scrollOffset = 0;
@@ -68,31 +67,23 @@ public final class VoidBoostScreen extends Screen {
         }, true, true, "Save and close VoidBoost");
     }
 
-    private int contentTop() {
-        return 122 - (int) Math.round(scrollOffset);
-    }
-
-    private int contentBottom() {
-        return height - 78;
-    }
+    private int contentTop() { return 122 - (int) Math.round(scrollOffset); }
+    private int contentBottom() { return height - 78; }
 
     private int maxScroll() {
         return switch (page) {
             case 0 -> 250;
-            case 1 -> 130;
-            default -> 170;
+            case 1 -> 170;
+            case 2 -> 170;
+            default -> 230;
         };
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (mouseX < 190 || mouseY < 82 || mouseY > contentBottom()) {
-            return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
-        }
-
-        double amount = scrollY * 42.0;
+        if (mouseX < 190 || mouseY < 82 || mouseY > contentBottom()) return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
         double old = scrollOffset;
-        scrollOffset = Math.max(0, Math.min(maxScroll(), scrollOffset - amount));
+        scrollOffset = Math.max(0, Math.min(maxScroll(), scrollOffset - scrollY * 42.0));
         if (old != scrollOffset) rebuildWidgets();
         return true;
     }
@@ -111,28 +102,41 @@ public final class VoidBoostScreen extends Screen {
         addButton(left + cardW + 14, y + 18, cardW, 82, "Competitive", "PVP", VoidBoostConfig::applyCompetitivePreset, isPreset("competitive"), false, "Low latency • competitive rendering");
         addButton(left, y + 114, cardW, 82, "MAX FPS", "FAST", VoidBoostConfig::applyMaxFpsPreset, isPreset("max"), false, "Aggressive optimization • high FPS");
         addButton(left + cardW + 14, y + 114, cardW, 82, "ULTIMATE FPS", "EXTREME", VoidBoostConfig::applyUltimateLockedPreset, isPreset("ultimate"), false, "Maximum cuts • lowest render load");
-        addButton(left, y + 210, right - left, 62, "Custom", "MANUAL", this::activateCustom, isPreset("custom"), false, "Keep your current settings and control every option");
-        addSetting(left, y + 290, right, "Dynamic Render Distance", state("dynamic"), "Adaptive chunk distance", () -> toggle("dynamic"));
+        addButton(left, y + 210, right - left, 62, "Custom", "MANUAL", this::activateCustom, isPreset("custom"), false, "Keep your settings and tune every control");
+        addSetting(left, y + 290, right, "Dynamic Render Distance", state("dynamic"), "Automatically adapts chunks to FPS", () -> toggle("dynamic"));
         addSetting(left, y + 342, right, "Target FPS", VoidBoostConfig.get().dynamicTargetFps + " FPS", "Adaptive rendering target", this::cycleTargetFps);
         addSetting(left, y + 394, right, "Performance Mode", state("performance"), "Apply optimized vanilla settings", () -> toggle("performance"));
     }
 
-    private void buildQuality(int left, int right, int y) {
-        addSetting(left, y + 26, right, "Particles", state("particles"), "ALL / REDUCED / MINIMAL", () -> toggle("particles"));
-        addSetting(left, y + 78, right, "Entity Shadows", state("shadows"), "Shadow pass for entities", () -> toggle("shadows"));
-        addSetting(left, y + 130, right, "Weather Effects", state("weather"), "Clouds and weather distance", () -> toggle("weather"));
-        addSetting(left, y + 182, right, "Animation Optimization", state("animations"), "Reduce view animation work", () -> toggle("animations"));
-        addSetting(left, y + 234, right, "Fog Optimization", state("fog"), "Reduce fog rendering", () -> toggle("fog"));
-        addSetting(left, y + 286, right, "Entity Optimization", state("entities"), "Cull distant entities", () -> toggle("entities"));
+    private void buildVisual(int left, int right, int y) {
+        addSetting(left, y + 20, right, "Particles", state("particles"), "ALL / REDUCED / MINIMAL", () -> toggle("particles"));
+        addSetting(left, y + 72, right, "Entity Shadows", state("shadows"), "Disable the entity shadow pass", () -> toggle("shadows"));
+        addSetting(left, y + 124, right, "Weather Effects", state("weather"), "Weather simulation and render radius", () -> toggle("weather"));
+        addSetting(left, y + 176, right, "Cloud Optimization", state("clouds"), "Disable expensive cloud rendering", () -> toggle("clouds"));
+        addSetting(left, y + 228, right, "Animation Optimization", state("animations"), "Reduce view and animation workload", () -> toggle("animations"));
+        addSetting(left, y + 280, right, "Fog Optimization", state("fog"), "Reduce fog rendering work", () -> toggle("fog"));
+        addSetting(left, y + 332, right, "Vignette Optimization", state("vignette"), "Disable the screen vignette pass", () -> toggle("vignette"));
+        addSetting(left, y + 384, right, "Ambient Occlusion", state("ao"), "Disable ambient-occlusion shading", () -> toggle("ao"));
     }
 
     private void buildPerformance(int left, int right, int y) {
-        addSetting(left, y + 26, right, "Entity Optimization", state("entities"), "Cull distant entities", () -> toggle("entities"));
-        addSetting(left, y + 78, right, "Entity Distance", VoidBoostConfig.get().maxEntityDistance + " BLOCKS", "Maximum entity render distance", this::cycleEntityDistance);
-        addSetting(left, y + 130, right, "Performance Mode", state("performance"), "Apply optimized vanilla settings", () -> toggle("performance"));
-        addSetting(left, y + 182, right, "Performance Monitor", state("monitor"), "Live FPS and frame diagnostics", () -> toggle("monitor"));
-        addSetting(left, y + 234, right, "Dynamic Render Distance", state("dynamic"), "Adaptive chunk distance", () -> toggle("dynamic"));
-        addInfo(left, y + 304, right, modeName());
+        addSetting(left, y + 20, right, "Entity Optimization", state("entities"), "Cull distant entity rendering", () -> toggle("entities"));
+        addSetting(left, y + 72, right, "Entity Distance", VoidBoostConfig.get().maxEntityDistance + " BLOCKS", "Maximum entity render distance", this::cycleEntityDistance);
+        addSetting(left, y + 124, right, "Render Distance", VoidBoostConfig.get().maxRenderDistance + " CHUNKS", "Maximum adaptive chunk distance", this::cycleRenderDistance);
+        addSetting(left, y + 176, right, "Dynamic Render Distance", state("dynamic"), "React to frame rate every second", () -> toggle("dynamic"));
+        addSetting(left, y + 228, right, "Performance Mode", state("performance"), "Apply optimized vanilla settings", () -> toggle("performance"));
+        addSetting(left, y + 280, right, "Performance Monitor", state("monitor"), "Low-overhead FPS and RAM diagnostics", () -> toggle("monitor"));
+        addSetting(left, y + 332, right, "View Bobbing", state("viewbob"), "Disable camera bob for lower frame work", () -> toggle("viewbob"));
+    }
+
+    private void buildAdvanced(int left, int right, int y) {
+        addSetting(left, y + 20, right, "Mipmap Optimization", state("mipmap"), "Use zero mipmap levels for lower texture work", () -> toggle("mipmap"));
+        addSetting(left, y + 72, right, "Biome Blend Optimization", state("biome"), "Disable expensive biome color blending", () -> toggle("biome"));
+        addSetting(left, y + 124, right, "VSync Optimization", state("vsync"), "Disable synchronization for lower latency", () -> toggle("vsync"));
+        addSetting(left, y + 176, right, "Particle Budget", VoidBoostConfig.get().particleLimitPercent + "%", "Sampling budget used by reduced particles", this::cycleParticleBudget);
+        addSetting(left, y + 228, right, "FPS Limit", VoidBoostConfig.get().targetFps + " FPS", "Client frame-rate limit target", this::cycleFpsLimit);
+        addInfo(left, y + 294, right, "LIGHTWEIGHT ENGINE");
+        addInfo(left, y + 342, right, modeName() + " • ALL SETTINGS LOCAL");
     }
 
     private void addSetting(int left, int y, int right, String title, String value, String description, Runnable action) {
@@ -169,8 +173,15 @@ public final class VoidBoostScreen extends Screen {
             case "entities" -> c.entityRenderOptimization = !c.entityRenderOptimization;
             case "shadows" -> c.entityShadows = !c.entityShadows;
             case "weather" -> c.weatherEffects = !c.weatherEffects;
+            case "clouds" -> c.cloudOptimization = !c.cloudOptimization;
             case "animations" -> c.animationOptimization = !c.animationOptimization;
             case "fog" -> c.fogOptimization = !c.fogOptimization;
+            case "vignette" -> c.vignetteOptimization = !c.vignetteOptimization;
+            case "ao" -> c.ambientOcclusionOptimization = !c.ambientOcclusionOptimization;
+            case "mipmap" -> c.mipmapOptimization = !c.mipmapOptimization;
+            case "biome" -> c.biomeBlendOptimization = !c.biomeBlendOptimization;
+            case "vsync" -> c.vsyncOptimization = !c.vsyncOptimization;
+            case "viewbob" -> c.viewBobOptimization = !c.viewBobOptimization;
             case "performance" -> {
                 c.performanceMode = !c.performanceMode;
                 if (!c.performanceMode) c.ultimateLocked = false;
@@ -189,22 +200,44 @@ public final class VoidBoostScreen extends Screen {
         VoidBoostConfig c = VoidBoostConfig.get();
         if (c.ultimateLocked) return;
         c.dynamicTargetFps = c.dynamicTargetFps >= 240 ? 60 : c.dynamicTargetFps + 30;
-        c.maxFpsPreset = false;
-        c.competitiveMode = false;
-        c.ultimateLocked = false;
-        c.markDirty();
-        rebuildWidgets();
+        c.maxFpsPreset = false; c.competitiveMode = false; c.ultimateLocked = false;
+        c.markDirty(); rebuildWidgets();
     }
 
     private void cycleEntityDistance() {
         VoidBoostConfig c = VoidBoostConfig.get();
         if (c.ultimateLocked) return;
         c.maxEntityDistance = c.maxEntityDistance >= 128 ? 32 : c.maxEntityDistance + 16;
-        c.maxFpsPreset = false;
-        c.competitiveMode = false;
-        c.ultimateLocked = false;
-        c.markDirty();
-        rebuildWidgets();
+        c.maxFpsPreset = false; c.competitiveMode = false; c.ultimateLocked = false;
+        c.markDirty(); rebuildWidgets();
+    }
+
+    private void cycleRenderDistance() {
+        VoidBoostConfig c = VoidBoostConfig.get();
+        if (c.ultimateLocked) return;
+        c.maxRenderDistance = c.maxRenderDistance >= 12 ? 4 : c.maxRenderDistance + 2;
+        c.maxFpsPreset = false; c.competitiveMode = false; c.ultimateLocked = false;
+        c.markDirty(); rebuildWidgets();
+    }
+
+    private void cycleParticleBudget() {
+        VoidBoostConfig c = VoidBoostConfig.get();
+        if (c.ultimateLocked) return;
+        c.particleLimitPercent = c.particleLimitPercent >= 100 ? 10 : c.particleLimitPercent + 10;
+        c.maxFpsPreset = false; c.competitiveMode = false; c.ultimateLocked = false;
+        c.markDirty(); rebuildWidgets();
+    }
+
+    private void cycleFpsLimit() {
+        VoidBoostConfig c = VoidBoostConfig.get();
+        if (c.ultimateLocked) return;
+        int[] values = {60, 120, 144, 165, 240, 360, 1000};
+        int next = values[0];
+        for (int value : values) if (value > c.targetFps) { next = value; break; }
+        c.targetFps = next;
+        if (c.targetFps == 1000 && next == 1000) c.targetFps = 60;
+        c.maxFpsPreset = false; c.competitiveMode = false; c.ultimateLocked = false;
+        c.markDirty(); rebuildWidgets();
     }
 
     private static String state(String key) {
@@ -215,8 +248,15 @@ public final class VoidBoostScreen extends Screen {
             case "entities" -> c.entityRenderOptimization ? "ON" : "OFF";
             case "shadows" -> c.entityShadows ? "ON" : "OFF";
             case "weather" -> c.weatherEffects ? "ON" : "OFF";
+            case "clouds" -> c.cloudOptimization ? "ON" : "OFF";
             case "animations" -> c.animationOptimization ? "ON" : "OFF";
             case "fog" -> c.fogOptimization ? "ON" : "OFF";
+            case "vignette" -> c.vignetteOptimization ? "ON" : "OFF";
+            case "ao" -> c.ambientOcclusionOptimization ? "ON" : "OFF";
+            case "mipmap" -> c.mipmapOptimization ? "ON" : "OFF";
+            case "biome" -> c.biomeBlendOptimization ? "ON" : "OFF";
+            case "vsync" -> c.vsyncOptimization ? "ON" : "OFF";
+            case "viewbob" -> c.viewBobOptimization ? "ON" : "OFF";
             case "performance" -> c.performanceMode ? "ON" : "OFF";
             case "monitor" -> c.performanceMonitor ? "ON" : "OFF";
             default -> "OFF";
@@ -238,18 +278,17 @@ public final class VoidBoostScreen extends Screen {
             case "competitive" -> c.competitiveMode && !c.maxFpsPreset && !c.ultimateLocked;
             case "max" -> c.maxFpsPreset && !c.competitiveMode && !c.ultimateLocked;
             case "balanced" -> !c.competitiveMode && !c.maxFpsPreset && !c.ultimateLocked
-                    && c.performanceMode && !c.disableParticles && c.reducedParticles
-                    && !c.entityShadows && !c.weatherEffects && c.animationOptimization
-                    && c.fogOptimization && c.entityRenderOptimization && c.dynamicRenderDistance
+                    && c.performanceMode && !c.disableParticles && c.reducedParticles && !c.entityShadows && !c.weatherEffects
+                    && c.animationOptimization && c.fogOptimization && c.entityRenderOptimization && c.dynamicRenderDistance
+                    && c.cloudOptimization && c.vignetteOptimization && c.ambientOcclusionOptimization && c.mipmapOptimization
+                    && c.biomeBlendOptimization && !c.viewBobOptimization && c.vsyncOptimization
                     && c.dynamicTargetFps == 120 && c.maxEntityDistance == 56 && c.maxRenderDistance == 10;
             case "custom" -> !isPresetStatic("balanced") && !c.competitiveMode && !c.maxFpsPreset && !c.ultimateLocked;
             default -> false;
         };
     }
 
-    private boolean isPreset(String name) {
-        return isPresetStatic(name);
-    }
+    private boolean isPreset(String name) { return isPresetStatic(name); }
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
@@ -276,10 +315,10 @@ public final class VoidBoostScreen extends Screen {
         g.drawString(font, Component.literal("CONTROL CENTER"), shellX + 12, 94, MUTED, false);
         g.fill(shellX + 12, 103, sidebarRight - 12, 104, BORDER);
         g.drawString(font, Component.literal("Made by VoidFlame"), shellX + 12, shellBottom - 38, MUTED, false);
-        g.drawString(font, Component.literal("CLIENT OPTIMIZER"), shellX + 12, shellBottom - 25, MUTED, false);
+        g.drawString(font, Component.literal("LIGHTWEIGHT ENGINE"), shellX + 12, shellBottom - 25, MUTED, false);
 
-        String title = page == 0 ? "General" : page == 1 ? "Quality" : "Performance";
-        String subtitle = page == 0 ? "Profiles & adaptive rendering" : page == 1 ? "Visual workload controls" : "Frame-time optimization";
+        String title = page == 0 ? "General" : page == 1 ? "Visual" : page == 2 ? "Performance" : "Advanced";
+        String subtitle = page == 0 ? "Profiles & adaptive rendering" : page == 1 ? "Visual workload controls" : page == 2 ? "Frame-time optimization" : "Fine-grained low-end tuning";
         g.drawString(font, Component.literal(title), content, 42, TEXT, false);
         g.drawString(font, Component.literal(subtitle), content, 57, MUTED, false);
 
@@ -294,23 +333,19 @@ public final class VoidBoostScreen extends Screen {
         if (page == 0) {
             g.drawString(font, Component.literal("PERFORMANCE PROFILES"), content, sectionY + 1, MUTED, false);
             g.drawString(font, Component.literal("ADAPTIVE CONTROLS"), content, sectionY + 282, MUTED, false);
-        } else if (page == 1) {
-            g.drawString(font, Component.literal("VISUAL LOAD"), content, sectionY + 8, MUTED, false);
-        } else {
-            g.drawString(font, Component.literal("RENDER ENGINE"), content, sectionY + 8, MUTED, false);
-        }
+        } else if (page == 1) g.drawString(font, Component.literal("VISUAL LOAD"), content, sectionY + 8, MUTED, false);
+        else if (page == 2) g.drawString(font, Component.literal("RENDER ENGINE"), content, sectionY + 8, MUTED, false);
+        else g.drawString(font, Component.literal("LOW-END TUNING",), content, sectionY + 8, MUTED, false);
         super.render(g, mouseX, mouseY, delta);
         g.disableScissor();
 
-        if (maxScroll() > 0) {
-            int scrollBottom = shellBottom - 50;
-            g.drawString(font, Component.literal("SCROLL"), shellRight - 64, scrollBottom + 13, MUTED, false);
-            g.fill(shellRight - 26, clipTop, shellRight - 23, scrollBottom, BORDER);
-            int track = Math.max(1, scrollBottom - clipTop);
-            int thumbH = Math.max(28, track * track / (track + maxScroll()));
-            int thumbY = clipTop + (int) ((track - thumbH) * (scrollOffset / Math.max(1, maxScroll())));
-            g.fill(shellRight - 26, thumbY, shellRight - 23, thumbY + thumbH, ACCENT);
-        }
+        int scrollBottom = shellBottom - 50;
+        g.drawString(font, Component.literal("SCROLL"), shellRight - 64, scrollBottom + 13, MUTED, false);
+        g.fill(shellRight - 26, clipTop, shellRight - 23, scrollBottom, BORDER);
+        int track = Math.max(1, scrollBottom - clipTop);
+        int thumbH = Math.max(28, track * track / (track + maxScroll()));
+        int thumbY = clipTop + (int) ((track - thumbH) * (scrollOffset / Math.max(1, maxScroll())));
+        g.fill(shellRight - 26, thumbY, shellRight - 23, thumbY + thumbH, ACCENT);
 
         g.fill(content, shellBottom - 49, shellRight - 12, shellBottom - 48, BORDER);
         g.drawString(font, Component.literal("VOIDBOOST  •  FABRIC  •  MINECRAFT 1.21.11"), content, shellBottom - 25, MUTED, false);
@@ -326,12 +361,8 @@ public final class VoidBoostScreen extends Screen {
 
         private PremiumButton(int x, int y, int width, int height, String title, String value, String description, Runnable action, boolean selected, boolean compact) {
             super(x, y, width, height, Component.literal(title));
-            this.title = title;
-            this.value = value;
-            this.description = description;
-            this.action = action;
-            this.selected = selected;
-            this.compact = compact;
+            this.title = title; this.value = value; this.description = description; this.action = action;
+            this.selected = selected; this.compact = compact;
         }
 
         @Override
@@ -345,9 +376,7 @@ public final class VoidBoostScreen extends Screen {
             int titleY = getY() + (compact ? 11 : 12);
             int titleColor = hover || selected ? TEXT : 0xFFE7EAF0;
             g.drawString(Minecraft.getInstance().font, Component.literal(title), getX() + 16, titleY, titleColor, false);
-            if (!description.isEmpty() && !compact) {
-                g.drawString(Minecraft.getInstance().font, Component.literal(description), getX() + 16, titleY + 17, MUTED, false);
-            }
+            if (!description.isEmpty() && !compact) g.drawString(Minecraft.getInstance().font, Component.literal(description), getX() + 16, titleY + 17, MUTED, false);
             if (!value.isEmpty()) {
                 int valueWidth = Minecraft.getInstance().font.width(value);
                 int valueX = getX() + width - valueWidth - 16;
@@ -357,13 +386,9 @@ public final class VoidBoostScreen extends Screen {
         }
 
         @Override
-        public void onClick(MouseButtonEvent event, boolean isDoubleClick) {
-            action.run();
-        }
+        public void onClick(MouseButtonEvent event, boolean isDoubleClick) { action.run(); }
 
         @Override
-        protected void updateWidgetNarration(NarrationElementOutput output) {
-            defaultButtonNarrationText(output);
-        }
+        protected void updateWidgetNarration(NarrationElementOutput output) { defaultButtonNarrationText(output); }
     }
 }
