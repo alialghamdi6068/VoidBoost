@@ -28,8 +28,10 @@ public final class VoidBoostClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(VoidBoostAI::tick);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (openMenuKey.consumeClick()) {
-                if (client.screen == null) {
-                    client.setScreen(new VoidBoostScreen(null));
+                if (client.screen instanceof VoidBoostScreen) {
+                    client.setScreen(null);
+                } else {
+                    client.setScreen(new VoidBoostScreen(client.screen));
                 }
             }
         });
