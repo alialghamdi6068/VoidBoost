@@ -28,32 +28,22 @@ public final class VoidBoostScreen extends Screen {
     }
 
     @Override
-    protected void init() {
-        rebuildWidgets();
-    }
+    protected void init() { rebuildWidgets(); }
 
     @Override
     protected void rebuildWidgets() {
         clearWidgets();
-
-        int left = 30;
-        int contentLeft = 196;
-        int right = width - 30;
-        int top = 86;
-
+        int left = 30, contentLeft = 196, right = width - 30, top = 86;
         addTab(left + 12, 92, "General", 0);
         addTab(left + 12, 122, "Quality", 1);
         addTab(left + 12, 152, "Performance", 2);
-
         if (page == 0) buildGeneral(contentLeft, right, top);
         else if (page == 1) buildQuality(contentLeft, right, top);
         else buildPerformance(contentLeft, right, top);
-
         addActionButton("Reset to Balanced", left + 12, height - 48, 136, () -> {
             VoidBoostConfig.applyBalancedPreset();
             rebuildWidgets();
         }, true);
-
         addActionButton("Done", right - 116, height - 48, 116, () -> {
             VoidBoostConfig.save();
             Minecraft.getInstance().setScreen(parent);
@@ -74,24 +64,23 @@ public final class VoidBoostScreen extends Screen {
         addPreset(left + 164, top + 42, 154, "Competitive", VoidBoostConfig::applyCompetitivePreset);
         addPreset(left, top + 72, 154, "MAX FPS", VoidBoostConfig::applyMaxFpsPreset);
         addPreset(left + 164, top + 72, 154, "ULTIMATE FPS", VoidBoostConfig::applyUltimateLockedPreset);
-
-        addRow(left, top + 136, right, "Dynamic Render Distance", "Automatically changes chunk distance around your FPS target.", state("dynamic"), () -> toggle("dynamic"), true);
-        addRow(left, top + 178, right, "Target FPS", "Used only by dynamic render distance.", String.valueOf(VoidBoostConfig.get().dynamicTargetFps), this::cycleTargetFps, true);
+        addRow(left, top + 136, right, "Dynamic Render Distance", "Automatically changes chunk distance around your FPS target.", state("dynamic"), () -> toggle("dynamic"));
+        addRow(left, top + 178, right, "Target FPS", "Used only by dynamic render distance.", String.valueOf(VoidBoostConfig.get().dynamicTargetFps), this::cycleTargetFps);
     }
 
     private void buildQuality(int left, int right, int top) {
-        addRow(left, top + 42, right, "Particles", "All, reduced, or minimal particles.", state("particles"), () -> toggle("particles"), true);
-        addRow(left, top + 84, right, "Entity Shadows", "Disable expensive entity shadow rendering.", state("shadows"), () -> toggle("shadows"), true);
-        addRow(left, top + 126, right, "Weather Effects", "Control clouds and weather rendering.", state("weather"), () -> toggle("weather"), true);
-        addRow(left, top + 168, right, "Animation Optimization", "Disable view bobbing and reduce animation work.", state("animations"), () -> toggle("animations"), true);
-        addRow(left, top + 210, right, "Fog Optimization", "Toggle the client fog optimization.", state("fog"), () -> toggle("fog"), true);
+        addRow(left, top + 42, right, "Particles", "All, reduced, or minimal particles.", state("particles"), () -> toggle("particles"));
+        addRow(left, top + 84, right, "Entity Shadows", "Disable expensive entity shadow rendering.", state("shadows"), () -> toggle("shadows"));
+        addRow(left, top + 126, right, "Weather Effects", "Control clouds and weather rendering.", state("weather"), () -> toggle("weather"));
+        addRow(left, top + 168, right, "Animation Optimization", "Disable view bobbing and reduce animation work.", state("animations"), () -> toggle("animations"));
+        addRow(left, top + 210, right, "Fog Optimization", "Toggle the client fog optimization.", state("fog"), () -> toggle("fog"));
     }
 
     private void buildPerformance(int left, int right, int top) {
-        addRow(left, top + 42, right, "Entity Optimization", "Stop rendering entities beyond the selected distance.", state("entities"), () -> toggle("entities"), true);
-        addRow(left, top + 84, right, "Entity Distance", "Maximum distance used by entity optimization.", String.valueOf(VoidBoostConfig.get().maxEntityDistance), this::cycleEntityDistance, true);
-        addRow(left, top + 126, right, "Performance Mode", "Apply low-cost vanilla rendering settings.", state("performance"), () -> toggle("performance"), true);
-        addRow(left, top + 168, right, "Performance Monitor", "Show live FPS, frame time, RAM, entities and particles.", state("monitor"), () -> toggle("monitor"), true);
+        addRow(left, top + 42, right, "Entity Optimization", "Stop rendering entities beyond the selected distance.", state("entities"), () -> toggle("entities"));
+        addRow(left, top + 84, right, "Entity Distance", "Maximum distance used by entity optimization.", String.valueOf(VoidBoostConfig.get().maxEntityDistance), this::cycleEntityDistance);
+        addRow(left, top + 126, right, "Performance Mode", "Apply low-cost vanilla rendering settings.", state("performance"), () -> toggle("performance"));
+        addRow(left, top + 168, right, "Performance Monitor", "Show live FPS, frame time, RAM, entities and particles.", state("monitor"), () -> toggle("monitor"));
     }
 
     private void cycleTargetFps() {
@@ -115,14 +104,12 @@ public final class VoidBoostScreen extends Screen {
         }, true);
     }
 
-    private void addRow(int left, int y, int right, String title, String description, String value, Runnable action, boolean enabled) {
-        addActionButton(value, right - 110, y, 96, action, enabled);
+    private void addRow(int left, int y, int right, String title, String description, String value, Runnable action) {
+        addActionButton(value, right - 110, y, 96, action, true);
     }
 
     private void addActionButton(String text, int x, int y, int width, Runnable action, boolean enabled) {
-        Button button = Button.builder(Component.literal(text), b -> action.run())
-                .bounds(x, y, width, 24)
-                .build();
+        Button button = Button.builder(Component.literal(text), b -> action.run()).bounds(x, y, width, 24).build();
         button.active = enabled;
         addRenderableWidget(button);
     }
@@ -131,14 +118,9 @@ public final class VoidBoostScreen extends Screen {
         VoidBoostConfig c = VoidBoostConfig.get();
         switch (key) {
             case "particles" -> {
-                if (c.disableParticles) {
-                    c.disableParticles = false;
-                    c.reducedParticles = true;
-                } else if (c.reducedParticles) {
-                    c.reducedParticles = false;
-                } else {
-                    c.disableParticles = true;
-                }
+                if (c.disableParticles) { c.disableParticles = false; c.reducedParticles = true; }
+                else if (c.reducedParticles) c.reducedParticles = false;
+                else c.disableParticles = true;
             }
             case "dynamic" -> c.dynamicRenderDistance = !c.dynamicRenderDistance;
             case "entities" -> c.entityRenderOptimization = !c.entityRenderOptimization;
@@ -150,7 +132,6 @@ public final class VoidBoostScreen extends Screen {
             case "monitor" -> c.performanceMonitor = !c.performanceMonitor;
             default -> { return; }
         }
-
         c.maxFpsPreset = false;
         c.competitiveMode = false;
         c.ultimateLocked = false;
@@ -184,27 +165,19 @@ public final class VoidBoostScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
-        int left = 30;
-        int sidebarRight = 176;
-        int contentLeft = 196;
-        int right = width - 30;
-        int top = 86;
-
+        int left = 30, sidebarRight = 176, contentLeft = 196, right = width - 30, top = 86;
         g.fill(0, 0, width, height, BG);
         g.fill(left, 26, right, height - 26, PANEL);
         g.fill(left, 26, sidebarRight, height - 26, 0xFF0A0D12);
         g.fill(sidebarRight, 26, sidebarRight + 1, height - 26, BORDER);
         g.fill(left, 26, right, 28, ACCENT);
-
         g.drawString(font, Component.literal("VoidBoost"), left + 14, 40, TEXT, false);
         g.drawString(font, Component.literal("Performance Suite"), left + 14, 54, MUTED, false);
         g.drawString(font, Component.literal("Made by VoidFlame"), right - 104, 40, MUTED, false);
-
         String title = page == 0 ? "General" : page == 1 ? "Quality" : "Performance";
         String subtitle = page == 0 ? "Profiles and adaptive rendering" : page == 1 ? "Visual effects and animation controls" : "Culling and performance diagnostics";
         g.drawString(font, Component.literal(title), contentLeft + 14, 40, TEXT, false);
         g.drawString(font, Component.literal(subtitle), contentLeft + 14, 54, MUTED, false);
-
         drawPage(g, contentLeft, right, top);
         super.render(g, mouseX, mouseY, delta);
     }
@@ -244,10 +217,10 @@ public final class VoidBoostScreen extends Screen {
 
     private void drawPresetCard(GuiGraphics g, int x, int y, int width, String title, String tag) {
         boolean active = switch (title) {
-            case "ULTIMATE FPS" -> VoidBoostConfig.get().ultimateLocked;
+            case "ULTIMATE FPS" -> false;
             case "MAX FPS" -> VoidBoostConfig.get().maxFpsPreset;
             case "Competitive" -> VoidBoostConfig.get().competitiveMode;
-            default -> !VoidBoostConfig.get().maxFpsPreset && !VoidBoostConfig.get().competitiveMode && !VoidBoostConfig.get().ultimateLocked;
+            default -> !VoidBoostConfig.get().maxFpsPreset && !VoidBoostConfig.get().competitiveMode;
         };
         g.fill(x, y, x + width, y + 26, active ? ACCENT_DARK : PANEL_3);
         g.fill(x, y, x + 2, y + 26, active ? ACCENT : BORDER);
