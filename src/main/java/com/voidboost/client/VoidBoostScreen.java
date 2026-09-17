@@ -6,7 +6,16 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+/** Main VoidBoost configuration screen. */
 public final class VoidBoostScreen extends Screen {
+    private static final int BG = 0xFF080A0E;
+    private static final int PANEL = 0xFF10131A;
+    private static final int PANEL_ALT = 0xFF151922;
+    private static final int BORDER = 0xFF252B36;
+    private static final int ACCENT = 0xFF7B88FF;
+    private static final int TEXT = 0xFFF3F5F8;
+    private static final int MUTED = 0xFF8B94A5;
+
     private final Screen parent;
     private int page;
 
@@ -17,130 +26,125 @@ public final class VoidBoostScreen extends Screen {
 
     @Override
     protected void init() {
-        rebuildVoidBoostWidgets();
+        rebuildWidgets();
     }
 
-    private void rebuildVoidBoostWidgets() {
+    private void rebuildWidgets() {
         clearWidgets();
+        int left = 30;
+        int sidebarRight = 176;
+        int contentLeft = 196;
+        int right = width - 30;
+        int top = 78;
 
-        int left = 42;
-        int contentLeft = 194;
-        int contentRight = this.width - 42;
-        int top = 58;
+        addTab(left + 10, 96, "General", 0);
+        addTab(left + 10, 126, "Quality", 1);
+        addTab(left + 10, 156, "Performance", 2);
 
-        addTab(left, 58, "General", 0);
-        addTab(left, 86, "Quality", 1);
-        addTab(left, 114, "Performance", 2);
+        if (page == 0) buildGeneral(contentLeft, right, top);
+        else if (page == 1) buildQuality(contentLeft, right, top);
+        else buildPerformance(contentLeft, right, top);
 
-        if (page == 0) buildGeneral(contentLeft, contentRight, top);
-        else if (page == 1) buildQuality(contentLeft, contentRight, top);
-        else buildPerformance(contentLeft, contentRight, top);
-
-        addRenderableWidget(Button.builder(Component.literal("Reset"), b -> {
+        addActionButton("Reset", left + 10, height - 46, 136, b -> {
             if (!VoidBoostConfig.get().ultimateLocked) {
                 VoidBoostConfig.applyBalancedPreset();
-                VoidBoostConfig.save();
-                rebuildVoidBoostWidgets();
+                rebuildWidgets();
             }
-        }).bounds(contentLeft, this.height - 34, 92, 22).build());
+        }, !VoidBoostConfig.get().ultimateLocked);
 
-        addRenderableWidget(Button.builder(Component.literal("Done"), b -> {
+        addActionButton("Done", right - 116, height - 46, 116, b -> {
             VoidBoostConfig.save();
             Minecraft.getInstance().setScreen(parent);
-        }).bounds(contentRight - 92, this.height - 34, 92, 22).build());
+        }, true);
     }
 
-    private void addTab(int x, int y, String name, int targetPage) {
-        Button button = Button.builder(Component.literal(name), b -> {
+    private void addTab(int x, int y, String label, int targetPage) {
+        Button button = Button.builder(Component.literal(label), b -> {
             page = targetPage;
-            rebuildVoidBoostWidgets();
-        }).bounds(x, y, 126, 22).build();
+            rebuildWidgets();
+        }).bounds(x, y, 136, 24).build();
         button.active = page != targetPage;
         addRenderableWidget(button);
     }
 
     private void buildGeneral(int left, int right, int top) {
-        addHeader(left, top, "General", "Choose how aggressively VoidBoost should optimize the client.");
-        addSection(left, top + 48, right, "Optimization Presets", "Presets change multiple settings at once.");
+        addPageHeader(left, top, "General", "Profiles and adaptive rendering controls");
+        addSection(left, top + 48, "Optimization Presets", "Start with a profile, then customize anything you need.");
+        addPreset(left, top + 86, 154, "Balanced", VoidBoostConfig::applyBalancedPreset);
+        addPreset(left + 164, top + 86, 154, "Competitive", VoidBoostConfig::applyCompetitivePreset);
+        addPreset(left, top + 116, 154, "MAX FPS", VoidBoostConfig::applyMaxFpsPreset);
+        addPreset(left + 164, top + 116, 154, "ULTIMATE FPS", VoidBoostConfig::applyUltimateLockedPreset);
 
-        addPreset(left, top + 80, 150, "Balanced", VoidBoostConfig::applyBalancedPreset);
-        addPreset(left + 160, top + 80, 150, "Competitive", VoidBoostConfig::applyCompetitivePreset);
-        addPreset(left, top + 108, 150, "MAX FPS", VoidBoostConfig::applyMaxFpsPreset);
-        addPreset(left + 160, top + 108, 150, "ULTIMATE FPS", VoidBoostConfig::applyUltimateLockedPreset);
-
-        addSection(left, top + 150, right, "Dynamic Rendering", "Automatically adjusts render distance around your FPS target.");
-        addToggleRow(left, top + 181, right, "Dynamic Render Distance", "Keeps FPS stable by adapting chunk distance.", "dynamic");
-        addValueRow(left, top + 216, right, "Target FPS", String.valueOf(VoidBoostConfig.get().dynamicTargetFps), () -> {
-            VoidBoostConfig c = VoidBoostConfig.get();
-            if (c.ultimateLocked) return;
-            c.dynamicTargetFps = c.dynamicTargetFps >= 240 ? 60 : c.dynamicTargetFps + 30;
-            VoidBoostConfig.save();
-            rebuildVoidBoostWidgets();
-        });
+        addSection(left, top + 166, "Dynamic Rendering", "Automatically adapts chunk distance around your FPS target.");
+        addRow(left, top + 208, right, "Dynamic Render Distance", "Adjust render distance while you play.", state("dynamic"), () -> toggle("dynamic"), editable());
+        addRow(left, top + 244, right, "Target FPS", "Adaptive rendering target.", String.valueOf(VoidBoostConfig.get().dynamicTargetFps), this::cycleTargetFps, editable());
     }
 
     private void buildQuality(int left, int right, int top) {
-        addHeader(left, top, "Quality", "Control visual effects that can affect rendering cost.");
-        addSection(left, top + 48, right, "Visual Effects", "Lower-cost rendering without changing gameplay behavior.");
-        addToggleRow(left, top + 80, right, "Particles", "Cycle between all, reduced, and minimal particles.", "particles");
-        addToggleRow(left, top + 115, right, "Entity Shadows", "Disable simple shadows beneath entities.", "shadows");
-        addToggleRow(left, top + 150, right, "Weather Effects", "Enable or disable weather and cloud rendering.", "weather");
-        addToggleRow(left, top + 185, right, "Animation Optimization", "Reduce unnecessary view animation work.", "animations");
-        addToggleRow(left, top + 220, right, "Fog Optimization", "Disable distance fog rendering when enabled.", "fog");
+        addPageHeader(left, top, "Quality", "Visual controls that can reduce rendering cost");
+        addSection(left, top + 48, "Visual Effects", "Change expensive visual effects without changing gameplay.");
+        addRow(left, top + 90, right, "Particles", "All, reduced, or minimal particles.", state("particles"), () -> toggle("particles"), editable());
+        addRow(left, top + 126, right, "Entity Shadows", "Control shadows beneath entities.", state("shadows"), () -> toggle("shadows"), editable());
+        addRow(left, top + 162, right, "Weather Effects", "Control weather and cloud rendering.", state("weather"), () -> toggle("weather"), editable());
+        addRow(left, top + 198, right, "Animation Optimization", "Reduce unnecessary view animation work.", state("animations"), () -> toggle("animations"), editable());
+        addRow(left, top + 234, right, "Fog Optimization", "Reduce distance fog rendering.", state("fog"), () -> toggle("fog"), editable());
     }
 
     private void buildPerformance(int left, int right, int top) {
-        addHeader(left, top, "Performance", "Fine-tune the systems that have the largest FPS impact.");
-        addSection(left, top + 48, right, "Rendering", "Client-side culling and performance controls.");
-        addToggleRow(left, top + 80, right, "Entity Optimization", "Stop rendering distant entities beyond the configured range.", "entities");
-        addValueRow(left, top + 115, right, "Entity Distance", String.valueOf(VoidBoostConfig.get().maxEntityDistance), () -> {
-            VoidBoostConfig c = VoidBoostConfig.get();
-            if (c.ultimateLocked) return;
-            c.maxEntityDistance = c.maxEntityDistance >= 128 ? 32 : c.maxEntityDistance + 16;
-            VoidBoostConfig.save();
-            rebuildVoidBoostWidgets();
-        });
-        addToggleRow(left, top + 150, right, "Performance Mode", "Apply low-overhead vanilla rendering settings.", "performance");
-        addToggleRow(left, top + 185, right, "Performance Monitor", "Shows FPS, frame time, entities and particles per second.", "monitor");
+        addPageHeader(left, top, "Performance", "Rendering, culling and live diagnostics");
+        addSection(left, top + 48, "Rendering", "Tune client-side systems with direct FPS impact.");
+        addRow(left, top + 90, right, "Entity Optimization", "Skip distant entity rendering beyond the selected range.", state("entities"), () -> toggle("entities"), editable());
+        addRow(left, top + 126, right, "Entity Distance", "Maximum distance for entity optimization.", String.valueOf(VoidBoostConfig.get().maxEntityDistance), this::cycleEntityDistance, editable());
+        addRow(left, top + 162, right, "Performance Mode", "Apply low-overhead vanilla rendering settings.", state("performance"), () -> toggle("performance"), editable());
+        addRow(left, top + 198, right, "Performance Monitor", "Display live FPS, frame time, RAM and render stats.", state("monitor"), () -> toggle("monitor"), editable());
 
-        addSection(left, top + 230, right, "Status", "Current VoidBoost configuration.");
-        addStatus(left, top + 262, right);
+        addSection(left, top + 248, "Current Profile", "The active configuration mode.");
+        addActionButton(modeName(), left, top + 286, 180, b -> {}, false);
     }
 
-    private void addHeader(int left, int top, String title, String subtitle) {
+    private boolean editable() {
+        return !VoidBoostConfig.get().ultimateLocked;
     }
 
-    private void addSection(int left, int y, int right, String title, String subtitle) {
+    private void cycleTargetFps() {
+        VoidBoostConfig c = VoidBoostConfig.get();
+        if (c.ultimateLocked) return;
+        c.dynamicTargetFps = c.dynamicTargetFps >= 240 ? 60 : c.dynamicTargetFps + 30;
+        c.markDirty();
+        rebuildWidgets();
+    }
+
+    private void cycleEntityDistance() {
+        VoidBoostConfig c = VoidBoostConfig.get();
+        if (c.ultimateLocked) return;
+        c.maxEntityDistance = c.maxEntityDistance >= 128 ? 32 : c.maxEntityDistance + 16;
+        c.markDirty();
+        rebuildWidgets();
+    }
+
+    private void addPageHeader(int x, int y, String title, String subtitle) {
+        // Header is rendered in render().
+    }
+
+    private void addSection(int x, int y, String title, String subtitle) {
+        // Section text is rendered in render().
     }
 
     private void addPreset(int x, int y, int width, String name, Runnable action) {
-        Button button = Button.builder(Component.literal(name), b -> {
-            action.run();
-            VoidBoostConfig.save();
-            rebuildVoidBoostWidgets();
-        }).bounds(x, y, width, 22).build();
-        button.active = !VoidBoostConfig.get().ultimateLocked || name.equals("ULTIMATE FPS");
+        boolean enabled = !VoidBoostConfig.get().ultimateLocked || name.equals("ULTIMATE FPS");
+        addActionButton(name, x, y, width, action, enabled);
+    }
+
+    private void addRow(int left, int y, int right, String title, String description, String value, Runnable action, boolean enabled) {
+        addActionButton(value, right - 104, y, 96, action, enabled);
+    }
+
+    private void addActionButton(String text, int x, int y, int width, Runnable action, boolean enabled) {
+        Button button = Button.builder(Component.literal(text), b -> action.run())
+                .bounds(x, y, width, 24)
+                .build();
+        button.active = enabled;
         addRenderableWidget(button);
-    }
-
-    private void addToggleRow(int left, int y, int right, String title, String description, String key) {
-        Button button = Button.builder(Component.literal(state(key)), b -> {
-            toggle(key);
-            VoidBoostConfig.save();
-            rebuildVoidBoostWidgets();
-        }).bounds(right - 92, y, 92, 22).build();
-        button.active = !VoidBoostConfig.get().ultimateLocked;
-        addRenderableWidget(button);
-    }
-
-    private void addValueRow(int left, int y, int right, String title, String value, Runnable action) {
-        addRenderableWidget(Button.builder(Component.literal(value), b -> action.run())
-                .bounds(right - 92, y, 92, 22).build());
-    }
-
-    private void addStatus(int left, int y, int right) {
-        addRenderableWidget(Button.builder(Component.literal(modeName()), b -> {})
-                .bounds(right - 150, y, 150, 22).build());
     }
 
     private void toggle(String key) {
@@ -148,14 +152,9 @@ public final class VoidBoostScreen extends Screen {
         if (c.ultimateLocked) return;
         switch (key) {
             case "particles" -> {
-                if (c.disableParticles) {
-                    c.disableParticles = false;
-                    c.reducedParticles = true;
-                } else if (c.reducedParticles) {
-                    c.reducedParticles = false;
-                } else {
-                    c.disableParticles = true;
-                }
+                if (c.disableParticles) { c.disableParticles = false; c.reducedParticles = true; }
+                else if (c.reducedParticles) c.reducedParticles = false;
+                else c.disableParticles = true;
             }
             case "dynamic" -> c.dynamicRenderDistance = !c.dynamicRenderDistance;
             case "entities" -> c.entityRenderOptimization = !c.entityRenderOptimization;
@@ -165,9 +164,12 @@ public final class VoidBoostScreen extends Screen {
             case "fog" -> c.fogOptimization = !c.fogOptimization;
             case "performance" -> c.performanceMode = !c.performanceMode;
             case "monitor" -> c.performanceMonitor = !c.performanceMonitor;
+            default -> { return; }
         }
         c.maxFpsPreset = false;
         c.competitiveMode = false;
+        c.markDirty();
+        rebuildWidgets();
     }
 
     private static String state(String key) {
@@ -191,59 +193,67 @@ public final class VoidBoostScreen extends Screen {
         if (c.ultimateLocked) return "ULTIMATE FPS";
         if (c.competitiveMode) return "COMPETITIVE";
         if (c.maxFpsPreset) return "MAX FPS";
-        return "CUSTOM / BALANCED";
+        return "CUSTOM";
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        int left = 42;
-        int contentLeft = 194;
-        int right = this.width - 42;
-        int top = 58;
+    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        int left = 30;
+        int sidebarRight = 176;
+        int contentLeft = 196;
+        int right = width - 30;
+        int top = 78;
 
-        graphics.fill(0, 0, this.width, this.height, 0xFF0B0C10);
-        graphics.fill(left, 38, right, this.height - 22, 0xFF12141A);
-        graphics.fill(left, 38, contentLeft - 12, this.height - 22, 0xFF0F1116);
-        graphics.fill(contentLeft - 1, 38, contentLeft, this.height - 22, 0xFF252832);
+        g.fill(0, 0, width, height, BG);
+        g.fill(left, 28, right, height - 28, PANEL);
+        g.fill(left, 28, sidebarRight, height - 28, 0xFF0C0F14);
+        g.fill(sidebarRight, 28, sidebarRight + 1, height - 28, BORDER);
+        g.fill(left, 28, right, 29, ACCENT);
 
-        graphics.drawString(this.font, Component.literal("VoidBoost"), left + 16, 48, 0xFFFFFFFF, false);
-        graphics.drawString(this.font, Component.literal("Client Performance Suite"), left + 16, 62, 0xFF8E95A7, false);
+        g.drawString(font, Component.literal("VoidBoost"), left + 14, 43, TEXT, false);
+        g.drawString(font, Component.literal("Performance Suite"), left + 14, 57, MUTED, false);
+        g.drawString(font, Component.literal("Made by VoidFlame"), right - 96, 43, MUTED, false);
 
-        graphics.drawString(this.font, Component.literal(page == 0 ? "General" : page == 1 ? "Quality" : "Performance"), contentLeft + 16, top, 0xFFFFFFFF, false);
-        graphics.drawString(this.font, Component.literal(page == 0 ? "Presets and adaptive rendering" : page == 1 ? "Visual effects and quality controls" : "FPS-focused rendering controls"), contentLeft + 16, top + 13, 0xFF8E95A7, false);
+        String title = page == 0 ? "General" : page == 1 ? "Quality" : "Performance";
+        String subtitle = page == 0 ? "Profiles and adaptive rendering controls" : page == 1 ? "Visual controls that can reduce rendering cost" : "Rendering, culling and live diagnostics";
+        g.drawString(font, Component.literal(title), contentLeft + 14, 43, TEXT, false);
+        g.drawString(font, Component.literal(subtitle), contentLeft + 14, 57, MUTED, false);
 
         if (page == 0) {
-            drawSection(graphics, contentLeft, top + 48, "Optimization Presets", "Presets change multiple settings at once.");
-            drawSection(graphics, contentLeft, top + 150, "Dynamic Rendering", "Automatically adjusts render distance around your FPS target.");
-            drawRowText(graphics, contentLeft, top + 181, "Dynamic Render Distance", "Keeps FPS stable by adapting chunk distance.");
-            drawRowText(graphics, contentLeft, top + 216, "Target FPS", "Preferred FPS target for adaptive rendering.");
+            drawSection(g, contentLeft, top, "Optimization Presets", "Start with a profile, then customize anything you need.");
+            drawSection(g, contentLeft, top + 166, "Dynamic Rendering", "Automatically adapts chunk distance around your FPS target.");
+            drawRow(g, contentLeft, top + 208, right, "Dynamic Render Distance", "Adjust render distance while you play.");
+            drawRow(g, contentLeft, top + 244, right, "Target FPS", "Adaptive rendering target.");
         } else if (page == 1) {
-            drawSection(graphics, contentLeft, top + 48, "Visual Effects", "Lower-cost rendering without changing gameplay behavior.");
-            drawRowText(graphics, contentLeft, top + 80, "Particles", "Cycle between all, reduced, and minimal particles.");
-            drawRowText(graphics, contentLeft, top + 115, "Entity Shadows", "Disable simple shadows beneath entities.");
-            drawRowText(graphics, contentLeft, top + 150, "Weather Effects", "Enable or disable weather and cloud rendering.");
-            drawRowText(graphics, contentLeft, top + 185, "Animation Optimization", "Reduce unnecessary view animation work.");
-            drawRowText(graphics, contentLeft, top + 220, "Fog Optimization", "Disable distance fog rendering when enabled.");
+            drawSection(g, contentLeft, top, "Visual Effects", "Change expensive visual effects without changing gameplay.");
+            drawRow(g, contentLeft, top + 90, right, "Particles", "All, reduced, or minimal particles.");
+            drawRow(g, contentLeft, top + 126, right, "Entity Shadows", "Control shadows beneath entities.");
+            drawRow(g, contentLeft, top + 162, right, "Weather Effects", "Control weather and cloud rendering.");
+            drawRow(g, contentLeft, top + 198, right, "Animation Optimization", "Reduce unnecessary view animation work.");
+            drawRow(g, contentLeft, top + 234, right, "Fog Optimization", "Reduce distance fog rendering.");
         } else {
-            drawSection(graphics, contentLeft, top + 48, "Rendering", "Client-side culling and performance controls.");
-            drawSection(graphics, contentLeft, top + 230, "Status", "Current VoidBoost configuration.");
-            drawRowText(graphics, contentLeft, top + 80, "Entity Optimization", "Stop rendering distant entities beyond the configured range.");
-            drawRowText(graphics, contentLeft, top + 115, "Entity Distance", "Maximum distance used by entity rendering optimization.");
-            drawRowText(graphics, contentLeft, top + 150, "Performance Mode", "Apply low-overhead vanilla rendering settings.");
-            drawRowText(graphics, contentLeft, top + 185, "Performance Monitor", "Shows FPS, frame time, entities and particles per second.");
+            drawSection(g, contentLeft, top, "Rendering", "Tune client-side systems with direct FPS impact.");
+            drawRow(g, contentLeft, top + 90, right, "Entity Optimization", "Skip distant entity rendering beyond the selected range.");
+            drawRow(g, contentLeft, top + 126, right, "Entity Distance", "Maximum distance for entity optimization.");
+            drawRow(g, contentLeft, top + 162, right, "Performance Mode", "Apply low-overhead vanilla rendering settings.");
+            drawRow(g, contentLeft, top + 198, right, "Performance Monitor", "Display live FPS, frame time, RAM and render stats.");
+            drawSection(g, contentLeft, top + 248, "Current Profile", "The active configuration mode.");
         }
 
-        super.render(graphics, mouseX, mouseY, delta);
+        super.render(g, mouseX, mouseY, delta);
     }
 
-    private void drawSection(GuiGraphics graphics, int x, int y, String title, String subtitle) {
-        graphics.drawString(this.font, Component.literal(title), x + 16, y + 4, 0xFFE8EAF0, false);
-        graphics.drawString(this.font, Component.literal(subtitle), x + 16, y + 16, 0xFF777E90, false);
+    private void drawSection(GuiGraphics g, int x, int y, String title, String subtitle) {
+        g.drawString(font, Component.literal(title), x + 14, y + 4, TEXT, false);
+        g.drawString(font, Component.literal(subtitle), x + 14, y + 17, MUTED, false);
     }
 
-    private void drawRowText(GuiGraphics graphics, int x, int y, String title, String description) {
-        graphics.fill(x + 10, y - 4, this.width - 52, y + 27, 0xFF181B22);
-        graphics.drawString(this.font, Component.literal(title), x + 18, y + 1, 0xFFE8EAF0, false);
-        graphics.drawString(this.font, Component.literal(description), x + 18, y + 13, 0xFF777E90, false);
+    private void drawRow(GuiGraphics g, int x, int y, int right, String title, String description) {
+        g.fill(x + 6, y - 5, right - 10, y + 29, PANEL_ALT);
+        g.fill(x + 6, y - 5, x + 8, y + 29, ACCENT);
+        g.fill(x + 8, y + 28, right - 10, y + 29, BORDER);
+        g.drawString(font, Component.literal(title), x + 17, y + 1, TEXT, false);
+        g.drawString(font, Component.literal(description), x + 17, y + 14, MUTED, false);
+        g.fill(right - 110, y - 3, right - 8, y + 28, BORDER);
     }
 }
