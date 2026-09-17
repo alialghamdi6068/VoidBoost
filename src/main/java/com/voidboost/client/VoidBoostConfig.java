@@ -139,7 +139,7 @@ public final class VoidBoostConfig {
         if (INSTANCE.ultimateLocked) return;
         INSTANCE.maxFpsPreset = false;
         INSTANCE.competitiveMode = false;
-        INSTANCE.performanceMode = false;
+        INSTANCE.performanceMode = true;
         INSTANCE.disableParticles = false;
         INSTANCE.reducedParticles = true;
         INSTANCE.particleLimitPercent = 60;
@@ -177,7 +177,6 @@ public final class VoidBoostConfig {
 
     public static void tick(Minecraft client) {
         if (client == null) return;
-        VoidBoostStats.frame();
         applyVanillaPerformanceOptions(client);
         if (client.level == null || !INSTANCE.dynamicRenderDistance) return;
         if (++stableTicks < 20) return;
