@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "com.voidboost.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ClientLevelMixin",
+    "VideoOptionsScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
