@@ -12,8 +12,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ClientLevelMixin {
     @Inject(method = "addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V", at = @At("HEAD"), cancellable = true)
     private void voidboost$filterParticles(ParticleOptions options, double x, double y, double z, double vx, double vy, double vz, CallbackInfo ci) {
-        if (VoidBoostConfig.get().disableParticles) {
+        VoidBoostConfig c = VoidBoostConfig.get();
+        if (c.disableParticles) {
             ci.cancel();
+            return;
+        }
+        if (c.reducedParticles && c.performanceMode) {
+            long hash = Double.doubleToLongBits(x * 31.0 + y * 17.0 + z * 13.0);
+            if ((hash & 3L) != 0L) ci.cancel();
         }
     }
 }
