@@ -102,20 +102,16 @@ public final class VoidBoostScreen extends Screen {
 
     private void buildGeneral(int left, int right, int y) {
         int cardW = (right - left - 14) / 2;
-
         addButton(left, y, cardW, 82, "Balanced", "STABLE", VoidBoostConfig::applyBalancedPreset, isPreset("balanced"), false, "Smooth visuals • reliable FPS");
         addButton(left + cardW + 14, y, cardW, 82, "Competitive", "PVP", VoidBoostConfig::applyCompetitivePreset, isPreset("competitive"), false, "Low latency • competitive rendering");
         addButton(left, y + 96, cardW, 82, "MAX FPS", "FAST", VoidBoostConfig::applyMaxFpsPreset, isPreset("max"), false, "Aggressive optimization • high FPS");
         addButton(left + cardW + 14, y + 96, cardW, 82, "ULTIMATE FPS", "EXTREME", VoidBoostConfig::applyUltimateLockedPreset, isPreset("ultimate"), false, "Maximum cuts • lowest render load");
-
-        drawSectionTitle(left, y + 196, "Adaptive Rendering", "Automatically manages render distance around your FPS target.");
         addSetting(left, y + 232, right, "Dynamic Render Distance", state("dynamic"), "Adaptive chunk distance", () -> toggle("dynamic"));
         addSetting(left, y + 284, right, "Target FPS", VoidBoostConfig.get().dynamicTargetFps + " FPS", "Adaptive rendering target", this::cycleTargetFps);
         addSetting(left, y + 336, right, "Performance Mode", state("performance"), "Apply optimized vanilla settings", () -> toggle("performance"));
     }
 
     private void buildQuality(int left, int right, int y) {
-        drawSectionTitle(left, y - 16, "Visual Controls", "Every option below changes a real client rendering setting.");
         addSetting(left, y + 26, right, "Particles", state("particles"), "ALL / REDUCED / MINIMAL", () -> toggle("particles"));
         addSetting(left, y + 78, right, "Entity Shadows", state("shadows"), "Shadow pass for entities", () -> toggle("shadows"));
         addSetting(left, y + 130, right, "Weather Effects", state("weather"), "Clouds and weather distance", () -> toggle("weather"));
@@ -125,14 +121,11 @@ public final class VoidBoostScreen extends Screen {
     }
 
     private void buildPerformance(int left, int right, int y) {
-        drawSectionTitle(left, y - 16, "Performance Core", "Low-overhead controls focused on frame-time and render workload.");
         addSetting(left, y + 26, right, "Entity Optimization", state("entities"), "Cull distant entities", () -> toggle("entities"));
         addSetting(left, y + 78, right, "Entity Distance", VoidBoostConfig.get().maxEntityDistance + " BLOCKS", "Maximum entity render distance", this::cycleEntityDistance);
         addSetting(left, y + 130, right, "Performance Mode", state("performance"), "Apply optimized vanilla settings", () -> toggle("performance"));
         addSetting(left, y + 182, right, "Performance Monitor", state("monitor"), "Live FPS and frame diagnostics", () -> toggle("monitor"));
         addSetting(left, y + 234, right, "Dynamic Render Distance", state("dynamic"), "Adaptive chunk distance", () -> toggle("dynamic"));
-
-        drawSectionTitle(left, y + 300, "Active Profile", "Current optimization profile.");
         addInfo(left, y + 338, right, modeName());
     }
 
@@ -222,10 +215,6 @@ public final class VoidBoostScreen extends Screen {
         };
     }
 
-    private void drawSectionTitle(int x, int y, String title, String subtitle) {
-        // Drawn from render so the scrollable content can be clipped cleanly.
-    }
-
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
         int shellX = 26;
@@ -249,7 +238,6 @@ public final class VoidBoostScreen extends Screen {
         g.drawString(font, Component.literal("V"), shellX + 25, 48, TEXT, false);
         g.drawString(font, Component.literal("VoidBoost"), shellX + 60, 41, TEXT, false);
         g.drawString(font, Component.literal("PERFORMANCE SUITE"), shellX + 60, 56, MUTED, false);
-
         g.drawString(font, Component.literal("CONTROL CENTER"), shellX + 12, 94, MUTED, false);
         g.fill(shellX + 12, 103, sidebarRight - 12, 104, BORDER);
         g.drawString(font, Component.literal("Made by VoidFlame"), shellX + 12, shellBottom - 38, MUTED, false);
@@ -267,34 +255,19 @@ public final class VoidBoostScreen extends Screen {
         g.drawString(font, Component.literal(perf ? "OPTIMIZED" : "STANDARD"), badgeX + 12, 48, perf ? ACCENT : MUTED, false);
 
         g.enableScissor(content, clipTop, shellRight - 10, clipBottom);
-        if (page == 0) {
-            drawSection(g, content, y - 28, "Optimization Profiles", "One-click profiles with real rendering changes.");
-            drawSection(g, content, y + 194, "Adaptive Rendering", "Automatically manages render distance around your FPS target.");
-        } else if (page == 1) {
-            drawSection(g, content, y - 16, "Visual Controls", "Every option below changes a real client rendering setting.");
-        } else {
-            drawSection(g, content, y - 16, "Performance Core", "Low-overhead controls focused on frame-time and render workload.");
-            drawSection(g, content, y + 300, "Active Profile", "Current optimization profile.");
-        }
+        super.render(g, mouseX, mouseY, delta);
         g.disableScissor();
 
-        // Scroll hint and footer remain fixed.
         if (maxScroll() > 0) {
             g.drawString(font, Component.literal("SCROLL"), shellRight - 64, clipBottom + 13, MUTED, false);
             g.fill(shellRight - 26, clipTop, shellRight - 23, clipBottom, BORDER);
             int track = clipBottom - clipTop;
-            int thumbH = Math.max(28, track * (track / (track + maxScroll())));
+            int thumbH = Math.max(28, track * track / (track + maxScroll()));
             int thumbY = clipTop + (int) ((track - thumbH) * (scrollOffset / Math.max(1, maxScroll())));
             g.fill(shellRight - 26, thumbY, shellRight - 23, thumbY + thumbH, ACCENT);
         }
 
         g.drawString(font, Component.literal("VOIDBOOST  •  FABRIC  •  MINECRAFT 1.21.11"), content, shellBottom - 25, MUTED, false);
-        super.render(g, mouseX, mouseY, delta);
-    }
-
-    private void drawSection(GuiGraphics g, int x, int y, String title, String subtitle) {
-        g.drawString(font, Component.literal(title), x, y, TEXT, false);
-        g.drawString(font, Component.literal(subtitle), x, y + 15, MUTED, false);
     }
 
     private static final class PremiumButton extends AbstractWidget {
@@ -323,25 +296,20 @@ public final class VoidBoostScreen extends Screen {
             g.fill(getX(), getY(), getX() + width, getY() + height, fill);
             g.fill(getX(), getY(), getX() + 3, getY() + height, edge);
             if (selected) g.fill(getX() + 3, getY(), getX() + width, getY() + 2, ACCENT);
-
             int titleY = getY() + (compact ? 11 : 12);
             int titleColor = hover || selected ? TEXT : 0xFFE7EAF0;
             g.drawString(Minecraft.getInstance().font, Component.literal(title), getX() + 16, titleY, titleColor, false);
-
             if (!description.isEmpty() && !compact) {
                 g.drawString(Minecraft.getInstance().font, Component.literal(description), getX() + 16, titleY + 17, MUTED, false);
             }
-
             if (!value.isEmpty()) {
                 int valueWidth = Minecraft.getInstance().font.width(value);
                 int valueX = getX() + width - valueWidth - 16;
-                int valueY = getY() + 13;
                 int color = selected ? ACCENT : (value.equals("OFF") ? BAD : GOOD);
-                g.drawString(Minecraft.getInstance().font, Component.literal(value), valueX, valueY, color, false);
+                g.drawString(Minecraft.getInstance().font, Component.literal(value), valueX, getY() + 13, color, false);
             }
         }
 
-        @Override
         public void onClick(double mouseX, double mouseY) {
             action.run();
         }
