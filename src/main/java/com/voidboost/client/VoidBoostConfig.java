@@ -2,9 +2,9 @@ package com.voidboost.client;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.ParticleStatus;
 import net.minecraft.client.CloudStatus;
+import net.minecraft.client.Minecraft;
+import net.minecraft.server.level.ParticleStatus;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -135,7 +135,7 @@ public final class VoidBoostConfig {
                 client.options.cloudStatus().set(INSTANCE.weatherEffects ? CloudStatus.FANCY : CloudStatus.OFF);
                 client.options.particles().set(INSTANCE.disableParticles ? ParticleStatus.MINIMAL : ParticleStatus.DECREASED);
                 client.options.vignette().set(false);
-                client.options.ambientOcclusion().set(0.0);
+                client.options.ambientOcclusion().set(false);
                 client.options.chunkSectionFadeInTime().set(0.0);
             }
         } catch (Exception ignored) {
