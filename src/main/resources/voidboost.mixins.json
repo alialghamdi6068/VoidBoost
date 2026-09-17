@@ -5,8 +5,7 @@
   "client": [
     "ClientLevelMixin",
     "EntityRenderMixin",
-    "PerformanceHudMixin",
-    "VideoOptionsScreenMixin"
+    "PerformanceHudMixin"
   ],
   "injectors": {
     "defaultRequire": 1
