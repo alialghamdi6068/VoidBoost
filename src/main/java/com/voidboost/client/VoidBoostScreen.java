@@ -171,7 +171,10 @@ public final class VoidBoostScreen extends Screen {
             case "weather" -> c.weatherEffects = !c.weatherEffects;
             case "animations" -> c.animationOptimization = !c.animationOptimization;
             case "fog" -> c.fogOptimization = !c.fogOptimization;
-            case "performance" -> c.performanceMode = !c.performanceMode;
+            case "performance" -> {
+                c.performanceMode = !c.performanceMode;
+                if (!c.performanceMode) c.ultimateLocked = false;
+            }
             case "monitor" -> c.performanceMonitor = !c.performanceMonitor;
             default -> { return; }
         }
