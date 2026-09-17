@@ -1,18 +1,29 @@
 # VoidBoost
 
-Client-side performance toolkit for Minecraft Java 1.21.11 on Fabric.
+Client-side performance and PvP rendering optimizer for Minecraft Java 1.21.11 on Fabric.
 
-## Current scope
+**Developer:** VoidFlame
 
-- Client-only configuration stored locally in `config/voidboost.json`.
-- VoidBoost settings entry from Video Settings.
-- Particle suppression toggle.
-- Reduced-particle toggle foundation.
-- Optional dynamic render-distance control based on FPS.
-- MAX FPS preset.
-- Fabric 1.21.11 + Java 21 target.
+## Features
 
-VoidBoost does not synchronize these settings with a server or other players.
+- Balanced, Competitive, MAX FPS and ULTIMATE FPS presets.
+- Client-side configuration saved locally in `config/voidboost.json`.
+- Particle suppression and configurable particle reduction.
+- Entity render-distance optimization.
+- Dynamic render distance that reacts to current FPS.
+- Entity shadows, weather, cloud, vignette and ambient-occlusion performance controls.
+- Animation optimization for PvP-focused rendering.
+- Optional in-game performance monitor with FPS, frame time, entity count and particles/second.
+- Settings menu opened directly from Minecraft Video Settings.
+- No server-side installation or configuration synchronization.
+- Designed to work alongside common client performance mods rather than replacing them.
+
+## Requirements
+
+- Minecraft Java 1.21.11
+- Fabric Loader 0.18.5 or newer
+- Fabric API
+- Java 21
 
 ## Build
 
@@ -23,3 +34,7 @@ gradle build
 ```
 
 The production JAR is generated under `build/libs/`.
+
+## Important
+
+VoidBoost changes client rendering/settings only. Actual FPS gains depend on hardware, graphics settings, world complexity and the other mods installed. The project does not claim a guaranteed FPS increase.
