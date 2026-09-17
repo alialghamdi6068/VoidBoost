@@ -3,7 +3,6 @@ package com.voidboost.client;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.client.CloudStatus;
-import net.minecraft.client.GraphicsStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.server.level.ParticleStatus;
@@ -43,7 +42,6 @@ public final class VoidBoostConfig {
     private static int savedWeatherRadius;
     private static CloudStatus savedCloudStatus;
     private static ParticleStatus savedParticleStatus;
-    private static GraphicsStatus savedGraphicsMode;
     private static int savedMipmapLevels;
     private static int savedBiomeBlendRadius;
     private static boolean savedVignette;
@@ -170,7 +168,6 @@ public final class VoidBoostConfig {
 
             captureVanillaPerformanceOptions(client);
             if (INSTANCE.performanceMode) {
-                client.options.graphicsMode().set(GraphicsStatus.FAST);
                 client.options.entityDistanceScaling().set(INSTANCE.competitiveMode ? 0.60 : 0.70);
                 client.options.vignette().set(false);
                 client.options.ambientOcclusion().set(false);
@@ -219,7 +216,6 @@ public final class VoidBoostConfig {
         savedWeatherRadius = client.options.weatherRadius().get();
         savedCloudStatus = client.options.cloudStatus().get();
         savedParticleStatus = client.options.particles().get();
-        savedGraphicsMode = client.options.graphicsMode().get();
         savedMipmapLevels = client.options.mipmapLevels().get();
         savedBiomeBlendRadius = client.options.biomeBlendRadius().get();
         savedVignette = client.options.vignette().get();
@@ -239,7 +235,6 @@ public final class VoidBoostConfig {
         client.options.weatherRadius().set(savedWeatherRadius);
         client.options.cloudStatus().set(savedCloudStatus);
         client.options.particles().set(savedParticleStatus);
-        client.options.graphicsMode().set(savedGraphicsMode);
         client.options.mipmapLevels().set(savedMipmapLevels);
         client.options.biomeBlendRadius().set(savedBiomeBlendRadius);
         client.options.vignette().set(savedVignette);
@@ -255,10 +250,8 @@ public final class VoidBoostConfig {
     private static void syncFog(boolean disable) {
         if (!fogStateCaptured) { fogStateCaptured = true; fogDisabledByVoidBoost = false; }
         if (disable == fogDisabledByVoidBoost) return;
-        boolean fogEnabled = FogRenderer.toggleFog();
-        boolean desiredFogEnabled = !disable;
-        if (fogEnabled != desiredFogEnabled) fogEnabled = FogRenderer.toggleFog();
-        fogDisabledByVoidBoost = !fogEnabled;
+        FogRenderer.toggleFog();
+        fogDisabledByVoidBoost = disable;
     }
 
     private static void updateDynamicRenderDistance(Minecraft client) {
