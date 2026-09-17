@@ -1,9 +1,11 @@
 package com.voidboost.mixin;
 
+import com.voidboost.client.VoidBoostAI;
 import com.voidboost.client.VoidBoostConfig;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.projectile.Projectile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,7 +18,10 @@ public abstract class EntityRenderMixin {
         VoidBoostConfig c = VoidBoostConfig.get();
         if (!c.entityRenderOptimization) return;
 
-        double maxDistance = c.maxEntityDistance;
+        // Never hide projectiles: they are gameplay-critical for PvP.
+        if (entity instanceof Projectile) return;
+
+        double maxDistance = VoidBoostAI.entityDistance(c.maxEntityDistance);
         if (entity.distanceToSqr(x, y, z) > maxDistance * maxDistance) {
             cir.setReturnValue(false);
         }
