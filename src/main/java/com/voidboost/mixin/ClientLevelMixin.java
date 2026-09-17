@@ -1,5 +1,6 @@
 package com.voidboost.mixin;
 
+import com.voidboost.client.VoidBoostAI;
 import com.voidboost.client.VoidBoostConfig;
 import com.voidboost.client.VoidBoostStats;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -25,8 +26,9 @@ public abstract class ClientLevelMixin {
 
         if (!c.reducedParticles) return;
 
-        // Very cheap deterministic reduction: avoid hashing six doubles for every particle.
-        int keep = Math.max(1, Math.min(100, c.particleLimitPercent));
+        // Cheap deterministic sampling; the adaptive controller can tighten the budget under load.
+        int configured = Math.max(1, Math.min(100, c.particleLimitPercent));
+        int keep = VoidBoostAI.particleBudget(configured);
         int sample = voidboost$particleCounter++ % 100;
         if (sample >= keep) {
             VoidBoostStats.particleAttempt();
