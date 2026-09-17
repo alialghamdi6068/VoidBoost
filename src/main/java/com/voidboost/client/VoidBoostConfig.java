@@ -17,6 +17,7 @@ public final class VoidBoostConfig {
     private static final Path FILE = Minecraft.getInstance().gameDirectory.toPath().resolve("config").resolve("voidboost.json");
     private static VoidBoostConfig INSTANCE = new VoidBoostConfig();
 
+    // Core engine
     public boolean performanceMode = true;
     public boolean performanceMonitor = false;
     public boolean disableParticles = false;
@@ -28,6 +29,17 @@ public final class VoidBoostConfig {
     public boolean fogOptimization = true;
     public boolean entityRenderOptimization = true;
     public boolean dynamicRenderDistance = true;
+
+    // Extra low-end controls
+    public boolean cloudOptimization = true;
+    public boolean vignetteOptimization = true;
+    public boolean ambientOcclusionOptimization = true;
+    public boolean mipmapOptimization = true;
+    public boolean biomeBlendOptimization = true;
+    public boolean viewBobOptimization = true;
+    public boolean vsyncOptimization = true;
+
+    // Profiles / limits
     public boolean competitiveMode = false;
     public boolean maxFpsPreset = false;
     public boolean ultimateLocked = false;
@@ -79,7 +91,7 @@ public final class VoidBoostConfig {
         dynamicTargetFps = Math.max(60, Math.min(240, dynamicTargetFps));
         targetFps = Math.max(30, Math.min(1000, targetFps));
         maxEntityDistance = Math.max(32, Math.min(128, maxEntityDistance));
-        maxRenderDistance = Math.max(4, Math.min(10, maxRenderDistance));
+        maxRenderDistance = Math.max(4, Math.min(12, maxRenderDistance));
     }
 
     public static void save() {
@@ -114,6 +126,13 @@ public final class VoidBoostConfig {
         INSTANCE.fogOptimization = true;
         INSTANCE.entityRenderOptimization = true;
         INSTANCE.dynamicRenderDistance = true;
+        INSTANCE.cloudOptimization = true;
+        INSTANCE.vignetteOptimization = true;
+        INSTANCE.ambientOcclusionOptimization = true;
+        INSTANCE.mipmapOptimization = true;
+        INSTANCE.biomeBlendOptimization = true;
+        INSTANCE.viewBobOptimization = true;
+        INSTANCE.vsyncOptimization = true;
         INSTANCE.competitiveMode = true;
         INSTANCE.maxFpsPreset = false;
         INSTANCE.ultimateLocked = true;
@@ -133,6 +152,9 @@ public final class VoidBoostConfig {
                 INSTANCE.entityShadows = false; INSTANCE.weatherEffects = false;
                 INSTANCE.animationOptimization = true; INSTANCE.fogOptimization = true;
                 INSTANCE.entityRenderOptimization = true; INSTANCE.dynamicRenderDistance = true;
+                INSTANCE.cloudOptimization = true; INSTANCE.vignetteOptimization = true;
+                INSTANCE.ambientOcclusionOptimization = true; INSTANCE.mipmapOptimization = true;
+                INSTANCE.biomeBlendOptimization = true; INSTANCE.viewBobOptimization = false; INSTANCE.vsyncOptimization = true;
                 INSTANCE.competitiveMode = false; INSTANCE.maxFpsPreset = false; INSTANCE.ultimateLocked = false;
                 INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 120;
                 INSTANCE.maxEntityDistance = 56; INSTANCE.maxRenderDistance = 10;
@@ -143,6 +165,9 @@ public final class VoidBoostConfig {
                 INSTANCE.entityShadows = false; INSTANCE.weatherEffects = false;
                 INSTANCE.animationOptimization = true; INSTANCE.fogOptimization = true;
                 INSTANCE.entityRenderOptimization = true; INSTANCE.dynamicRenderDistance = true;
+                INSTANCE.cloudOptimization = true; INSTANCE.vignetteOptimization = true;
+                INSTANCE.ambientOcclusionOptimization = true; INSTANCE.mipmapOptimization = true;
+                INSTANCE.biomeBlendOptimization = true; INSTANCE.viewBobOptimization = true; INSTANCE.vsyncOptimization = true;
                 INSTANCE.competitiveMode = true; INSTANCE.maxFpsPreset = false; INSTANCE.ultimateLocked = false;
                 INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 180;
                 INSTANCE.maxEntityDistance = 44; INSTANCE.maxRenderDistance = 8;
@@ -153,6 +178,9 @@ public final class VoidBoostConfig {
                 INSTANCE.entityShadows = false; INSTANCE.weatherEffects = false;
                 INSTANCE.animationOptimization = true; INSTANCE.fogOptimization = true;
                 INSTANCE.entityRenderOptimization = true; INSTANCE.dynamicRenderDistance = true;
+                INSTANCE.cloudOptimization = true; INSTANCE.vignetteOptimization = true;
+                INSTANCE.ambientOcclusionOptimization = true; INSTANCE.mipmapOptimization = true;
+                INSTANCE.biomeBlendOptimization = true; INSTANCE.viewBobOptimization = true; INSTANCE.vsyncOptimization = true;
                 INSTANCE.competitiveMode = false; INSTANCE.maxFpsPreset = true; INSTANCE.ultimateLocked = false;
                 INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 240;
                 INSTANCE.maxEntityDistance = 36; INSTANCE.maxRenderDistance = 6;
@@ -169,7 +197,9 @@ public final class VoidBoostConfig {
         if (signature == appliedOptionsSignature) return;
         try {
             boolean controlVanilla = INSTANCE.performanceMode || INSTANCE.disableParticles || INSTANCE.reducedParticles
-                    || !INSTANCE.entityShadows || !INSTANCE.weatherEffects || INSTANCE.animationOptimization || INSTANCE.fogOptimization;
+                    || !INSTANCE.entityShadows || !INSTANCE.weatherEffects || INSTANCE.animationOptimization || INSTANCE.fogOptimization
+                    || INSTANCE.cloudOptimization || INSTANCE.vignetteOptimization || INSTANCE.ambientOcclusionOptimization
+                    || INSTANCE.mipmapOptimization || INSTANCE.biomeBlendOptimization || INSTANCE.viewBobOptimization || INSTANCE.vsyncOptimization;
             if (!controlVanilla) {
                 restoreVanillaPerformanceOptions(client);
                 syncFog(false);
@@ -182,28 +212,28 @@ public final class VoidBoostConfig {
             if (INSTANCE.performanceMode) {
                 double entityScale = INSTANCE.maxRenderDistance <= 4 ? 0.32 : INSTANCE.maxRenderDistance <= 6 ? 0.38 : INSTANCE.competitiveMode ? 0.45 : INSTANCE.maxFpsPreset ? 0.40 : 0.58;
                 client.options.entityDistanceScaling().set(entityScale);
-                client.options.vignette().set(false);
-                client.options.ambientOcclusion().set(false);
-                client.options.chunkSectionFadeInTime().set(0.0);
-                client.options.enableVsync().set(false);
-                client.options.biomeBlendRadius().set(0);
-                client.options.mipmapLevels().set(0);
+                client.options.vignette().set(!INSTANCE.vignetteOptimization);
+                client.options.ambientOcclusion().set(!INSTANCE.ambientOcclusionOptimization);
+                client.options.chunkSectionFadeInTime().set(INSTANCE.animationOptimization ? 0.0 : savedChunkSectionFadeInTime);
+                client.options.enableVsync().set(INSTANCE.vsyncOptimization ? false : savedVsync);
+                client.options.biomeBlendRadius().set(INSTANCE.biomeBlendOptimization ? 0 : savedBiomeBlendRadius);
+                client.options.mipmapLevels().set(INSTANCE.mipmapOptimization ? 0 : savedMipmapLevels);
+                client.options.cloudStatus().set(INSTANCE.cloudOptimization ? CloudStatus.OFF : savedCloudStatus);
+                client.options.bobView().set(INSTANCE.viewBobOptimization ? false : savedBobView);
 
-                int hardLimit = Math.max(4, Math.min(10, INSTANCE.maxRenderDistance));
-                if (client.options.renderDistance().get() > hardLimit) {
-                    client.options.renderDistance().set(hardLimit);
-                }
+                int hardLimit = Math.max(4, Math.min(12, INSTANCE.maxRenderDistance));
+                if (client.options.renderDistance().get() > hardLimit) client.options.renderDistance().set(hardLimit);
             } else {
                 restorePerformanceOnlyOptions(client);
             }
 
             client.options.entityShadows().set(INSTANCE.entityShadows);
             client.options.weatherRadius().set(INSTANCE.weatherEffects ? 32 : 0);
-            client.options.cloudStatus().set(INSTANCE.weatherEffects ? CloudStatus.FANCY : CloudStatus.OFF);
+            if (!INSTANCE.cloudOptimization) client.options.cloudStatus().set(INSTANCE.weatherEffects ? CloudStatus.FANCY : CloudStatus.OFF);
             client.options.particles().set(INSTANCE.disableParticles ? ParticleStatus.MINIMAL : (INSTANCE.reducedParticles ? ParticleStatus.DECREASED : ParticleStatus.ALL));
-            client.options.bobView().set(!INSTANCE.animationOptimization && !INSTANCE.competitiveMode);
+            if (!INSTANCE.animationOptimization && !INSTANCE.competitiveMode) client.options.bobView().set(savedBobView);
             syncFog(INSTANCE.fogOptimization);
-            if (!INSTANCE.dynamicRenderDistance) client.options.renderDistance().set(savedRenderDistance);
+            if (!INSTANCE.dynamicRenderDistance && optionsCaptured) client.options.renderDistance().set(savedRenderDistance);
             appliedOptionsSignature = signature;
         } catch (Exception ignored) {
             appliedOptionsSignature = Long.MIN_VALUE;
@@ -212,16 +242,14 @@ public final class VoidBoostConfig {
 
     private static long optionsSignature() {
         long result = 17;
-        result = 31 * result + (INSTANCE.performanceMode ? 1 : 0);
-        result = 31 * result + (INSTANCE.ultimateLocked ? 1 : 0);
-        result = 31 * result + (INSTANCE.entityShadows ? 1 : 0);
-        result = 31 * result + (INSTANCE.competitiveMode ? 1 : 0);
-        result = 31 * result + (INSTANCE.weatherEffects ? 1 : 0);
-        result = 31 * result + (INSTANCE.disableParticles ? 1 : 0);
-        result = 31 * result + (INSTANCE.reducedParticles ? 1 : 0);
-        result = 31 * result + (INSTANCE.animationOptimization ? 1 : 0);
-        result = 31 * result + (INSTANCE.fogOptimization ? 1 : 0);
-        result = 31 * result + (INSTANCE.dynamicRenderDistance ? 1 : 0);
+        boolean[] flags = {
+                INSTANCE.performanceMode, INSTANCE.ultimateLocked, INSTANCE.entityShadows, INSTANCE.competitiveMode,
+                INSTANCE.weatherEffects, INSTANCE.disableParticles, INSTANCE.reducedParticles, INSTANCE.animationOptimization,
+                INSTANCE.fogOptimization, INSTANCE.dynamicRenderDistance, INSTANCE.cloudOptimization, INSTANCE.vignetteOptimization,
+                INSTANCE.ambientOcclusionOptimization, INSTANCE.mipmapOptimization, INSTANCE.biomeBlendOptimization,
+                INSTANCE.viewBobOptimization, INSTANCE.vsyncOptimization
+        };
+        for (boolean flag : flags) result = 31 * result + (flag ? 1 : 0);
         result = 31 * result + INSTANCE.targetFps;
         result = 31 * result + INSTANCE.dynamicTargetFps;
         result = 31 * result + INSTANCE.maxEntityDistance;
@@ -258,6 +286,8 @@ public final class VoidBoostConfig {
         client.options.enableVsync().set(savedVsync);
         client.options.biomeBlendRadius().set(savedBiomeBlendRadius);
         client.options.mipmapLevels().set(savedMipmapLevels);
+        client.options.cloudStatus().set(savedCloudStatus);
+        client.options.bobView().set(savedBobView);
         client.options.framerateLimit().set(savedMaxFps);
     }
 
