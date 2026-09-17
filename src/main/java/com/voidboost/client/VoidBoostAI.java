@@ -61,6 +61,7 @@ public final class VoidBoostAI {
             initialized = true;
             level = strength >= 5 ? 3 : strength >= 4 ? 2 : 1;
             stableTicks = 0;
+            applyAdaptiveOptions(client, c, target);
             return;
         }
 
@@ -68,6 +69,7 @@ public final class VoidBoostAI {
         if (fps < target * 0.55 || (smoothedFps > 20.0 && fps < smoothedFps * 0.60)) {
             level = Math.min(4, Math.max(level + 1, strength >= 5 ? 3 : 2));
             stableTicks = 0;
+            applyAdaptiveOptions(client, c, target);
             return;
         }
 
@@ -78,10 +80,10 @@ public final class VoidBoostAI {
         else if (smoothedPressure >= 0.18) desired = Math.min(2, Math.max(1, strength - 2));
         else desired = 0;
 
-        // Never immediately return to an expensive state; recovery is gradual.
         if (desired > level) {
             level = desired;
             stableTicks = 0;
+            applyAdaptiveOptions(client, c, target);
             return;
         }
 
@@ -94,15 +96,49 @@ public final class VoidBoostAI {
         if (++stableTicks < 12) return;
         level = desired;
         stableTicks = 0;
+        applyAdaptiveOptions(client, c, target);
+    }
+
+    /** Applies only cheap client options. No allocations or GC calls are made. */
+    private static void applyAdaptiveOptions(Minecraft client, VoidBoostConfig c, int target) {
+        if (!c.dynamicRenderDistance) return;
+        try {
+            int configured = Math.max(4, Math.min(12, c.maxRenderDistance));
+            int render = renderDistanceLimit(configured);
+            if (client.options.renderDistance().get() > render) {
+                client.options.renderDistance().set(render);
+            }
+
+            // Lower simulation distance under pressure. This reduces client-side
+            // world update work without touching server configuration.
+            int configuredSimulation = client.options.simulationDistance().get();
+            int desiredSimulation = switch (level) {
+                case 4 -> 4;
+                case 3 -> 5;
+                case 2 -> 6;
+                case 1 -> Math.min(configuredSimulation, 8);
+                default -> configuredSimulation;
+            };
+            desiredSimulation = Math.max(4, Math.min(configuredSimulation, desiredSimulation));
+            if (configuredSimulation != desiredSimulation) {
+                client.options.simulationDistance().set(desiredSimulation);
+            }
+
+            // Keep an uncapped render budget for MAX/ULTIMATE instead of adding
+            // an artificial FPS ceiling that could hide available headroom.
+            if (c.maxFpsPreset || c.ultimateLocked) {
+                client.options.framerateLimit().set(Math.max(target, 1000));
+            }
+        } catch (RuntimeException ignored) {
+            // A version-specific option must never crash the client.
+        }
     }
 
     private static double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
     }
 
-    public static int level() {
-        return level;
-    }
+    public static int level() { return level; }
 
     public static int entityDistance(int configured) {
         if (!VoidBoostConfig.get().performanceMode) return configured;
@@ -133,19 +169,8 @@ public final class VoidBoostAI {
         };
     }
 
-    public static double fps() {
-        return smoothedFps;
-    }
-
-    public static double pressure() {
-        return smoothedPressure;
-    }
-
-    public static double ramPressure() {
-        return smoothedRamPressure;
-    }
-
-    public static double entityPressure() {
-        return smoothedEntityPressure;
-    }
+    public static double fps() { return smoothedFps; }
+    public static double pressure() { return smoothedPressure; }
+    public static double ramPressure() { return smoothedRamPressure; }
+    public static double entityPressure() { return smoothedEntityPressure; }
 }
