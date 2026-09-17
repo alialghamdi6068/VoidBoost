@@ -303,10 +303,17 @@ public final class VoidBoostConfig {
             fogStateCaptured = true;
             fogDisabledByVoidBoost = false;
         }
-        if (disable != fogDisabledByVoidBoost) {
-            FogRenderer.toggleFog();
-            fogDisabledByVoidBoost = disable;
+
+        if (disable == fogDisabledByVoidBoost) return;
+
+        // toggleFog() returns the new fog-enabled state. Use that return value
+        // instead of assuming Minecraft always starts with fog enabled.
+        boolean fogEnabled = FogRenderer.toggleFog();
+        boolean desiredFogEnabled = !disable;
+        if (fogEnabled != desiredFogEnabled) {
+            fogEnabled = FogRenderer.toggleFog();
         }
+        fogDisabledByVoidBoost = !fogEnabled;
     }
 
     private static void updateDynamicRenderDistance(Minecraft client) {
