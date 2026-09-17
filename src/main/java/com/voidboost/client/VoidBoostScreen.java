@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 /** Polished, scrollable client-side configuration screen for VoidBoost. */
@@ -224,8 +225,7 @@ public final class VoidBoostScreen extends Screen {
         int sidebarRight = 180;
         int content = 202;
         int clipTop = 82;
-        int clipBottom = shellBottom - 50;
-        int y = contentTop();
+        int clipBottom = shellBottom;
 
         g.fill(0, 0, width, height, BG);
         g.fill(shellX, shellTop, shellRight, shellBottom, SHELL);
@@ -254,14 +254,16 @@ public final class VoidBoostScreen extends Screen {
         g.fill(badgeX, 40, badgeX + 2, 64, perf ? ACCENT : BORDER);
         g.drawString(font, Component.literal(perf ? "OPTIMIZED" : "STANDARD"), badgeX + 12, 48, perf ? ACCENT : MUTED, false);
 
-        g.enableScissor(content, clipTop, shellRight - 10, clipBottom);
+        // Clip only the screen content vertically. Sidebar and footer controls remain visible and clickable.
+        g.enableScissor(0, clipTop, width, clipBottom);
         super.render(g, mouseX, mouseY, delta);
         g.disableScissor();
 
         if (maxScroll() > 0) {
-            g.drawString(font, Component.literal("SCROLL"), shellRight - 64, clipBottom + 13, MUTED, false);
-            g.fill(shellRight - 26, clipTop, shellRight - 23, clipBottom, BORDER);
-            int track = clipBottom - clipTop;
+            int scrollBottom = shellBottom - 50;
+            g.drawString(font, Component.literal("SCROLL"), shellRight - 64, scrollBottom + 13, MUTED, false);
+            g.fill(shellRight - 26, clipTop, shellRight - 23, scrollBottom, BORDER);
+            int track = scrollBottom - clipTop;
             int thumbH = Math.max(28, track * track / (track + maxScroll()));
             int thumbY = clipTop + (int) ((track - thumbH) * (scrollOffset / Math.max(1, maxScroll())));
             g.fill(shellRight - 26, thumbY, shellRight - 23, thumbY + thumbH, ACCENT);
@@ -310,7 +312,8 @@ public final class VoidBoostScreen extends Screen {
             }
         }
 
-        public void onClick(double mouseX, double mouseY) {
+        @Override
+        public void onClick(MouseButtonEvent event, boolean isDoubleClick) {
             action.run();
         }
 
