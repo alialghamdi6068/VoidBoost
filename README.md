@@ -14,8 +14,8 @@ Client-side performance and PvP rendering toolkit for Minecraft Java 1.21.11 on 
 - Entity shadows, weather, cloud, vignette and ambient-occlusion performance controls.
 - Animation optimization for PvP-focused rendering.
 - Fog optimization toggle.
-- Optional in-game performance monitor with FPS, frame time, entity count and particle attempts per second.
-- Settings menu opened directly from Minecraft Video Settings.
+- Optional in-game performance monitor with FPS, frame time, RAM, entity count and blocked-particle rate.
+- Dedicated VoidBoost menu opened with **O** from the title screen or while in-game.
 - Performance-mode vanilla options are restored when the mode is disabled.
 - No server-side installation or configuration synchronization.
 - Designed to work alongside common client performance mods rather than replacing them.
