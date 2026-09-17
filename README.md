@@ -1,6 +1,6 @@
 # VoidBoost
 
-Client-side performance and PvP rendering optimizer for Minecraft Java 1.21.11 on Fabric.
+Client-side performance and PvP rendering toolkit for Minecraft Java 1.21.11 on Fabric.
 
 **Developer:** VoidFlame
 
@@ -13,8 +13,10 @@ Client-side performance and PvP rendering optimizer for Minecraft Java 1.21.11 o
 - Dynamic render distance that reacts to current FPS.
 - Entity shadows, weather, cloud, vignette and ambient-occlusion performance controls.
 - Animation optimization for PvP-focused rendering.
-- Optional in-game performance monitor with FPS, frame time, entity count and particles/second.
+- Fog optimization toggle.
+- Optional in-game performance monitor with FPS, frame time, entity count and particle attempts per second.
 - Settings menu opened directly from Minecraft Video Settings.
+- Performance-mode vanilla options are restored when the mode is disabled.
 - No server-side installation or configuration synchronization.
 - Designed to work alongside common client performance mods rather than replacing them.
 
