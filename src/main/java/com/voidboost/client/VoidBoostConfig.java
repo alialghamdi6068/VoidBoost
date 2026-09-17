@@ -70,10 +70,21 @@ public final class VoidBoostConfig {
         } catch (Exception ignored) {
             INSTANCE = new VoidBoostConfig();
         }
+        INSTANCE.sanitize();
+        appliedOptionsSignature = Long.MIN_VALUE;
+    }
+
+    private void sanitize() {
+        particleLimitPercent = Math.max(1, Math.min(100, particleLimitPercent));
+        dynamicTargetFps = Math.max(60, Math.min(240, dynamicTargetFps));
+        targetFps = Math.max(30, Math.min(1000, targetFps));
+        maxEntityDistance = Math.max(32, Math.min(128, maxEntityDistance));
+        maxRenderDistance = Math.max(4, Math.min(10, maxRenderDistance));
     }
 
     public static void save() {
         try {
+            INSTANCE.sanitize();
             Files.createDirectories(FILE.getParent());
             try (Writer writer = Files.newBufferedWriter(FILE)) {
                 GSON.toJson(INSTANCE, writer);
@@ -108,7 +119,7 @@ public final class VoidBoostConfig {
         INSTANCE.ultimateLocked = true;
         INSTANCE.targetFps = 240;
         INSTANCE.dynamicTargetFps = 240;
-        INSTANCE.maxEntityDistance = 28;
+        INSTANCE.maxEntityDistance = 32;
         INSTANCE.maxRenderDistance = 4;
         save();
         appliedOptionsSignature = Long.MIN_VALUE;
