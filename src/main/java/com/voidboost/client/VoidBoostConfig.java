@@ -3,6 +3,8 @@ package com.voidboost.client;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.ParticleStatus;
+import net.minecraft.client.CloudStatus;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,6 +26,7 @@ public final class VoidBoostConfig {
     public boolean animationOptimization = true;
     public boolean fogOptimization = true;
     public boolean performanceMode = false;
+    public boolean performanceMonitor = false;
     public int maxEntityDistance = 64;
     public int minRenderDistance = 4;
     public int maxRenderDistance = 16;
@@ -31,6 +34,7 @@ public final class VoidBoostConfig {
     private static VoidBoostConfig INSTANCE = new VoidBoostConfig();
     private static long lastSave;
     private static int stableTicks;
+    private static double smoothedFps = 120.0;
 
     public static void load() {
         try {
@@ -77,6 +81,7 @@ public final class VoidBoostConfig {
         INSTANCE.weatherEffects = false;
         INSTANCE.animationOptimization = true;
         INSTANCE.fogOptimization = true;
+        INSTANCE.performanceMonitor = true;
         INSTANCE.maxEntityDistance = 32;
         INSTANCE.minRenderDistance = 2;
         INSTANCE.maxRenderDistance = 8;
@@ -95,6 +100,7 @@ public final class VoidBoostConfig {
         INSTANCE.weatherEffects = false;
         INSTANCE.animationOptimization = true;
         INSTANCE.fogOptimization = true;
+        INSTANCE.performanceMonitor = false;
         INSTANCE.maxEntityDistance = 48;
         INSTANCE.minRenderDistance = 4;
         INSTANCE.maxRenderDistance = 12;
@@ -113,12 +119,32 @@ public final class VoidBoostConfig {
         INSTANCE.weatherEffects = true;
         INSTANCE.animationOptimization = false;
         INSTANCE.fogOptimization = false;
+        INSTANCE.performanceMonitor = false;
         INSTANCE.maxEntityDistance = 96;
         INSTANCE.minRenderDistance = 6;
         INSTANCE.maxRenderDistance = 16;
     }
 
+    public static void applyVanillaPerformanceOptions(Minecraft client) {
+        if (client == null) return;
+        try {
+            if (INSTANCE.performanceMode || INSTANCE.ultimateLocked) {
+                client.options.entityShadows().set(INSTANCE.entityShadows);
+                client.options.entityDistanceScaling().set(INSTANCE.ultimateLocked ? 0.5 : 0.75);
+                client.options.weatherRadius().set(INSTANCE.weatherEffects ? 32 : 0);
+                client.options.cloudStatus().set(INSTANCE.weatherEffects ? CloudStatus.FANCY : CloudStatus.OFF);
+                client.options.particles().set(INSTANCE.disableParticles ? ParticleStatus.MINIMAL : ParticleStatus.DECREASED);
+                client.options.vignette().set(false);
+                client.options.ambientOcclusion().set(0.0);
+                client.options.chunkSectionFadeInTime().set(0.0);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     public static void tick(Minecraft client) {
+        if (client == null) return;
+        applyVanillaPerformanceOptions(client);
         if (client.level == null || !INSTANCE.dynamicRenderDistance) return;
         if (++stableTicks < 20) return;
         stableTicks = 0;
@@ -127,14 +153,16 @@ public final class VoidBoostConfig {
         if (now - lastSave < 500) return;
 
         double fps = client.getFps();
+        if (fps > 0) smoothedFps = smoothedFps * 0.80 + fps * 0.20;
+
         int current = client.options.renderDistance().get();
         int next = current;
         int min = INSTANCE.minRenderDistance;
         int max = INSTANCE.maxRenderDistance;
         int target = INSTANCE.dynamicTargetFps;
 
-        if (fps < target - 25 && current > min) next = current - 1;
-        else if (fps > target + 35 && current < max) next = current + 1;
+        if (smoothedFps < target - 18 && current > min) next = current - 1;
+        else if (smoothedFps > target + 28 && current < max) next = current + 1;
 
         if (next != current) client.options.renderDistance().set(next);
     }
