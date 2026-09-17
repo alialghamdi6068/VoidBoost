@@ -8,76 +8,93 @@ import net.minecraft.network.chat.Component;
 
 public final class VoidBoostScreen extends Screen {
     private final Screen parent;
+    private int page;
 
     public VoidBoostScreen(Screen parent) {
-        super(Component.literal("VoidBoost Performance"));
+        super(Component.literal("VoidBoost"));
         this.parent = parent;
     }
 
     @Override
     protected void init() {
-        int left = this.width / 2 - 155;
-        int right = this.width / 2 + 5;
-        int y = 62;
-        boolean locked = VoidBoostConfig.get().ultimateLocked;
+        rebuildWidgets();
+    }
 
-        Button ultimate = Button.builder(Component.literal(locked ? "ULTIMATE FPS: LOCKED" : "ULTIMATE FPS"), b -> {
-            VoidBoostConfig.applyUltimateLockedPreset();
-            VoidBoostConfig.save();
-            rebuildWidgets();
-        }).bounds(left, y, 310, 20).build();
-        ultimate.active = !locked;
-        addRenderableWidget(ultimate);
+    private void rebuildWidgets() {
+        clearWidgets();
+        int center = this.width / 2;
+        int top = 44;
 
-        Button maxFps = Button.builder(Component.literal("MAX FPS"), b -> {
-            VoidBoostConfig.applyMaxFpsPreset();
-            VoidBoostConfig.save();
-            rebuildWidgets();
-        }).bounds(left, y + 27, 150, 20).build();
-        maxFps.active = !locked;
-        addRenderableWidget(maxFps);
+        addRenderableWidget(Button.builder(Component.literal("General"), b -> { page = 0; rebuildWidgets(); })
+                .bounds(center - 180, top, 110, 22).build());
+        addRenderableWidget(Button.builder(Component.literal("Quality"), b -> { page = 1; rebuildWidgets(); })
+                .bounds(center - 55, top, 110, 22).build());
+        addRenderableWidget(Button.builder(Component.literal("Performance"), b -> { page = 2; rebuildWidgets(); })
+                .bounds(center + 70, top, 110, 22).build());
 
-        Button balanced = Button.builder(Component.literal("Balanced"), b -> {
-            VoidBoostConfig.applyBalancedPreset();
-            VoidBoostConfig.save();
-            rebuildWidgets();
-        }).bounds(right, y + 27, 150, 20).build();
-        balanced.active = !locked;
-        addRenderableWidget(balanced);
-
-        Button competitive = Button.builder(Component.literal("Competitive"), b -> {
-            VoidBoostConfig.applyCompetitivePreset();
-            VoidBoostConfig.save();
-            rebuildWidgets();
-        }).bounds(left, y + 54, 310, 20).build();
-        competitive.active = !locked;
-        addRenderableWidget(competitive);
-
-        addToggle(left, y + 81, "Particles", "particles", locked);
-        addToggle(right, y + 81, "Dynamic Render", "dynamic", locked);
-        addToggle(left, y + 108, "Entity Optimization", "entities", locked);
-        addToggle(right, y + 108, "Entity Shadows", "shadows", locked);
-        addToggle(left, y + 135, "Weather Effects", "weather", locked);
-        addToggle(right, y + 135, "Animation Optimization", "animations", locked);
-        addToggle(left, y + 162, "Fog Optimization", "fog", locked);
-        addToggle(right, y + 162, "Performance Mode", "performance", locked);
-        addToggle(left, y + 189, "Performance Monitor", "monitor", locked);
+        if (page == 0) buildGeneral(center, top + 36);
+        else if (page == 1) buildQuality(center, top + 36);
+        else buildPerformance(center, top + 36);
 
         addRenderableWidget(Button.builder(Component.literal("Done"), b -> {
             VoidBoostConfig.save();
             Minecraft.getInstance().setScreen(parent);
-        }).bounds(this.width / 2 - 100, this.height - 35, 200, 20).build());
+        }).bounds(center - 100, this.height - 30, 200, 20).build());
     }
 
-    private void addToggle(int x, int y, String title, String key, boolean locked) {
-        Button button = Button.builder(toggleLabel(title, key, locked), b -> {
+    private void buildGeneral(int center, int y) {
+        addSection("Preset", center, y);
+        addPreset(center - 155, y + 22, "Balanced", () -> VoidBoostConfig.applyBalancedPreset());
+        addPreset(center + 5, y + 22, "Competitive", () -> VoidBoostConfig.applyCompetitivePreset());
+        addPreset(center - 155, y + 49, "MAX FPS", () -> VoidBoostConfig.applyMaxFpsPreset());
+        addPreset(center + 5, y + 49, "ULTIMATE FPS", () -> VoidBoostConfig.applyUltimateLockedPreset());
+
+        addSection("Render Distance", center, y + 83);
+        addToggle(center - 155, y + 105, "Dynamic Render", "dynamic");
+        addSliderLike(center + 5, y + 105, "Entity Distance", VoidBoostConfig.get().maxEntityDistance);
+    }
+
+    private void buildQuality(int center, int y) {
+        addSection("Visual Quality", center, y);
+        addToggle(center - 155, y + 22, "Particles", "particles");
+        addToggle(center + 5, y + 22, "Entity Shadows", "shadows");
+        addToggle(center - 155, y + 49, "Weather Effects", "weather");
+        addToggle(center + 5, y + 49, "Fog Optimization", "fog");
+        addToggle(center - 155, y + 76, "Animation Optimization", "animations");
+    }
+
+    private void buildPerformance(int center, int y) {
+        addSection("Performance", center, y);
+        addToggle(center - 155, y + 22, "Entity Optimization", "entities");
+        addToggle(center + 5, y + 22, "Performance Mode", "performance");
+        addToggle(center - 155, y + 49, "Dynamic Render", "dynamic");
+        addToggle(center + 5, y + 49, "Performance Monitor", "monitor");
+        addSection("About", center, y + 87);
+        addRenderableWidget(Button.builder(Component.literal("VoidBoost  •  Made by VoidFlame"), b -> {})
+                .bounds(center - 155, y + 109, 310, 22).build());
+    }
+
+    private void addSection(String text, int center, int y) {
+        addRenderableWidget(Button.builder(Component.literal("—  " + text + "  —"), b -> {})
+                .bounds(center - 155, y, 310, 20).build());
+    }
+
+    private void addPreset(int x, int y, String name, Runnable action) {
+        Button button = Button.builder(Component.literal(name), b -> {
+            action.run();
+            VoidBoostConfig.save();
+            rebuildWidgets();
+        }).bounds(x, y, 150, 22).build();
+        button.active = !VoidBoostConfig.get().ultimateLocked || name.equals("ULTIMATE FPS");
+        addRenderableWidget(button);
+    }
+
+    private void addToggle(int x, int y, String title, String key) {
+        Button button = Button.builder(Component.literal(title + ": " + state(key)), b -> {
             VoidBoostConfig c = VoidBoostConfig.get();
             if (c.ultimateLocked) return;
             switch (key) {
-                case "particles" -> {
-                    c.disableParticles = !c.disableParticles;
-                    c.reducedParticles = false;
-                }
+                case "particles" -> { c.disableParticles = !c.disableParticles; c.reducedParticles = false; }
                 case "dynamic" -> c.dynamicRenderDistance = !c.dynamicRenderDistance;
                 case "entities" -> c.entityRenderOptimization = !c.entityRenderOptimization;
                 case "shadows" -> c.entityShadows = !c.entityShadows;
@@ -90,36 +107,44 @@ public final class VoidBoostScreen extends Screen {
             c.maxFpsPreset = false;
             c.competitiveMode = false;
             VoidBoostConfig.save();
-            b.setMessage(toggleLabel(title, key, false));
-        }).bounds(x, y, 150, 20).build();
-        button.active = !locked;
+            rebuildWidgets();
+        }).bounds(x, y, 150, 22).build();
+        button.active = !VoidBoostConfig.get().ultimateLocked;
         addRenderableWidget(button);
     }
 
-    private static Component toggleLabel(String title, String key, boolean locked) {
+    private void addSliderLike(int x, int y, String title, int value) {
+        addRenderableWidget(Button.builder(Component.literal(title + ": " + value), b -> {
+            VoidBoostConfig c = VoidBoostConfig.get();
+            c.maxEntityDistance = c.maxEntityDistance >= 128 ? 32 : c.maxEntityDistance + 16;
+            VoidBoostConfig.save();
+            rebuildWidgets();
+        }).bounds(x, y, 150, 22).build());
+    }
+
+    private static String state(String key) {
         VoidBoostConfig c = VoidBoostConfig.get();
-        boolean on = switch (key) {
-            case "particles" -> c.disableParticles || c.reducedParticles;
-            case "dynamic" -> c.dynamicRenderDistance;
-            case "entities" -> c.entityRenderOptimization;
-            case "shadows" -> c.entityShadows;
-            case "weather" -> c.weatherEffects;
-            case "animations" -> c.animationOptimization;
-            case "fog" -> c.fogOptimization;
-            case "performance" -> c.performanceMode;
-            case "monitor" -> c.performanceMonitor;
-            default -> false;
+        return switch (key) {
+            case "particles" -> (c.disableParticles || c.reducedParticles) ? "ON" : "OFF";
+            case "dynamic" -> c.dynamicRenderDistance ? "ON" : "OFF";
+            case "entities" -> c.entityRenderOptimization ? "ON" : "OFF";
+            case "shadows" -> c.entityShadows ? "ON" : "OFF";
+            case "weather" -> c.weatherEffects ? "ON" : "OFF";
+            case "animations" -> c.animationOptimization ? "ON" : "OFF";
+            case "fog" -> c.fogOptimization ? "ON" : "OFF";
+            case "performance" -> c.performanceMode ? "ON" : "OFF";
+            case "monitor" -> c.performanceMonitor ? "ON" : "OFF";
+            default -> "OFF";
         };
-        return Component.literal(title + ": " + (on ? "ON" : "OFF") + (locked ? " [LOCKED]" : ""));
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        renderBackground(graphics, mouseX, mouseY, delta);
-        graphics.drawCenteredString(this.font, this.title, this.width / 2, 25, 0xFFFFFF);
-        graphics.drawCenteredString(this.font, Component.literal(
-                VoidBoostConfig.get().ultimateLocked ? "Ultimate performance is locked" : "Client-side FPS & PvP optimization"), this.width / 2, 42, 0xAAAAAA);
-        graphics.drawCenteredString(this.font, Component.literal("Made by VoidFlame"), this.width / 2, 51, 0xAAAAAA);
+        // Intentionally do not call renderBackground(): Minecraft's screen renderer already
+        // applies the frame blur, and calling it here causes "Can only blur once per frame".
+        graphics.fill(0, 0, this.width, this.height, 0xE6101014);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, 16, 0xFFFFFF);
+        graphics.drawCenteredString(this.font, Component.literal("Client-side performance & PvP optimization"), this.width / 2, 30, 0xA0A0A0);
         super.render(graphics, mouseX, mouseY, delta);
     }
 }
