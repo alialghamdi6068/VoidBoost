@@ -3,47 +3,40 @@ package com.voidboost.client;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.client.CloudStatus;
+import net.minecraft.client.FogRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.fog.FogRenderer;
-import net.minecraft.server.level.ParticleStatus;
-
+import net.minecraft.client.ParticleStatus;
+import net.minecraft.client.Options;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 
 public final class VoidBoostConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path FILE = Path.of("config", "voidboost.json");
+    private static final Path FILE = Minecraft.getInstance().gameDirectory.toPath().resolve("config").resolve("voidboost.json");
+    private static VoidBoostConfig INSTANCE = new VoidBoostConfig();
 
-    public boolean disableParticles = true;
-    public boolean reducedParticles = false;
-    public boolean dynamicRenderDistance = false;
-    public int dynamicTargetFps = 120;
-    public boolean maxFpsPreset = false;
-    public boolean competitiveMode = false;
-    public boolean ultimateLocked = false;
-    public boolean entityRenderOptimization = true;
+    public boolean performanceMode = true;
+    public boolean performanceMonitor = false;
+    public boolean disableParticles = false;
+    public boolean reducedParticles = true;
+    public int particleLimitPercent = 50;
     public boolean entityShadows = false;
     public boolean weatherEffects = false;
     public boolean animationOptimization = true;
     public boolean fogOptimization = true;
-    public boolean performanceMode = false;
-    public boolean performanceMonitor = false;
-    public int particleLimitPercent = 25;
+    public boolean entityRenderOptimization = true;
+    public boolean dynamicRenderDistance = true;
+    public boolean competitiveMode = false;
+    public boolean ultimateLocked = false;
+    public int targetFps = 120;
     public int maxEntityDistance = 64;
-    public int minRenderDistance = 4;
-    public int maxRenderDistance = 16;
-
-    private static VoidBoostConfig INSTANCE = new VoidBoostConfig();
-    private static long lastSave;
-    private static int stableTicks;
-    private static double smoothedFps = 120.0;
-    private static long appliedOptionsSignature = Long.MIN_VALUE;
+    public int maxRenderDistance = 12;
 
     private static boolean optionsCaptured;
-    private static boolean fogStateCaptured;
-    private static boolean fogDisabledByVoidBoost;
-
     private static boolean savedEntityShadows;
     private static double savedEntityDistanceScaling;
     private static int savedWeatherRadius;
@@ -55,132 +48,135 @@ public final class VoidBoostConfig {
     private static boolean savedBobView;
     private static boolean savedVsync;
     private static int savedMaxFps;
-
-    public static void load() {
-        try {
-            if (Files.exists(FILE)) {
-                VoidBoostConfig loaded = GSON.fromJson(Files.readString(FILE), VoidBoostConfig.class);
-                INSTANCE = loaded == null ? new VoidBoostConfig() : loaded;
-                INSTANCE.sanitize();
-            }
-        } catch (Exception ignored) {
-            INSTANCE = new VoidBoostConfig();
-        }
-        appliedOptionsSignature = Long.MIN_VALUE;
-    }
-
-    private void sanitize() {
-        dynamicTargetFps = Math.max(30, Math.min(500, dynamicTargetFps));
-        particleLimitPercent = Math.max(1, Math.min(100, particleLimitPercent));
-        minRenderDistance = Math.max(2, Math.min(16, minRenderDistance));
-        maxRenderDistance = Math.max(minRenderDistance, Math.min(32, maxRenderDistance));
-        maxEntityDistance = Math.max(16, Math.min(256, maxEntityDistance));
-    }
+    private static long appliedOptionsSignature = Long.MIN_VALUE;
+    private static boolean fogStateCaptured;
+    private static boolean fogDisabledByVoidBoost;
+    private static int tickCounter;
 
     public static VoidBoostConfig get() {
         return INSTANCE;
     }
 
+    public static void load() {
+        try {
+            Files.createDirectories(FILE.getParent());
+            if (Files.exists(FILE)) {
+                try (Reader reader = Files.newBufferedReader(FILE)) {
+                    VoidBoostConfig loaded = GSON.fromJson(reader, VoidBoostConfig.class);
+                    if (loaded != null) INSTANCE = loaded;
+                }
+            } else {
+                save();
+            }
+        } catch (Exception ignored) {
+            INSTANCE = new VoidBoostConfig();
+        }
+    }
+
     public static void save() {
         try {
-            INSTANCE.sanitize();
             Files.createDirectories(FILE.getParent());
-            Files.writeString(FILE, GSON.toJson(INSTANCE));
-            lastSave = System.currentTimeMillis();
-            appliedOptionsSignature = Long.MIN_VALUE;
+            try (Writer writer = Files.newBufferedWriter(FILE)) {
+                GSON.toJson(INSTANCE, writer);
+            }
         } catch (IOException ignored) {
         }
     }
 
+    public static void tick(Minecraft client) {
+        if (client.level == null) return;
+        tickCounter++;
+        applyVanillaPerformanceOptions(client);
+        if (INSTANCE.dynamicRenderDistance && tickCounter % 20 == 0) {
+            updateDynamicRenderDistance(client);
+        }
+    }
+
     public static void applyUltimateLockedPreset() {
-        INSTANCE.maxFpsPreset = true;
+        INSTANCE.performanceMode = true;
+        INSTANCE.performanceMonitor = false;
+        INSTANCE.disableParticles = true;
+        INSTANCE.reducedParticles = false;
+        INSTANCE.entityShadows = false;
+        INSTANCE.weatherEffects = false;
+        INSTANCE.animationOptimization = true;
+        INSTANCE.fogOptimization = true;
+        INSTANCE.entityRenderOptimization = true;
+        INSTANCE.dynamicRenderDistance = true;
         INSTANCE.competitiveMode = true;
         INSTANCE.ultimateLocked = true;
-        INSTANCE.performanceMode = true;
-        INSTANCE.disableParticles = true;
-        INSTANCE.reducedParticles = false;
-        INSTANCE.particleLimitPercent = 1;
-        INSTANCE.dynamicRenderDistance = true;
-        INSTANCE.entityRenderOptimization = true;
-        INSTANCE.entityShadows = false;
-        INSTANCE.weatherEffects = false;
-        INSTANCE.animationOptimization = true;
-        INSTANCE.fogOptimization = true;
-        INSTANCE.performanceMonitor = false;
-        INSTANCE.maxEntityDistance = 32;
-        INSTANCE.minRenderDistance = 2;
-        INSTANCE.maxRenderDistance = 8;
-        INSTANCE.dynamicTargetFps = 120;
-    }
-
-    public static void applyMaxFpsPreset() {
-        if (INSTANCE.ultimateLocked) return;
-        INSTANCE.maxFpsPreset = true;
-        INSTANCE.competitiveMode = false;
-        INSTANCE.performanceMode = true;
-        INSTANCE.disableParticles = true;
-        INSTANCE.reducedParticles = false;
-        INSTANCE.particleLimitPercent = 1;
-        INSTANCE.dynamicRenderDistance = true;
-        INSTANCE.entityRenderOptimization = true;
-        INSTANCE.entityShadows = false;
-        INSTANCE.weatherEffects = false;
-        INSTANCE.animationOptimization = true;
-        INSTANCE.fogOptimization = true;
-        INSTANCE.performanceMonitor = false;
+        INSTANCE.targetFps = 240;
         INSTANCE.maxEntityDistance = 48;
-        INSTANCE.minRenderDistance = 4;
-        INSTANCE.maxRenderDistance = 12;
-        INSTANCE.dynamicTargetFps = 144;
+        INSTANCE.maxRenderDistance = 8;
+        save();
+        appliedOptionsSignature = Long.MIN_VALUE;
     }
 
-    public static void applyCompetitivePreset() {
-        if (INSTANCE.ultimateLocked) return;
-        INSTANCE.maxFpsPreset = false;
-        INSTANCE.competitiveMode = true;
-        INSTANCE.performanceMode = true;
-        INSTANCE.disableParticles = false;
-        INSTANCE.reducedParticles = true;
-        INSTANCE.particleLimitPercent = 20;
-        INSTANCE.dynamicRenderDistance = true;
-        INSTANCE.entityRenderOptimization = true;
-        INSTANCE.entityShadows = false;
-        INSTANCE.weatherEffects = false;
-        INSTANCE.animationOptimization = true;
-        INSTANCE.fogOptimization = true;
-        INSTANCE.performanceMonitor = false;
-        INSTANCE.maxEntityDistance = 64;
-        INSTANCE.minRenderDistance = 6;
-        INSTANCE.maxRenderDistance = 12;
-        INSTANCE.dynamicTargetFps = 120;
+    public static void applyPreset(String preset) {
+        switch (preset) {
+            case "Balanced" -> {
+                INSTANCE.performanceMode = true;
+                INSTANCE.performanceMonitor = false;
+                INSTANCE.disableParticles = false;
+                INSTANCE.reducedParticles = true;
+                INSTANCE.entityShadows = false;
+                INSTANCE.weatherEffects = false;
+                INSTANCE.animationOptimization = true;
+                INSTANCE.fogOptimization = true;
+                INSTANCE.entityRenderOptimization = true;
+                INSTANCE.dynamicRenderDistance = true;
+                INSTANCE.competitiveMode = false;
+                INSTANCE.ultimateLocked = false;
+                INSTANCE.targetFps = 120;
+                INSTANCE.maxEntityDistance = 64;
+                INSTANCE.maxRenderDistance = 12;
+            }
+            case "Competitive" -> {
+                INSTANCE.performanceMode = true;
+                INSTANCE.performanceMonitor = false;
+                INSTANCE.disableParticles = true;
+                INSTANCE.reducedParticles = false;
+                INSTANCE.entityShadows = false;
+                INSTANCE.weatherEffects = false;
+                INSTANCE.animationOptimization = true;
+                INSTANCE.fogOptimization = true;
+                INSTANCE.entityRenderOptimization = true;
+                INSTANCE.dynamicRenderDistance = true;
+                INSTANCE.competitiveMode = true;
+                INSTANCE.ultimateLocked = false;
+                INSTANCE.targetFps = 180;
+                INSTANCE.maxEntityDistance = 56;
+                INSTANCE.maxRenderDistance = 10;
+            }
+            case "MAX FPS" -> {
+                INSTANCE.performanceMode = true;
+                INSTANCE.performanceMonitor = false;
+                INSTANCE.disableParticles = true;
+                INSTANCE.reducedParticles = false;
+                INSTANCE.entityShadows = false;
+                INSTANCE.weatherEffects = false;
+                INSTANCE.animationOptimization = true;
+                INSTANCE.fogOptimization = true;
+                INSTANCE.entityRenderOptimization = true;
+                INSTANCE.dynamicRenderDistance = true;
+                INSTANCE.competitiveMode = false;
+                INSTANCE.ultimateLocked = false;
+                INSTANCE.targetFps = 240;
+                INSTANCE.maxEntityDistance = 48;
+                INSTANCE.maxRenderDistance = 8;
+            }
+            case "ULTIMATE FPS" -> applyUltimateLockedPreset();
+            default -> {
+                return;
+            }
+        }
+        save();
+        appliedOptionsSignature = Long.MIN_VALUE;
     }
 
-    public static void applyBalancedPreset() {
-        if (INSTANCE.ultimateLocked) return;
-        INSTANCE.maxFpsPreset = false;
-        INSTANCE.competitiveMode = false;
-        INSTANCE.performanceMode = true;
-        INSTANCE.disableParticles = false;
-        INSTANCE.reducedParticles = true;
-        INSTANCE.particleLimitPercent = 60;
-        INSTANCE.dynamicRenderDistance = false;
-        INSTANCE.entityRenderOptimization = true;
-        INSTANCE.entityShadows = true;
-        INSTANCE.weatherEffects = true;
-        INSTANCE.animationOptimization = false;
-        INSTANCE.fogOptimization = false;
-        INSTANCE.performanceMonitor = false;
-        INSTANCE.maxEntityDistance = 96;
-        INSTANCE.minRenderDistance = 6;
-        INSTANCE.maxRenderDistance = 16;
-    }
-
-    public static void applyVanillaPerformanceOptions(Minecraft client) {
-        if (client == null) return;
-
+    private static void applyVanillaPerformanceOptions(Minecraft client) {
         long signature = optionsSignature();
         if (signature == appliedOptionsSignature) return;
-        appliedOptionsSignature = signature;
 
         try {
             boolean controlVanilla = INSTANCE.performanceMode
@@ -195,6 +191,7 @@ public final class VoidBoostConfig {
             if (!controlVanilla) {
                 restoreVanillaPerformanceOptions(client);
                 syncFog(false);
+                appliedOptionsSignature = signature;
                 return;
             }
 
@@ -206,7 +203,7 @@ public final class VoidBoostConfig {
                 client.options.ambientOcclusion().set(false);
                 client.options.chunkSectionFadeInTime().set(0.0);
                 client.options.enableVsync().set(false);
-                client.options.maxFps().set(260);
+                client.options.framerateLimit().set(260);
             }
 
             client.options.entityShadows().set(INSTANCE.entityShadows);
@@ -215,6 +212,7 @@ public final class VoidBoostConfig {
             client.options.particles().set(INSTANCE.disableParticles ? ParticleStatus.MINIMAL : (INSTANCE.reducedParticles ? ParticleStatus.DECREASED : ParticleStatus.ALL));
             client.options.bobView().set(!INSTANCE.animationOptimization && !INSTANCE.competitiveMode);
             syncFog(INSTANCE.fogOptimization);
+            appliedOptionsSignature = signature;
         } catch (Exception ignored) {
             appliedOptionsSignature = Long.MIN_VALUE;
         }
@@ -246,7 +244,7 @@ public final class VoidBoostConfig {
         savedChunkSectionFadeInTime = client.options.chunkSectionFadeInTime().get();
         savedBobView = client.options.bobView().get();
         savedVsync = client.options.enableVsync().get();
-        savedMaxFps = client.options.maxFps().get();
+        savedMaxFps = client.options.framerateLimit().get();
         optionsCaptured = true;
     }
 
@@ -262,7 +260,7 @@ public final class VoidBoostConfig {
         client.options.chunkSectionFadeInTime().set(savedChunkSectionFadeInTime);
         client.options.bobView().set(savedBobView);
         client.options.enableVsync().set(savedVsync);
-        client.options.maxFps().set(savedMaxFps);
+        client.options.framerateLimit().set(savedMaxFps);
         optionsCaptured = false;
     }
 
@@ -277,28 +275,15 @@ public final class VoidBoostConfig {
         }
     }
 
-    public static void tick(Minecraft client) {
-        if (client == null) return;
-        applyVanillaPerformanceOptions(client);
-        if (client.level == null || !INSTANCE.dynamicRenderDistance) return;
-        if (++stableTicks < 20) return;
-        stableTicks = 0;
-
-        long now = System.currentTimeMillis();
-        if (now - lastSave < 500) return;
-
-        double fps = client.getFps();
-        if (fps > 0) smoothedFps = smoothedFps * 0.82 + fps * 0.18;
-
+    private static void updateDynamicRenderDistance(Minecraft client) {
+        if (client.level == null) return;
         int current = client.options.renderDistance().get();
-        int next = current;
-        int min = INSTANCE.minRenderDistance;
-        int max = INSTANCE.maxRenderDistance;
-        int target = INSTANCE.dynamicTargetFps;
+        int desired = Math.max(4, Math.min(INSTANCE.maxRenderDistance, current));
+        if (desired != current) client.options.renderDistance().set(desired);
+    }
 
-        if (smoothedFps < target - 12 && current > min) next = current - 1;
-        else if (smoothedFps > target + 22 && current < max) next = current + 1;
-
-        if (next != current) client.options.renderDistance().set(next);
+    public static void markDirty() {
+        appliedOptionsSignature = Long.MIN_VALUE;
+        save();
     }
 }
