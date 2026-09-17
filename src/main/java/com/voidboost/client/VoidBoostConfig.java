@@ -17,6 +17,7 @@ public final class VoidBoostConfig {
     public boolean dynamicRenderDistance = false;
     public int dynamicTargetFps = 120;
     public boolean maxFpsPreset = false;
+    public boolean ultimateLocked = false;
     public boolean entityRenderOptimization = true;
     public boolean entityShadows = false;
     public boolean weatherEffects = false;
@@ -64,7 +65,26 @@ public final class VoidBoostConfig {
         }
     }
 
+    public static void applyUltimateLockedPreset() {
+        INSTANCE.maxFpsPreset = true;
+        INSTANCE.ultimateLocked = true;
+        INSTANCE.performanceMode = true;
+        INSTANCE.disableParticles = true;
+        INSTANCE.reducedParticles = false;
+        INSTANCE.dynamicRenderDistance = true;
+        INSTANCE.entityRenderOptimization = true;
+        INSTANCE.entityShadows = false;
+        INSTANCE.weatherEffects = false;
+        INSTANCE.animationOptimization = true;
+        INSTANCE.fogOptimization = true;
+        INSTANCE.maxEntityDistance = 32;
+        INSTANCE.minRenderDistance = 2;
+        INSTANCE.maxRenderDistance = 8;
+        INSTANCE.dynamicTargetFps = 120;
+    }
+
     public static void applyMaxFpsPreset() {
+        if (INSTANCE.ultimateLocked) return;
         INSTANCE.maxFpsPreset = true;
         INSTANCE.performanceMode = true;
         INSTANCE.disableParticles = true;
@@ -82,6 +102,7 @@ public final class VoidBoostConfig {
     }
 
     public static void applyBalancedPreset() {
+        if (INSTANCE.ultimateLocked) return;
         INSTANCE.maxFpsPreset = false;
         INSTANCE.performanceMode = false;
         INSTANCE.disableParticles = false;
