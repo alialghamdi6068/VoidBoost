@@ -5,6 +5,7 @@
   "client": [
     "ClientLevelMixin",
     "EntityRenderMixin",
+    "PerformanceHudMixin",
     "VideoOptionsScreenMixin"
   ],
   "injectors": {
