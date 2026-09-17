@@ -18,28 +18,55 @@ public final class VoidBoostScreen extends Screen {
     protected void init() {
         int left = this.width / 2 - 155;
         int right = this.width / 2 + 5;
-        int y = 70;
+        int y = 62;
+        boolean locked = VoidBoostConfig.get().ultimateLocked;
+
+        Button ultimate = Button.builder(
+                Component.literal(locked ? "ULTIMATE FPS: LOCKED" : "ULTIMATE FPS"),
+                b -> {
+                    VoidBoostConfig.applyUltimateLockedPreset();
+                    VoidBoostConfig.save();
+                    rebuildWidgets();
+                }).bounds(left, y, 310, 20).build();
+        ultimate.active = !locked;
+        addRenderableWidget(ultimate);
 
         addRenderableWidget(Button.builder(Component.literal("MAX FPS"), b -> {
             VoidBoostConfig.applyMaxFpsPreset();
             VoidBoostConfig.save();
             rebuildWidgets();
-        }).bounds(left, y, 150, 20).build());
+        }).bounds(left, y + 27, 150, 20).build());
 
         addRenderableWidget(Button.builder(Component.literal("Balanced"), b -> {
             VoidBoostConfig.applyBalancedPreset();
             VoidBoostConfig.save();
             rebuildWidgets();
-        }).bounds(right, y, 150, 20).build());
+        }).bounds(right, y + 27, 150, 20).build());
 
-        addToggle(left, y + 27, "Particles", "particles");
-        addToggle(right, y + 27, "Dynamic Render", "dynamic");
-        addToggle(left, y + 54, "Entity Optimization", "entities");
-        addToggle(right, y + 54, "Entity Shadows", "shadows");
-        addToggle(left, y + 81, "Weather Effects", "weather");
-        addToggle(right, y + 81, "Animation Optimization", "animations");
-        addToggle(left, y + 108, "Fog Optimization", "fog");
-        addToggle(right, y + 108, "Performance Mode", "performance");
+        addToggle(left, y + 54, "Particles", "particles", locked);
+        addToggle(right, y + 54, "Dynamic Render", "dynamic", locked);
+        addToggle(left, y + 81, "Entity Optimization", "entities", locked);
+        addToggle(right, y + 81, "Entity Shadows", "shadows", locked);
+        addToggle(left, y + 108, "Weather Effects", "weather", locked);
+        addToggle(right, y + 108, "Animation Optimization", "animations", locked);
+        addToggle(left, y + 135, "Fog Optimization", "fog", locked);
+        addToggle(right, y + 135, "Performance Mode", "performance", locked);
+
+        Button maxFps = this.children().stream()
+                .filter(w -> w instanceof Button)
+                .map(w -> (Button) w)
+                .skip(1)
+                .findFirst()
+                .orElse(null);
+        if (locked && maxFps != null) maxFps.active = false;
+
+        Button balanced = this.children().stream()
+                .filter(w -> w instanceof Button)
+                .map(w -> (Button) w)
+                .skip(2)
+                .findFirst()
+                .orElse(null);
+        if (locked && balanced != null) balanced.active = false;
 
         addRenderableWidget(Button.builder(Component.literal("Done"), b -> {
             VoidBoostConfig.save();
@@ -47,9 +74,10 @@ public final class VoidBoostScreen extends Screen {
         }).bounds(this.width / 2 - 100, this.height - 35, 200, 20).build());
     }
 
-    private void addToggle(int x, int y, String title, String key) {
-        addRenderableWidget(Button.builder(toggleLabel(title, key), b -> {
+    private void addToggle(int x, int y, String title, String key, boolean locked) {
+        Button button = Button.builder(toggleLabel(title, key, locked), b -> {
             VoidBoostConfig c = VoidBoostConfig.get();
+            if (c.ultimateLocked) return;
             switch (key) {
                 case "particles" -> c.disableParticles = !c.disableParticles;
                 case "dynamic" -> c.dynamicRenderDistance = !c.dynamicRenderDistance;
@@ -62,11 +90,13 @@ public final class VoidBoostScreen extends Screen {
             }
             c.maxFpsPreset = false;
             VoidBoostConfig.save();
-            b.setMessage(toggleLabel(title, key));
-        }).bounds(x, y, 150, 20).build());
+            b.setMessage(toggleLabel(title, key, false));
+        }).bounds(x, y, 150, 20).build();
+        button.active = !locked;
+        addRenderableWidget(button);
     }
 
-    private static Component toggleLabel(String title, String key) {
+    private static Component toggleLabel(String title, String key, boolean locked) {
         VoidBoostConfig c = VoidBoostConfig.get();
         boolean on = switch (key) {
             case "particles" -> c.disableParticles;
@@ -79,14 +109,17 @@ public final class VoidBoostScreen extends Screen {
             case "performance" -> c.performanceMode;
             default -> false;
         };
-        return Component.literal(title + ": " + (on ? "ON" : "OFF"));
+        return Component.literal(title + ": " + (on ? "ON" : "OFF") + (locked ? " [LOCKED]" : ""));
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
         renderBackground(graphics, mouseX, mouseY, delta);
-        graphics.drawCenteredString(this.font, this.title, this.width / 2, 28, 0xFFFFFF);
-        graphics.drawCenteredString(this.font, Component.literal("Client-side FPS & PvP optimization"), this.width / 2, 45, 0xAAAAAA);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, 25, 0xFFFFFF);
+        graphics.drawCenteredString(this.font, Component.literal(
+                VoidBoostConfig.get().ultimateLocked
+                        ? "Ultimate performance is locked"
+                        : "Client-side FPS & PvP optimization"), this.width / 2, 42, 0xAAAAAA);
         super.render(graphics, mouseX, mouseY, delta);
     }
 }
