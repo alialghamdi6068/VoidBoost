@@ -17,19 +17,19 @@ public final class VoidBoostScreen extends Screen {
 
     @Override
     protected void init() {
-        rebuildWidgets();
+        rebuildVoidBoostWidgets();
     }
 
-    private void rebuildWidgets() {
+    private void rebuildVoidBoostWidgets() {
         clearWidgets();
         int center = this.width / 2;
         int top = 44;
 
-        addRenderableWidget(Button.builder(Component.literal("General"), b -> { page = 0; rebuildWidgets(); })
+        addRenderableWidget(Button.builder(Component.literal("General"), b -> { page = 0; rebuildVoidBoostWidgets(); })
                 .bounds(center - 180, top, 110, 22).build());
-        addRenderableWidget(Button.builder(Component.literal("Quality"), b -> { page = 1; rebuildWidgets(); })
+        addRenderableWidget(Button.builder(Component.literal("Quality"), b -> { page = 1; rebuildVoidBoostWidgets(); })
                 .bounds(center - 55, top, 110, 22).build());
-        addRenderableWidget(Button.builder(Component.literal("Performance"), b -> { page = 2; rebuildWidgets(); })
+        addRenderableWidget(Button.builder(Component.literal("Performance"), b -> { page = 2; rebuildVoidBoostWidgets(); })
                 .bounds(center + 70, top, 110, 22).build());
 
         if (page == 0) buildGeneral(center, top + 36);
@@ -44,10 +44,10 @@ public final class VoidBoostScreen extends Screen {
 
     private void buildGeneral(int center, int y) {
         addSection("Preset", center, y);
-        addPreset(center - 155, y + 22, "Balanced", () -> VoidBoostConfig.applyBalancedPreset());
-        addPreset(center + 5, y + 22, "Competitive", () -> VoidBoostConfig.applyCompetitivePreset());
-        addPreset(center - 155, y + 49, "MAX FPS", () -> VoidBoostConfig.applyMaxFpsPreset());
-        addPreset(center + 5, y + 49, "ULTIMATE FPS", () -> VoidBoostConfig.applyUltimateLockedPreset());
+        addPreset(center - 155, y + 22, "Balanced", VoidBoostConfig::applyBalancedPreset);
+        addPreset(center + 5, y + 22, "Competitive", VoidBoostConfig::applyCompetitivePreset);
+        addPreset(center - 155, y + 49, "MAX FPS", VoidBoostConfig::applyMaxFpsPreset);
+        addPreset(center + 5, y + 49, "ULTIMATE FPS", VoidBoostConfig::applyUltimateLockedPreset);
 
         addSection("Render Distance", center, y + 83);
         addToggle(center - 155, y + 105, "Dynamic Render", "dynamic");
@@ -83,7 +83,7 @@ public final class VoidBoostScreen extends Screen {
         Button button = Button.builder(Component.literal(name), b -> {
             action.run();
             VoidBoostConfig.save();
-            rebuildWidgets();
+            rebuildVoidBoostWidgets();
         }).bounds(x, y, 150, 22).build();
         button.active = !VoidBoostConfig.get().ultimateLocked || name.equals("ULTIMATE FPS");
         addRenderableWidget(button);
@@ -107,7 +107,7 @@ public final class VoidBoostScreen extends Screen {
             c.maxFpsPreset = false;
             c.competitiveMode = false;
             VoidBoostConfig.save();
-            rebuildWidgets();
+            rebuildVoidBoostWidgets();
         }).bounds(x, y, 150, 22).build();
         button.active = !VoidBoostConfig.get().ultimateLocked;
         addRenderableWidget(button);
@@ -118,7 +118,7 @@ public final class VoidBoostScreen extends Screen {
             VoidBoostConfig c = VoidBoostConfig.get();
             c.maxEntityDistance = c.maxEntityDistance >= 128 ? 32 : c.maxEntityDistance + 16;
             VoidBoostConfig.save();
-            rebuildWidgets();
+            rebuildVoidBoostWidgets();
         }).bounds(x, y, 150, 22).build());
     }
 
@@ -140,8 +140,6 @@ public final class VoidBoostScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        // Intentionally do not call renderBackground(): Minecraft's screen renderer already
-        // applies the frame blur, and calling it here causes "Can only blur once per frame".
         graphics.fill(0, 0, this.width, this.height, 0xE6101014);
         graphics.drawCenteredString(this.font, this.title, this.width / 2, 16, 0xFFFFFF);
         graphics.drawCenteredString(this.font, Component.literal("Client-side performance & PvP optimization"), this.width / 2, 30, 0xA0A0A0);
