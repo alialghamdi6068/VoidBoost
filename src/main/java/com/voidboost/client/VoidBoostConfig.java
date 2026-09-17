@@ -38,6 +38,8 @@ public final class VoidBoostConfig {
     private static long lastSave;
     private static int stableTicks;
     private static double smoothedFps = 120.0;
+    private static long appliedOptionsSignature = Long.MIN_VALUE;
+
     private static boolean optionsCaptured;
     private static boolean fogStateCaptured;
     private static boolean fogDisabledByVoidBoost;
@@ -62,6 +64,7 @@ public final class VoidBoostConfig {
         } catch (Exception ignored) {
             INSTANCE = new VoidBoostConfig();
         }
+        appliedOptionsSignature = Long.MIN_VALUE;
     }
 
     private void sanitize() {
@@ -82,6 +85,7 @@ public final class VoidBoostConfig {
             Files.createDirectories(FILE.getParent());
             Files.writeString(FILE, GSON.toJson(INSTANCE));
             lastSave = System.currentTimeMillis();
+            appliedOptionsSignature = Long.MIN_VALUE;
         } catch (IOException ignored) {
         }
     }
@@ -172,6 +176,10 @@ public final class VoidBoostConfig {
     public static void applyVanillaPerformanceOptions(Minecraft client) {
         if (client == null) return;
 
+        long signature = optionsSignature();
+        if (signature == appliedOptionsSignature) return;
+        appliedOptionsSignature = signature;
+
         try {
             if (!INSTANCE.performanceMode && !INSTANCE.ultimateLocked) {
                 restoreVanillaPerformanceOptions(client);
@@ -191,7 +199,21 @@ public final class VoidBoostConfig {
             client.options.bobView().set(!INSTANCE.animationOptimization && !INSTANCE.competitiveMode);
             syncFog(INSTANCE.fogOptimization);
         } catch (Exception ignored) {
+            appliedOptionsSignature = Long.MIN_VALUE;
         }
+    }
+
+    private static long optionsSignature() {
+        long result = 17;
+        result = 31 * result + (INSTANCE.performanceMode ? 1 : 0);
+        result = 31 * result + (INSTANCE.ultimateLocked ? 1 : 0);
+        result = 31 * result + (INSTANCE.entityShadows ? 1 : 0);
+        result = 31 * result + (INSTANCE.competitiveMode ? 1 : 0);
+        result = 31 * result + (INSTANCE.weatherEffects ? 1 : 0);
+        result = 31 * result + (INSTANCE.disableParticles ? 1 : 0);
+        result = 31 * result + (INSTANCE.animationOptimization ? 1 : 0);
+        result = 31 * result + (INSTANCE.fogOptimization ? 1 : 0);
+        return result;
     }
 
     private static void captureVanillaPerformanceOptions(Minecraft client) {
