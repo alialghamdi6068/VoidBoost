@@ -74,7 +74,10 @@ public final class VoidBoostScreen extends Screen {
             VoidBoostConfig c = VoidBoostConfig.get();
             if (c.ultimateLocked) return;
             switch (key) {
-                case "particles" -> c.disableParticles = !c.disableParticles;
+                case "particles" -> {
+                    c.disableParticles = !c.disableParticles;
+                    c.reducedParticles = false;
+                }
                 case "dynamic" -> c.dynamicRenderDistance = !c.dynamicRenderDistance;
                 case "entities" -> c.entityRenderOptimization = !c.entityRenderOptimization;
                 case "shadows" -> c.entityShadows = !c.entityShadows;
