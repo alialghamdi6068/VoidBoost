@@ -185,8 +185,8 @@ public final class VoidBoostScreen extends Screen {
         g.drawString(font,Component.literal("Made by VoidFlame"),left+14,bottom-29,MUTED,false);
         g.drawString(font,Component.literal("O"),left+side-28,bottom-29,ACCENT,false);
 
-        String title=switch(page){case 0->"General";case 1->"Visual";case 2->"Performance";default->"Advanced"};
-        String sub=switch(page){case 0->"Profiles and adaptive controls";case 1->"Rendering workload";case 2->"Frame-time and entity control";default->"Advanced performance controls"};
+        String title=switch(page){case 0->"General";case 1->"Visual";case 2->"Performance";default->"Advanced";};
+        String sub=switch(page){case 0->"Profiles and adaptive controls";case 1->"Rendering workload";case 2->"Frame-time and entity control";default->"Advanced performance controls";};
         g.drawString(font,Component.literal(title),content,41,TEXT,false);
         g.drawString(font,Component.literal(sub),content,57,MUTED,false);
 
