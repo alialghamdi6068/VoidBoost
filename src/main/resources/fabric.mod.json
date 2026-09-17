@@ -4,7 +4,7 @@
   "version": "${version}",
   "name": "VoidBoost",
   "description": "Client-side performance and PvP rendering optimizer for Minecraft 1.21.11.",
-  "authors": ["alialghamdi6068"],
+  "authors": ["VoidFlame"],
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
