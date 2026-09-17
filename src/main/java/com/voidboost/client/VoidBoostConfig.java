@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.server.level.ParticleStatus;
 
 import java.io.IOException;
@@ -37,6 +38,19 @@ public final class VoidBoostConfig {
     private static long lastSave;
     private static int stableTicks;
     private static double smoothedFps = 120.0;
+    private static boolean optionsCaptured;
+    private static boolean fogStateCaptured;
+    private static boolean fogDisabledByVoidBoost;
+
+    private static boolean savedEntityShadows;
+    private static double savedEntityDistanceScaling;
+    private static int savedWeatherRadius;
+    private static CloudStatus savedCloudStatus;
+    private static ParticleStatus savedParticleStatus;
+    private static boolean savedVignette;
+    private static boolean savedAmbientOcclusion;
+    private static double savedChunkSectionFadeInTime;
+    private static boolean savedBobView;
 
     public static void load() {
         try {
@@ -157,21 +171,65 @@ public final class VoidBoostConfig {
 
     public static void applyVanillaPerformanceOptions(Minecraft client) {
         if (client == null) return;
+
         try {
-            if (INSTANCE.performanceMode || INSTANCE.ultimateLocked) {
-                client.options.entityShadows().set(INSTANCE.entityShadows);
-                client.options.entityDistanceScaling().set(INSTANCE.ultimateLocked ? 0.5 : (INSTANCE.competitiveMode ? 0.65 : 0.75));
-                client.options.weatherRadius().set(INSTANCE.weatherEffects ? 32 : 0);
-                client.options.cloudStatus().set(INSTANCE.weatherEffects ? CloudStatus.FANCY : CloudStatus.OFF);
-                client.options.particles().set(INSTANCE.disableParticles ? ParticleStatus.MINIMAL : ParticleStatus.DECREASED);
-                client.options.vignette().set(false);
-                client.options.ambientOcclusion().set(false);
-                client.options.chunkSectionFadeInTime().set(0.0);
-                if (INSTANCE.animationOptimization || INSTANCE.competitiveMode) {
-                    client.options.bobView().set(false);
-                }
+            if (!INSTANCE.performanceMode && !INSTANCE.ultimateLocked) {
+                restoreVanillaPerformanceOptions(client);
+                syncFog(false);
+                return;
             }
+
+            captureVanillaPerformanceOptions(client);
+            client.options.entityShadows().set(INSTANCE.entityShadows);
+            client.options.entityDistanceScaling().set(INSTANCE.ultimateLocked ? 0.5 : (INSTANCE.competitiveMode ? 0.65 : 0.75));
+            client.options.weatherRadius().set(INSTANCE.weatherEffects ? 32 : 0);
+            client.options.cloudStatus().set(INSTANCE.weatherEffects ? CloudStatus.FANCY : CloudStatus.OFF);
+            client.options.particles().set(INSTANCE.disableParticles ? ParticleStatus.MINIMAL : ParticleStatus.DECREASED);
+            client.options.vignette().set(false);
+            client.options.ambientOcclusion().set(false);
+            client.options.chunkSectionFadeInTime().set(0.0);
+            client.options.bobView().set(!INSTANCE.animationOptimization && !INSTANCE.competitiveMode);
+            syncFog(INSTANCE.fogOptimization);
         } catch (Exception ignored) {
+        }
+    }
+
+    private static void captureVanillaPerformanceOptions(Minecraft client) {
+        if (optionsCaptured) return;
+        savedEntityShadows = client.options.entityShadows().get();
+        savedEntityDistanceScaling = client.options.entityDistanceScaling().get();
+        savedWeatherRadius = client.options.weatherRadius().get();
+        savedCloudStatus = client.options.cloudStatus().get();
+        savedParticleStatus = client.options.particles().get();
+        savedVignette = client.options.vignette().get();
+        savedAmbientOcclusion = client.options.ambientOcclusion().get();
+        savedChunkSectionFadeInTime = client.options.chunkSectionFadeInTime().get();
+        savedBobView = client.options.bobView().get();
+        optionsCaptured = true;
+    }
+
+    private static void restoreVanillaPerformanceOptions(Minecraft client) {
+        if (!optionsCaptured) return;
+        client.options.entityShadows().set(savedEntityShadows);
+        client.options.entityDistanceScaling().set(savedEntityDistanceScaling);
+        client.options.weatherRadius().set(savedWeatherRadius);
+        client.options.cloudStatus().set(savedCloudStatus);
+        client.options.particles().set(savedParticleStatus);
+        client.options.vignette().set(savedVignette);
+        client.options.ambientOcclusion().set(savedAmbientOcclusion);
+        client.options.chunkSectionFadeInTime().set(savedChunkSectionFadeInTime);
+        client.options.bobView().set(savedBobView);
+        optionsCaptured = false;
+    }
+
+    private static void syncFog(boolean disable) {
+        if (!fogStateCaptured) {
+            fogStateCaptured = true;
+            fogDisabledByVoidBoost = false;
+        }
+        if (disable != fogDisabledByVoidBoost) {
+            FogRenderer.toggleFog();
+            fogDisabledByVoidBoost = disable;
         }
     }
 
