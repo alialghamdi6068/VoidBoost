@@ -108,7 +108,7 @@ public final class VoidBoostConfig {
         INSTANCE.ultimateLocked = false;
         INSTANCE.targetFps = 240;
         INSTANCE.dynamicTargetFps = 240;
-        INSTANCE.maxEntityDistance = 48;
+        INSTANCE.maxEntityDistance = 40;
         INSTANCE.maxRenderDistance = 6;
         save();
         appliedOptionsSignature = Long.MIN_VALUE;
@@ -134,7 +134,7 @@ public final class VoidBoostConfig {
                 INSTANCE.entityRenderOptimization = true; INSTANCE.dynamicRenderDistance = true;
                 INSTANCE.competitiveMode = true; INSTANCE.maxFpsPreset = false; INSTANCE.ultimateLocked = false;
                 INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 180;
-                INSTANCE.maxEntityDistance = 56; INSTANCE.maxRenderDistance = 10;
+                INSTANCE.maxEntityDistance = 52; INSTANCE.maxRenderDistance = 10;
             }
             case "MAX FPS" -> {
                 INSTANCE.performanceMode = true; INSTANCE.performanceMonitor = false;
@@ -144,7 +144,7 @@ public final class VoidBoostConfig {
                 INSTANCE.entityRenderOptimization = true; INSTANCE.dynamicRenderDistance = true;
                 INSTANCE.competitiveMode = false; INSTANCE.maxFpsPreset = true; INSTANCE.ultimateLocked = false;
                 INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 240;
-                INSTANCE.maxEntityDistance = 48; INSTANCE.maxRenderDistance = 8;
+                INSTANCE.maxEntityDistance = 44; INSTANCE.maxRenderDistance = 8;
             }
             case "ULTIMATE FPS" -> applyUltimateLockedPreset();
             default -> { return; }
@@ -168,13 +168,19 @@ public final class VoidBoostConfig {
 
             captureVanillaPerformanceOptions(client);
             if (INSTANCE.performanceMode) {
-                client.options.entityDistanceScaling().set(INSTANCE.competitiveMode ? 0.60 : 0.70);
+                double entityScale = INSTANCE.maxRenderDistance <= 6 ? 0.45 : INSTANCE.competitiveMode ? 0.52 : INSTANCE.maxFpsPreset ? 0.48 : 0.62;
+                client.options.entityDistanceScaling().set(entityScale);
                 client.options.vignette().set(false);
                 client.options.ambientOcclusion().set(false);
                 client.options.chunkSectionFadeInTime().set(0.0);
                 client.options.enableVsync().set(false);
                 client.options.biomeBlendRadius().set(0);
                 client.options.mipmapLevels().set(0);
+
+                int hardLimit = Math.max(4, Math.min(12, INSTANCE.maxRenderDistance));
+                if (client.options.renderDistance().get() > hardLimit) {
+                    client.options.renderDistance().set(hardLimit);
+                }
             }
             client.options.entityShadows().set(INSTANCE.entityShadows);
             client.options.weatherRadius().set(INSTANCE.weatherEffects ? 32 : 0);
