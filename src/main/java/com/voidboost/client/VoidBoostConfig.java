@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Options;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.server.level.ParticleStatus;
 import java.io.IOException;
@@ -49,6 +48,7 @@ public final class VoidBoostConfig {
     private static boolean savedBobView;
     private static boolean savedVsync;
     private static int savedMaxFps;
+    private static int savedRenderDistance;
     private static long appliedOptionsSignature = Long.MIN_VALUE;
     private static boolean fogStateCaptured;
     private static boolean fogDisabledByVoidBoost;
@@ -233,6 +233,11 @@ public final class VoidBoostConfig {
             client.options.particles().set(INSTANCE.disableParticles ? ParticleStatus.MINIMAL : (INSTANCE.reducedParticles ? ParticleStatus.DECREASED : ParticleStatus.ALL));
             client.options.bobView().set(!INSTANCE.animationOptimization && !INSTANCE.competitiveMode);
             syncFog(INSTANCE.fogOptimization);
+
+            if (!INSTANCE.dynamicRenderDistance) {
+                client.options.renderDistance().set(savedRenderDistance);
+            }
+
             appliedOptionsSignature = signature;
         } catch (Exception ignored) {
             appliedOptionsSignature = Long.MIN_VALUE;
@@ -272,6 +277,7 @@ public final class VoidBoostConfig {
         savedBobView = client.options.bobView().get();
         savedVsync = client.options.enableVsync().get();
         savedMaxFps = client.options.framerateLimit().get();
+        savedRenderDistance = client.options.renderDistance().get();
         optionsCaptured = true;
     }
 
@@ -288,6 +294,7 @@ public final class VoidBoostConfig {
         client.options.bobView().set(savedBobView);
         client.options.enableVsync().set(savedVsync);
         client.options.framerateLimit().set(savedMaxFps);
+        client.options.renderDistance().set(savedRenderDistance);
         optionsCaptured = false;
     }
 
@@ -306,11 +313,14 @@ public final class VoidBoostConfig {
         if (client.level == null) return;
         int current = client.options.renderDistance().get();
         int target = Math.max(60, Math.min(260, INSTANCE.dynamicTargetFps));
+        int maxDistance = Math.max(4, INSTANCE.maxRenderDistance);
         int fps = client.getFps();
-        int desired = current;
+        int desired = Math.min(current, maxDistance);
 
-        if (fps > target + 15 && current < INSTANCE.maxRenderDistance) {
-            desired = Math.min(INSTANCE.maxRenderDistance, current + 1);
+        if (current > maxDistance) {
+            desired = maxDistance;
+        } else if (fps > target + 15 && current < maxDistance) {
+            desired = Math.min(maxDistance, current + 1);
         } else if (fps < target - 15 && current > 4) {
             desired = Math.max(4, current - 1);
         }
