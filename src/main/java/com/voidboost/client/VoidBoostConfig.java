@@ -53,6 +53,8 @@ public final class VoidBoostConfig {
     private static boolean savedAmbientOcclusion;
     private static double savedChunkSectionFadeInTime;
     private static boolean savedBobView;
+    private static boolean savedVsync;
+    private static int savedMaxFps;
 
     public static void load() {
         try {
@@ -104,7 +106,7 @@ public final class VoidBoostConfig {
         INSTANCE.weatherEffects = false;
         INSTANCE.animationOptimization = true;
         INSTANCE.fogOptimization = true;
-        INSTANCE.performanceMonitor = true;
+        INSTANCE.performanceMonitor = false;
         INSTANCE.maxEntityDistance = 32;
         INSTANCE.minRenderDistance = 2;
         INSTANCE.maxRenderDistance = 8;
@@ -181,21 +183,36 @@ public final class VoidBoostConfig {
         appliedOptionsSignature = signature;
 
         try {
-            if (!INSTANCE.performanceMode && !INSTANCE.ultimateLocked) {
+            boolean controlVanilla = INSTANCE.performanceMode
+                    || INSTANCE.ultimateLocked
+                    || INSTANCE.disableParticles
+                    || INSTANCE.reducedParticles
+                    || !INSTANCE.entityShadows
+                    || !INSTANCE.weatherEffects
+                    || INSTANCE.animationOptimization
+                    || INSTANCE.fogOptimization;
+
+            if (!controlVanilla) {
                 restoreVanillaPerformanceOptions(client);
                 syncFog(false);
                 return;
             }
 
             captureVanillaPerformanceOptions(client);
+
+            if (INSTANCE.performanceMode || INSTANCE.ultimateLocked) {
+                client.options.entityDistanceScaling().set(INSTANCE.ultimateLocked ? 0.5 : (INSTANCE.competitiveMode ? 0.65 : 0.75));
+                client.options.vignette().set(false);
+                client.options.ambientOcclusion().set(false);
+                client.options.chunkSectionFadeInTime().set(0.0);
+                client.options.enableVsync().set(false);
+                client.options.getMaxFps().set(OptionsLimit.maxFps());
+            }
+
             client.options.entityShadows().set(INSTANCE.entityShadows);
-            client.options.entityDistanceScaling().set(INSTANCE.ultimateLocked ? 0.5 : (INSTANCE.competitiveMode ? 0.65 : 0.75));
             client.options.weatherRadius().set(INSTANCE.weatherEffects ? 32 : 0);
             client.options.cloudStatus().set(INSTANCE.weatherEffects ? CloudStatus.FANCY : CloudStatus.OFF);
-            client.options.particles().set(INSTANCE.disableParticles ? ParticleStatus.MINIMAL : ParticleStatus.DECREASED);
-            client.options.vignette().set(false);
-            client.options.ambientOcclusion().set(false);
-            client.options.chunkSectionFadeInTime().set(0.0);
+            client.options.particles().set(INSTANCE.disableParticles ? ParticleStatus.MINIMAL : (INSTANCE.reducedParticles ? ParticleStatus.DECREASED : ParticleStatus.ALL));
             client.options.bobView().set(!INSTANCE.animationOptimization && !INSTANCE.competitiveMode);
             syncFog(INSTANCE.fogOptimization);
         } catch (Exception ignored) {
@@ -211,6 +228,7 @@ public final class VoidBoostConfig {
         result = 31 * result + (INSTANCE.competitiveMode ? 1 : 0);
         result = 31 * result + (INSTANCE.weatherEffects ? 1 : 0);
         result = 31 * result + (INSTANCE.disableParticles ? 1 : 0);
+        result = 31 * result + (INSTANCE.reducedParticles ? 1 : 0);
         result = 31 * result + (INSTANCE.animationOptimization ? 1 : 0);
         result = 31 * result + (INSTANCE.fogOptimization ? 1 : 0);
         return result;
@@ -227,6 +245,8 @@ public final class VoidBoostConfig {
         savedAmbientOcclusion = client.options.ambientOcclusion().get();
         savedChunkSectionFadeInTime = client.options.chunkSectionFadeInTime().get();
         savedBobView = client.options.bobView().get();
+        savedVsync = client.options.enableVsync().get();
+        savedMaxFps = client.options.getMaxFps().get();
         optionsCaptured = true;
     }
 
@@ -241,6 +261,8 @@ public final class VoidBoostConfig {
         client.options.ambientOcclusion().set(savedAmbientOcclusion);
         client.options.chunkSectionFadeInTime().set(savedChunkSectionFadeInTime);
         client.options.bobView().set(savedBobView);
+        client.options.enableVsync().set(savedVsync);
+        client.options.getMaxFps().set(savedMaxFps);
         optionsCaptured = false;
     }
 
@@ -278,5 +300,11 @@ public final class VoidBoostConfig {
         else if (smoothedFps > target + 22 && current < max) next = current + 1;
 
         if (next != current) client.options.renderDistance().set(next);
+    }
+
+    private static final class OptionsLimit {
+        private static int maxFps() {
+            return 260;
+        }
     }
 }
