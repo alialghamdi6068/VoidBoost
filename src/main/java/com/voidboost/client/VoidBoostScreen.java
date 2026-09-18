@@ -7,10 +7,12 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 /** High-end VoidBoost control center. */
 public final class VoidBoostScreen extends Screen {
     private static final int BG=0xFF07090D,SHELL=0xFF0B0F16,SIDE=0xFF090C12,CARD=0xFF101620,HOVER=0xFF171E2A,SEL=0xFF1D1730,BORDER=0xFF252D3A,ACCENT=0xFF9B7CFF,ACCENT_SOFT=0xFF5E4A8A,TEXT=0xFFF5F6FA,MUTED=0xFF8791A4,GOOD=0xFF75E0A4;
+    private static final Identifier LOGO_TEXTURE=Identifier.fromNamespaceAndPath("voidboost","textures/gui/voidboost_logo.png");
     private final Screen parent;
     private int page;
     private double scroll;
@@ -174,10 +176,11 @@ public final class VoidBoostScreen extends Screen {
         g.fill(left,top,right,top+2,ACCENT);
         g.fill(side,top+2,side+1,bottom,BORDER);
 
-        // Reserved logo frame. Intentionally blank until the real VoidBoost logo is supplied.
-        g.fill(left+14,39,left+52,77,0xFF141923);
-        g.fill(left+14,39,left+17,77,ACCENT);
-        g.fill(left+17,39,left+52,40,ACCENT_SOFT);
+        // VoidBoost artwork supplied for the mod branding.
+        g.fill(left+13,38,left+53,78,0xFF141923);
+        g.blit(LOGO_TEXTURE,left+15,40,0,0,36,36,64,64);
+        g.fill(left+14,39,left+16,77,ACCENT);
+        g.fill(left+16,39,left+52,41,ACCENT_SOFT);
 
         g.drawString(font,Component.literal("VoidBoost"),left+64,41,TEXT,false);
         g.drawString(font,Component.literal("PERFORMANCE SUITE"),left+64,57,MUTED,false);
