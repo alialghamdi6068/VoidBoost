@@ -52,7 +52,7 @@ public final class VoidBoostScreen extends Screen {
     }
 
     private void nav(int x,int y,int w,String label,int p) {
-        addRenderableWidget(new NavButton(x,y,w,38,label,p==page,()->{page=p;rebuildWidgets();}));
+        addRenderableWidget(new NavButton(x,y,w,label,p==page,()->{page=p;rebuildWidgets();}));
     }
 
     private void performance(int x,int y,int w,int h) {
@@ -205,7 +205,7 @@ public final class VoidBoostScreen extends Screen {
             box(g);g.drawString(font,Component.literal(title),getX()+16,getY()+10,TEXT,false);g.drawString(font,Component.literal(desc),getX()+16,getY()+28,MUTED,false);g.drawString(font,Component.literal(value),getX()+width-100,getY()+11,CYAN,false);
             int tx=getX()+16,tw=width-32,ty=getY()+45;g.fill(tx,ty,tx+tw,ty+3,0xFF263A49);int knob=tx+(int)((current-min)/(double)(max-min)*tw);g.fill(tx,ty,knob,ty+3,CYAN);g.fill(knob-4,ty-4,knob+5,ty+9,CYAN);
         }
-        @Override public void onClick(MouseButtonEvent e,boolean d){current=clampFromMouse(e.x()); if(kind==0)draggingRender=true;if(kind==1)draggingSimulation=true;if(kind==2)draggingFps=true;preview.accept(current);change.accept(current);rebuildWidgets();}
+        @Override public void onClick(MouseButtonEvent e,boolean d){current=clampFromMouse(e.x()); if(kind==0)draggingRender=true;if(kind==1)draggingSimulation=true;if(kind==2)draggingFps=true;preview.accept(current);change.accept(current);}
         private int clampFromMouse(double xx){int tx=getX()+16,tw=width-32;return clamp((int)Math.round(min+(xx-tx)/tw*(max-min)),min,max);}
     }
 
