@@ -609,6 +609,50 @@ public final class VoidBoostScreen extends Screen {
         }
     }
 
+    private final class IntSliderRow extends Base {
+        private final String title;
+        private final String description;
+        private final int min;
+        private final int max;
+        private int current;
+        private final java.util.function.IntConsumer change;
+
+        IntSliderRow(int x, int y, int w, int h, String title, String description,
+                     int current, int min, int max, java.util.function.IntConsumer change) {
+            super(x, y, w, h, title);
+            this.title = title;
+            this.description = description;
+            this.current = current;
+            this.min = min;
+            this.max = max;
+            this.change = change;
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float delta) {
+            drawRow(g);
+            g.drawString(font, Component.literal(title), getX() + 16, getY() + 10, TEXT, false);
+            g.drawString(font, Component.literal(description), getX() + 16, getY() + 28, MUTED, false);
+            g.drawString(font, Component.literal(current + " "), getX() + width - 64, getY() + 10, CYAN, false);
+
+            int tx = getX() + 16;
+            int tw = width - 32;
+            int ty = getY() + height - 10;
+            g.fill(tx, ty, tx + tw, ty + 3, 0xFF263A49);
+            double ratio = (current - min) / (double) (max - min);
+            int knob = tx + (int) Math.round(ratio * tw);
+            g.fill(tx, ty, knob, ty + 3, CYAN);
+            g.fill(knob - 4, ty - 4, knob + 5, ty + 9, CYAN);
+        }
+
+        @Override
+        public void onClick(MouseButtonEvent event, boolean doubleClick) {
+            current = sliderValue(event.x(), getX() + 16, width - 32, min, max);
+            change.accept(current);
+            VoidBoostConfig.get().markDirty();
+        }
+    }
+
     private final class ToggleRow extends Base {
         private final String title;
         private final String description;
