@@ -7,56 +7,46 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+
+import java.util.function.IntConsumer;
 
 /**
- * VoidBoost custom settings UI.
- *
- * Layout is intentionally based on the supplied VoidBoost reference artwork:
- * floating header, left navigation rail, large performance panel, cyan accents,
- * compact settings rows and no dependency on vanilla Video Settings.
+ * Compact performance-mod settings screen.
+ * The layout intentionally follows the familiar Sodium-style Minecraft mod UI:
+ * centered panel, compact category tabs, dense option rows and vanilla-like controls.
  */
 public final class VoidBoostScreen extends Screen {
-    private static final int BACKDROP = 0xB8040A12;
-    private static final int SIDE = 0xE60A111B;
-    private static final int PANEL = 0xE90B1420;
-    private static final int ROW = 0xD9141E2A;
-    private static final int ROW_HOVER = 0xE71C2935;
-    private static final int BORDER = 0x663B5368;
-    private static final int CYAN = 0xFF31D8FF;
-    private static final int CYAN_DIM = 0x6631D8FF;
-    private static final int TEXT = 0xFFF2F8FC;
-    private static final int MUTED = 0xFF91A8B8;
-
-    private static final Identifier LOGO =
-            Identifier.fromNamespaceAndPath("voidboost", "textures/gui/voidboost_logo.png");
+    private static final int BG = 0xB8000000;
+    private static final int PANEL = 0xF010141B;
+    private static final int PANEL_EDGE = 0xFF303943;
+    private static final int SECTION = 0xFF1B222B;
+    private static final int BUTTON = 0xFF252D36;
+    private static final int BUTTON_HOVER = 0xFF303A45;
+    private static final int BUTTON_EDGE = 0xFF3B4652;
+    private static final int TEXT = 0xFFE8EDF2;
+    private static final int MUTED = 0xFF9BA7B2;
+    private static final int ACCENT = 0xFF55C7FF;
+    private static final int ACCENT_DARK = 0xFF24556B;
 
     private final Screen parent;
     private int page = 1;
 
-    private boolean draggingRender;
-    private boolean draggingSimulation;
-    private boolean draggingFps;
-    private IntSliderRow draggingIntSlider;
-
-    private int renderDistance = 12;
-    private int simulationDistance = 8;
-    private int fps = 240;
+    private int renderDistance;
+    private int simulationDistance;
+    private int fps;
 
     public VoidBoostScreen(Screen parent) {
-        super(Component.literal("VoidBoost"));
+        super(Component.literal("VoidBoost Settings"));
         this.parent = parent;
     }
 
     @Override
     protected void init() {
-        Minecraft client = Minecraft.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         VoidBoostConfig c = VoidBoostConfig.get();
-
         renderDistance = clamp(c.maxRenderDistance, 4, 12);
-        simulationDistance = clamp(client.options.simulationDistance().get(), 5, 32);
+        simulationDistance = clamp(mc.options.simulationDistance().get(), 5, 32);
         fps = clamp(c.targetFps, 30, 1000);
-
         rebuildWidgets();
     }
 
@@ -64,246 +54,122 @@ public final class VoidBoostScreen extends Screen {
     protected void rebuildWidgets() {
         clearWidgets();
 
-        int[] l = layout();
-        int sx = l[0], py = l[1], sw = l[2], mainX = l[3], mainW = l[4], ph = l[5];
+        int[] b = bounds();
+        int x = b[0], y = b[1], w = b[2], h = b[3];
 
-        int navY = py + 100;
-        nav(sx + 12, navY, sw - 24, "General", 0);
-        nav(sx + 12, navY + 46, sw - 24, "Performance", 1);
-        nav(sx + 12, navY + 92, sw - 24, "Visuals", 2);
-        nav(sx + 12, navY + 138, sw - 24, "PvP", 3);
-        nav(sx + 12, navY + 184, sw - 24, "HUD", 4);
-        nav(sx + 12, navY + 230, sw - 24, "Advanced", 5);
-
-        if (page == 1) {
-            performance(mainX, py, mainW, ph);
-        } else if (page == 0) {
-            general(mainX, py, mainW, ph);
-        } else {
-            simplePage(mainX, py, mainW, ph, page);
+        int tabW = Math.max(118, (w - 40) / 6);
+        int tabY = y + 58;
+        String[] tabs = {"General", "Performance", "Visuals", "PvP", "HUD", "Advanced"};
+        for (int i = 0; i < tabs.length; i++) {
+            int tx = x + 20 + i * tabW;
+            addRenderableWidget(new TabButton(tx, tabY, tabW - 4, 26, tabs[i], i, i == page));
         }
+
+        int contentX = x + 24;
+        int contentY = y + 106;
+        int contentW = w - 48;
+
+        if (page == 0) general(contentX, contentY, contentW);
+        else if (page == 1) performance(contentX, contentY, contentW);
+        else simplePage(contentX, contentY, contentW, page);
     }
 
-    /**
-     * Reference canvas is 1536x1024 with the main panels starting around y=178
-     * and ending around y=946. Keep that vertical composition on large displays,
-     * while shrinking gracefully on smaller screens.
-     */
-    private int[] layout() {
-        int shellW = Math.min(width - 104, 1432);
-        int sideW = Math.min(306, Math.max(270, shellW / 5));
-        int mainW = shellW - sideW - 20;
-
-        int panelH = Math.min(768, Math.max(560, height - 256));
-        int panelY = Math.min(178, Math.max(72, height - panelH - 78));
-        int shellX = (width - shellW) / 2;
-        int mainX = shellX + sideW + 20;
-
-        return new int[]{shellX, panelY, sideW, mainX, mainW, panelH};
+    private int[] bounds() {
+        int w = Math.min(1040, Math.max(760, width - 80));
+        int h = Math.min(720, Math.max(540, height - 90));
+        int x = (width - w) / 2;
+        int y = Math.max(34, (height - h) / 2);
+        return new int[]{x, y, w, h};
     }
 
-    private void nav(int x, int y, int w, String label, int targetPage) {
-        addRenderableWidget(new NavButton(
-                x, y, w, label, targetPage == page,
-                () -> {
-                    page = targetPage;
-                    rebuildWidgets();
-                }
-        ));
-    }
-
-    private void performance(int x, int y, int w, int h) {
-        int rowY = y + 154;
-        int rowH = h < 650 ? 44 : 58;
-        int gap = h < 650 ? 8 : 14;
-
-        addRenderableWidget(new SliderRow(
-                x + 22, rowY, w - 44, rowH,
-                "Render Distance",
-                "How far you can see in the world.",
-                renderDistance + " Chunks",
-                4, 12, renderDistance, 0
-        ));
-        rowY += rowH + gap;
-
-        addRenderableWidget(new SliderRow(
-                x + 22, rowY, w - 44, rowH,
-                "Simulation Distance",
-                "How far game mechanics are simulated.",
-                simulationDistance + " Chunks",
-                5, 32, simulationDistance, 1
-        ));
-        rowY += rowH + gap;
-
-        addRenderableWidget(new SliderRow(
-                x + 22, rowY, w - 44, rowH,
-                "Max Framerate",
-                "Limits the FPS to reduce heat and lag.",
-                fps + " FPS",
-                30, 1000, fps, 2
-        ));
-        rowY += rowH + gap;
-
+    private void performance(int x, int y, int w) {
+        int rowH = 48;
+        int gap = 7;
+        addRenderableWidget(new SliderRow(x, y, w, rowH, "Render Distance",
+                "Maximum configured world view distance", renderDistance, 4, 12, "Chunks", 0));
+        y += rowH + gap;
+        addRenderableWidget(new SliderRow(x, y, w, rowH, "Simulation Distance",
+                "Distance at which game mechanics are simulated", simulationDistance, 5, 32, "Chunks", 1));
+        y += rowH + gap;
+        addRenderableWidget(new SliderRow(x, y, w, rowH, "Max Framerate",
+                "Limit FPS to reduce heat and unnecessary rendering", fps, 30, 1000, "FPS", 2));
+        y += rowH + gap;
         VoidBoostConfig c = VoidBoostConfig.get();
-
-        addRenderableWidget(new ToggleRow(
-                x + 22, rowY, w - 44, rowH,
-                "VSync",
-                "Synchronize frames with your monitor.",
-                !c.vsyncOptimization,
-                () -> {
+        addRenderableWidget(new ToggleRow(x, y, w, rowH, "VSync",
+                "Synchronize frames with the monitor", !c.vsyncOptimization, () -> {
                     c.vsyncOptimization = !c.vsyncOptimization;
                     c.markDirty();
                     rebuildWidgets();
-                }
-        ));
-        rowY += rowH + gap;
-
-        addRenderableWidget(new ChoiceRow(
-                x + 22, rowY, w - 44, rowH,
-                "Particles",
-                "Reduce particle effects for better performance.",
-                particles(),
-                this::cycleParticles
-        ));
-        rowY += rowH + gap;
-
-        addRenderableWidget(new ToggleRow(
-                x + 22, rowY, w - 44, rowH,
-                "Entity Shadows",
-                "Disable entity shadows to save resources.",
-                c.entityShadows,
-                () -> {
+                }));
+        y += rowH + gap;
+        addRenderableWidget(new ChoiceRow(x, y, w, rowH, "Particles",
+                "Choose how many particle effects are rendered", particles(), this::cycleParticles));
+        y += rowH + gap;
+        addRenderableWidget(new ToggleRow(x, y, w, rowH, "Entity Shadows",
+                "Render shadows beneath entities", c.entityShadows, () -> {
                     c.entityShadows = !c.entityShadows;
                     c.markDirty();
                     rebuildWidgets();
-                }
-        ));
-        rowY += rowH + gap;
-
-        addRenderableWidget(new ToggleRow(
-                x + 22, rowY, w - 44, rowH,
-                "FPS Boost",
-                "Applies additional optimizations (experimental).",
-                c.performanceMode,
-                () -> {
+                }));
+        y += rowH + gap;
+        addRenderableWidget(new ToggleRow(x, y, w, rowH, "FPS Boost",
+                "Enable VoidBoost performance optimizations", c.performanceMode, () -> {
                     c.performanceMode = !c.performanceMode;
                     c.markDirty();
                     rebuildWidgets();
-                }
-        ));
+                }));
     }
 
-    private void general(int x, int y, int w, int h) {
-        int rowY = y + 154;
-        int rowH = h < 650 ? 44 : 58;
-        int gap = h < 650 ? 8 : 14;
-
-        addRenderableWidget(new ProfileRow(
-                x + 22, rowY, w - 44, rowH,
-                "Balanced", "Stable everyday performance",
-                VoidBoostConfig::applyBalancedPreset
-        ));
-        rowY += rowH + gap;
-
-        addRenderableWidget(new ProfileRow(
-                x + 22, rowY, w - 44, rowH,
-                "Competitive", "Low-latency PvP profile",
-                VoidBoostConfig::applyCompetitivePreset
-        ));
-        rowY += rowH + gap;
-
-        addRenderableWidget(new ProfileRow(
-                x + 22, rowY, w - 44, rowH,
-                "MAX FPS", "Aggressive performance profile",
-                VoidBoostConfig::applyMaxFpsPreset
-        ));
-        rowY += rowH + gap;
-
-        addRenderableWidget(new ProfileRow(
-                x + 22, rowY, w - 44, rowH,
-                "ULTIMATE FPS", "Maximum performance profile",
-                VoidBoostConfig::applyUltimateLockedPreset
-        ));
+    private void general(int x, int y, int w) {
+        int rowH = 48;
+        int gap = 7;
+        addRenderableWidget(new ProfileRow(x, y, w, rowH, "Balanced",
+                "Stable everyday performance", VoidBoostConfig::applyBalancedPreset));
+        y += rowH + gap;
+        addRenderableWidget(new ProfileRow(x, y, w, rowH, "Competitive",
+                "Low-latency PvP profile", VoidBoostConfig::applyCompetitivePreset));
+        y += rowH + gap;
+        addRenderableWidget(new ProfileRow(x, y, w, rowH, "MAX FPS",
+                "Aggressive performance profile", VoidBoostConfig::applyMaxFpsPreset));
+        y += rowH + gap;
+        addRenderableWidget(new ProfileRow(x, y, w, rowH, "ULTIMATE FPS",
+                "Maximum performance profile", VoidBoostConfig::applyUltimateLockedPreset));
     }
 
-    private void simplePage(int x, int y, int w, int h, int p) {
-        int rowY = y + 154;
-        int rowH = h < 650 ? 44 : 58;
-        int gap = h < 650 ? 8 : 14;
-        int rw = w - 44;
+    private void simplePage(int x, int y, int w, int p) {
+        int rowH = 48;
+        int gap = 7;
         VoidBoostConfig c = VoidBoostConfig.get();
 
         if (p == 2) {
-            addToggle(x, rowY, rw, "Weather Effects", "Keep weather rendering enabled.", c.weatherEffects,
-                    () -> { c.weatherEffects = !c.weatherEffects; });
-            rowY += rowH + gap;
-            addToggle(x, rowY, rw, "Cloud Optimization", "Disable clouds to reduce render work.", c.cloudOptimization,
-                    () -> { c.cloudOptimization = !c.cloudOptimization; });
-            rowY += rowH + gap;
-            addToggle(x, rowY, rw, "Vignette Optimization", "Reduce the vignette rendering cost.", c.vignetteOptimization,
-                    () -> { c.vignetteOptimization = !c.vignetteOptimization; });
-            rowY += rowH + gap;
-            addToggle(x, rowY, rw, "Ambient Occlusion", "Reduce ambient occlusion calculations.", c.ambientOcclusionOptimization,
-                    () -> { c.ambientOcclusionOptimization = !c.ambientOcclusionOptimization; });
-            rowY += rowH + gap;
-            addToggle(x, rowY, rw, "Mipmap Optimization", "Lower mipmap work for better performance.", c.mipmapOptimization,
-                    () -> { c.mipmapOptimization = !c.mipmapOptimization; });
-            rowY += rowH + gap;
-            addToggle(x, rowY, rw, "Biome Blend Optimization", "Reduce biome color blending work.", c.biomeBlendOptimization,
-                    () -> { c.biomeBlendOptimization = !c.biomeBlendOptimization; });
-            rowY += rowH + gap;
-            addToggle(x, rowY, rw, "View Bob Optimization", "Disable view bobbing for lower visual overhead.", c.viewBobOptimization,
-                    () -> { c.viewBobOptimization = !c.viewBobOptimization; });
+            addToggle(x, y, w, "Weather Effects", "Keep weather rendering enabled", c.weatherEffects, () -> c.weatherEffects = !c.weatherEffects); y += rowH + gap;
+            addToggle(x, y, w, "Cloud Optimization", "Reduce cloud rendering work", c.cloudOptimization, () -> c.cloudOptimization = !c.cloudOptimization); y += rowH + gap;
+            addToggle(x, y, w, "Vignette Optimization", "Reduce vignette rendering cost", c.vignetteOptimization, () -> c.vignetteOptimization = !c.vignetteOptimization); y += rowH + gap;
+            addToggle(x, y, w, "Ambient Occlusion", "Reduce ambient occlusion calculations", c.ambientOcclusionOptimization, () -> c.ambientOcclusionOptimization = !c.ambientOcclusionOptimization); y += rowH + gap;
+            addToggle(x, y, w, "Mipmap Optimization", "Reduce texture mipmap work", c.mipmapOptimization, () -> c.mipmapOptimization = !c.mipmapOptimization); y += rowH + gap;
+            addToggle(x, y, w, "Biome Blend Optimization", "Reduce biome color blending", c.biomeBlendOptimization, () -> c.biomeBlendOptimization = !c.biomeBlendOptimization); y += rowH + gap;
+            addToggle(x, y, w, "View Bob Optimization", "Disable view bobbing overhead", c.viewBobOptimization, () -> c.viewBobOptimization = !c.viewBobOptimization);
         } else if (p == 3) {
-            addToggle(x, rowY, rw, "Competitive Mode", "Use the low-latency competitive profile.", c.competitiveMode,
-                    () -> { c.competitiveMode = !c.competitiveMode; });
-            rowY += rowH + gap;
-            addToggle(x, rowY, rw, "Entity Render Optimization", "Reduce distant entity rendering work.", c.entityRenderOptimization,
-                    () -> { c.entityRenderOptimization = !c.entityRenderOptimization; });
-            rowY += rowH + gap;
-            addToggle(x, rowY, rw, "Animation Optimization", "Reduce expensive animation updates.", c.animationOptimization,
-                    () -> { c.animationOptimization = !c.animationOptimization; });
-            rowY += rowH + gap;
-            addToggle(x, rowY, rw, "Fog Optimization", "Reduce fog rendering overhead.", c.fogOptimization,
-                    () -> { c.fogOptimization = !c.fogOptimization; });
-            rowY += rowH + gap;
-            addRenderableWidget(new IntSliderRow(x + 22, rowY, rw, rowH,
-                    "Entity Distance", "Maximum distance for entity processing.",
-                    c.maxEntityDistance, 32, 128, v -> c.maxEntityDistance = v));
+            addToggle(x, y, w, "Competitive Mode", "Use the low-latency competitive profile", c.competitiveMode, () -> c.competitiveMode = !c.competitiveMode); y += rowH + gap;
+            addToggle(x, y, w, "Entity Render Optimization", "Reduce distant entity rendering", c.entityRenderOptimization, () -> c.entityRenderOptimization = !c.entityRenderOptimization); y += rowH + gap;
+            addToggle(x, y, w, "Animation Optimization", "Reduce expensive animation updates", c.animationOptimization, () -> c.animationOptimization = !c.animationOptimization); y += rowH + gap;
+            addToggle(x, y, w, "Fog Optimization", "Reduce fog rendering overhead", c.fogOptimization, () -> c.fogOptimization = !c.fogOptimization); y += rowH + gap;
+            addRenderableWidget(new IntSliderRow(x, y, w, rowH, "Entity Distance", "Maximum entity processing distance", c.maxEntityDistance, 32, 128, v -> c.maxEntityDistance = v));
         } else if (p == 4) {
-            addToggle(x, rowY, rw, "Performance Monitor", "Show the VoidBoost performance monitor.", c.performanceMonitor,
-                    () -> { c.performanceMonitor = !c.performanceMonitor; });
-            rowY += rowH + gap;
-            addToggle(x, rowY, rw, "Dynamic Render Distance", "Adapt render distance to current FPS.", c.dynamicRenderDistance,
-                    () -> { c.dynamicRenderDistance = !c.dynamicRenderDistance; });
-            rowY += rowH + gap;
-            addRenderableWidget(new IntSliderRow(x + 22, rowY, rw, rowH,
-                    "Dynamic Target FPS", "FPS target used by adaptive rendering.",
-                    c.dynamicTargetFps, 60, 240, v -> c.dynamicTargetFps = v));
+            addToggle(x, y, w, "Performance Monitor", "Show the VoidBoost performance monitor", c.performanceMonitor, () -> c.performanceMonitor = !c.performanceMonitor); y += rowH + gap;
+            addToggle(x, y, w, "Dynamic Render Distance", "Adapt render distance to current FPS", c.dynamicRenderDistance, () -> c.dynamicRenderDistance = !c.dynamicRenderDistance); y += rowH + gap;
+            addRenderableWidget(new IntSliderRow(x, y, w, rowH, "Dynamic Target FPS", "FPS target used by adaptive rendering", c.dynamicTargetFps, 60, 240, v -> c.dynamicTargetFps = v));
         } else {
-            addToggle(x, rowY, rw, "Dynamic Render Distance", "Automatically adjust render distance.", c.dynamicRenderDistance,
-                    () -> { c.dynamicRenderDistance = !c.dynamicRenderDistance; });
-            rowY += rowH + gap;
-            addToggle(x, rowY, rw, "Animation Optimization", "Reduce animation update overhead.", c.animationOptimization,
-                    () -> { c.animationOptimization = !c.animationOptimization; });
-            rowY += rowH + gap;
-            addToggle(x, rowY, rw, "Fog Optimization", "Reduce fog rendering overhead.", c.fogOptimization,
-                    () -> { c.fogOptimization = !c.fogOptimization; });
-            rowY += rowH + gap;
-            addRenderableWidget(new IntSliderRow(x + 22, rowY, rw, rowH,
-                    "Dynamic Target FPS", "Target used by adaptive render distance.",
-                    c.dynamicTargetFps, 60, 240, v -> c.dynamicTargetFps = v));
-            rowY += rowH + gap;
-            addRenderableWidget(new IntSliderRow(x + 22, rowY, rw, rowH,
-                    "Max Entity Distance", "Limit distant entity processing.",
-                    c.maxEntityDistance, 32, 128, v -> c.maxEntityDistance = v));
+            addToggle(x, y, w, "Dynamic Render Distance", "Automatically adjust render distance", c.dynamicRenderDistance, () -> c.dynamicRenderDistance = !c.dynamicRenderDistance); y += rowH + gap;
+            addToggle(x, y, w, "Animation Optimization", "Reduce animation update overhead", c.animationOptimization, () -> c.animationOptimization = !c.animationOptimization); y += rowH + gap;
+            addToggle(x, y, w, "Fog Optimization", "Reduce fog rendering overhead", c.fogOptimization, () -> c.fogOptimization = !c.fogOptimization); y += rowH + gap;
+            addRenderableWidget(new IntSliderRow(x, y, w, rowH, "Dynamic Target FPS", "Target used by adaptive render distance", c.dynamicTargetFps, 60, 240, v -> c.dynamicTargetFps = v)); y += rowH + gap;
+            addRenderableWidget(new IntSliderRow(x, y, w, rowH, "Max Entity Distance", "Limit distant entity processing", c.maxEntityDistance, 32, 128, v -> c.maxEntityDistance = v));
         }
     }
 
     private void addToggle(int x, int y, int w, String title, String desc, boolean value, Runnable action) {
-        int rowH = layout()[5] < 650 ? 44 : 58;
-        addRenderableWidget(new ToggleRow(x + 22, y, w, rowH, title, desc, value, () -> {
+        addRenderableWidget(new ToggleRow(x, y, w, 48, title, desc, value, () -> {
             action.run();
             VoidBoostConfig.get().markDirty();
             rebuildWidgets();
@@ -319,125 +185,15 @@ public final class VoidBoostScreen extends Screen {
 
     private void cycleParticles() {
         VoidBoostConfig c = VoidBoostConfig.get();
-
-        if (!c.reducedParticles && !c.disableParticles) {
-            c.reducedParticles = true;
-        } else if (c.reducedParticles) {
-            c.reducedParticles = false;
-            c.disableParticles = true;
-        } else {
-            c.disableParticles = false;
-        }
-
+        if (!c.reducedParticles && !c.disableParticles) c.reducedParticles = true;
+        else if (c.reducedParticles) { c.reducedParticles = false; c.disableParticles = true; }
+        else c.disableParticles = false;
         c.markDirty();
         rebuildWidgets();
     }
 
-    @Override
-    public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
-        int closeX = width - 74;
-        if (e.x() >= closeX && e.y() <= 82) {
-            Minecraft.getInstance().setScreen(parent);
-            return true;
-        }
-        return super.mouseClicked(e, doubleClick);
-    }
-
-    @Override
-    public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
-        if (draggingRender || draggingSimulation || draggingFps) {
-            int[] l = layout();
-            int panelX = l[3];
-            int panelW = l[4];
-            int trackX = panelX + 22 + 16;
-            int trackW = panelW - 44 - 32;
-
-            if (draggingRender) {
-                renderDistance = sliderValue(e.x(), trackX, trackW, 4, 12);
-                VoidBoostConfig.get().maxRenderDistance = renderDistance;
-            } else if (draggingSimulation) {
-                simulationDistance = sliderValue(e.x(), trackX, trackW, 5, 32);
-                Minecraft.getInstance().options.simulationDistance().set(simulationDistance);
-            } else {
-                fps = sliderValue(e.x(), trackX, trackW, 30, 1000);
-                VoidBoostConfig.get().targetFps = fps;
-            }
-
-            return true;
-        }
-
-        if (draggingIntSlider != null) {
-            draggingIntSlider.dragTo(e.x());
-            return true;
-        }
-
-        return super.mouseDragged(e, dx, dy);
-    }
-
-    @Override
-    public boolean mouseReleased(MouseButtonEvent e) {
-        boolean wasDragging = draggingRender || draggingSimulation || draggingFps || draggingIntSlider != null;
-        if (wasDragging) {
-            VoidBoostConfig.get().markDirty();
-            Minecraft.getInstance().options.save();
-        }
-
-        draggingRender = false;
-        draggingSimulation = false;
-        draggingFps = false;
-        draggingIntSlider = null;
-        return super.mouseReleased(e);
-    }
-
-    private int sliderValue(double mouseX, int x, int w, int min, int max) {
-        double t = (mouseX - x) / (double) w;
-        t = Math.max(0.0, Math.min(1.0, t));
-        return clamp((int) Math.round(min + t * (max - min)), min, max);
-    }
-
-    @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
-        int[] l = layout();
-        int sx = l[0], py = l[1], sw = l[2], mainX = l[3], mainW = l[4], ph = l[5];
-        int bottom = py + ph;
-
-        // World remains visible through the dark VoidBoost overlay.
-        g.fill(0, 0, width, height, BACKDROP);
-
-        // Branding/header area.
-        g.blit(LOGO, sx, 48, 0, 0, 64, 64, 64, 64);
-        g.drawString(font, Component.literal("VOIDBOOST"), sx + 76, 51, TEXT, false);
-        g.drawString(font, Component.literal("More FPS • Smoother • Better"), sx + 76, 69, MUTED, false);
-
-        g.drawString(
-                font,
-                Component.literal("Minecraft 1.21.11 | Fabric"),
-                mainX + mainW - 188,
-                58,
-                MUTED,
-                false
-        );
-
-        // Close X, drawn rather than using a text glyph.
-        drawClose(g, width - 55, 58);
-
-        // Main floating panels.
-        g.fill(sx, py, sx + sw, bottom, SIDE);
-        g.fill(mainX, py, mainX + mainW, bottom, PANEL);
-
-        // Thin cyan top edges exactly where the reference establishes hierarchy.
-        g.fill(sx, py, sx + sw, py + 2, CYAN);
-        g.fill(mainX, py, mainX + mainW, py + 2, CYAN);
-
-        // Sidebar title and footer.
-        g.drawString(font, Component.literal("VOIDBOOST"), sx + 20, py + 24, TEXT, false);
-        g.drawString(font, Component.literal("Boost your game"), sx + 20, py + 42, MUTED, false);
-
-        g.drawString(font, Component.literal("VOIDBOOST"), sx + 20, bottom - 50, MUTED, false);
-        g.drawString(font, Component.literal("Boost your game"), sx + 20, bottom - 33, MUTED, false);
-
-        // Main page heading.
-        String title = switch (page) {
+    private String pageTitle() {
+        return switch (page) {
             case 0 -> "General";
             case 1 -> "Performance";
             case 2 -> "Visuals";
@@ -445,64 +201,63 @@ public final class VoidBoostScreen extends Screen {
             case 4 -> "HUD";
             default -> "Advanced";
         };
+    }
 
-        String subtitle = page == 1
-                ? "Optimize your game for higher FPS and smoother gameplay."
-                : "VoidBoost client-side controls.";
+    @Override
+    public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
+        int[] b = bounds();
+        int x = b[0], y = b[1], w = b[2], h = b[3];
 
-        drawGaugeIcon(g, mainX + 24, py + 24);
-        g.drawString(font, Component.literal(title), mainX + 50, py + 24, TEXT, false);
-        g.drawString(font, Component.literal(subtitle), mainX + 50, py + 43, MUTED, false);
+        g.fill(0, 0, width, height, BG);
+        g.fill(x, y, x + w, y + h, PANEL);
+        g.fill(x, y, x + w, y + 2, ACCENT);
+        g.fill(x, y, x + 1, y + h, PANEL_EDGE);
+        g.fill(x + w - 1, y, x + w, y + h, PANEL_EDGE);
+        g.fill(x, y + 88, x + w, y + 89, PANEL_EDGE);
 
-        g.fill(mainX + 22, py + 72, mainX + mainW - 22, py + 73, BORDER);
+        g.drawCenteredString(font, Component.literal("VoidBoost"), width / 2, y + 12, TEXT);
+        g.drawCenteredString(font, Component.literal(pageTitle()), width / 2, y + 31, MUTED);
 
-        // Subtle right-side scroll rail, matching the reference panel treatment.
-        g.fill(mainX + mainW - 13, py + 88, mainX + mainW - 9, bottom - 18, 0x44314A5A);
+        g.drawString(font, Component.literal("Minecraft 1.21.11 • Fabric"), x + 14, y + 14, MUTED, false);
+        g.drawString(font, Component.literal("X"), x + w - 20, y + 14, TEXT, false);
 
         super.render(g, mouseX, mouseY, delta);
 
-        // Fade the area below the floating panels.
-        g.fill(0, bottom, width, height, 0x55040A12);
+        g.drawCenteredString(font, Component.literal("VoidBoost • Performance settings"), width / 2, y + h - 18, MUTED);
     }
 
-    private static void drawClose(GuiGraphics g, int cx, int cy) {
-        g.fill(cx - 6, cy - 7, cx - 4, cy - 2, TEXT);
-        g.fill(cx + 4, cy - 7, cx + 6, cy - 2, TEXT);
-        g.fill(cx - 4, cy - 3, cx + 4, cy + 3, TEXT);
-        g.fill(cx - 6, cy + 2, cx - 4, cy + 7, TEXT);
-        g.fill(cx + 4, cy + 2, cx + 6, cy + 7, TEXT);
+    @Override
+    public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
+        int[] b = bounds();
+        int x = b[0], y = b[1], w = b[2];
+        if (e.x() >= x + w - 38 && e.x() <= x + w && e.y() >= y && e.y() <= y + 38) {
+            Minecraft.getInstance().setScreen(parent);
+            return true;
+        }
+        return super.mouseClicked(e, doubleClick);
     }
 
-    private static void drawGaugeIcon(GuiGraphics g, int x, int y) {
-        g.fill(x, y + 8, x + 22, y + 10, CYAN);
-        g.fill(x + 2, y + 5, x + 4, y + 8, CYAN);
-        g.fill(x + 18, y + 5, x + 20, y + 8, CYAN);
-        g.fill(x + 10, y + 2, x + 12, y + 9, CYAN);
-        g.fill(x + 10, y + 8, x + 14, y + 10, CYAN);
+    @Override
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent e) {
+        if (e.key() == 256) {
+            Minecraft.getInstance().setScreen(parent);
+            return true;
+        }
+        return super.keyPressed(e);
     }
 
     private abstract static class Base extends AbstractWidget {
-        Base(int x, int y, int w, int h, String narration) {
-            super(x, y, w, h, Component.literal(narration));
+        Base(int x, int y, int w, int h, String name) {
+            super(x, y, w, h, Component.literal(name));
         }
 
-        protected void drawRow(GuiGraphics g) {
-            int color = isHovered() ? ROW_HOVER : ROW;
-            g.fill(getX(), getY(), getX() + width, getY() + height, color);
-            g.fill(
-                    getX(),
-                    getY(),
-                    getX() + 1,
-                    getY() + height,
-                    isHovered() ? CYAN_DIM : BORDER
-            );
-            g.fill(
-                    getX(),
-                    getY() + height - 1,
-                    getX() + width,
-                    getY() + height,
-                    BORDER
-            );
+        protected void box(GuiGraphics g) {
+            int bg = isHovered() ? BUTTON_HOVER : BUTTON;
+            g.fill(getX(), getY(), getX() + width, getY() + height, bg);
+            g.fill(getX(), getY(), getX() + width, getY() + 1, BUTTON_EDGE);
+            g.fill(getX(), getY() + height - 1, getX() + width, getY() + height, BUTTON_EDGE);
+            g.fill(getX(), getY(), getX() + 1, getY() + height, BUTTON_EDGE);
+            g.fill(getX() + width - 1, getY(), getX() + width, getY() + height, BUTTON_EDGE);
         }
 
         @Override
@@ -511,349 +266,244 @@ public final class VoidBoostScreen extends Screen {
         }
 
         @Override
-        public void onClick(MouseButtonEvent event, boolean doubleClick) {
-        }
+        public void onClick(MouseButtonEvent event, boolean doubleClick) {}
     }
 
-    private final class NavButton extends Base {
+    private final class TabButton extends Base {
         private final String label;
+        private final int target;
         private final boolean selected;
-        private final Runnable action;
 
-        NavButton(int x, int y, int w, String label, boolean selected, Runnable action) {
-            super(x, y, w, 38, label);
+        TabButton(int x, int y, int w, int h, String label, int target, boolean selected) {
+            super(x, y, w, h, label);
             this.label = label;
+            this.target = target;
             this.selected = selected;
-            this.action = action;
         }
 
         @Override
         protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float delta) {
-            int bg = selected ? 0xCC132A35 : (isHovered() ? ROW_HOVER : SIDE);
+            int bg = selected ? ACCENT_DARK : (isHovered() ? BUTTON_HOVER : SECTION);
             g.fill(getX(), getY(), getX() + width, getY() + height, bg);
-
-            if (selected) {
-                g.fill(getX(), getY(), getX() + 3, getY() + height, CYAN);
-            }
-
-            drawIcon(g, getX() + 16, getY() + 11, label, selected ? CYAN : MUTED);
-            g.drawString(
-                    font,
-                    Component.literal(label),
-                    getX() + 46,
-                    getY() + 13,
-                    selected ? TEXT : MUTED,
-                    false
-            );
+            g.fill(getX(), getY() + height - 2, getX() + width, getY() + height, selected ? ACCENT : BUTTON_EDGE);
+            g.drawCenteredString(font, Component.literal(label), getX() + width / 2, getY() + 8, selected ? TEXT : MUTED);
         }
 
         @Override
         public void onClick(MouseButtonEvent event, boolean doubleClick) {
-            action.run();
+            page = target;
+            rebuildWidgets();
         }
     }
 
     private final class SliderRow extends Base {
-        private final String title;
-        private final String description;
-        private final int min;
-        private final int max;
+        private final String title, description, unit;
+        private final int min, max, kind;
         private int current;
-        private final int kind;
+        private boolean dragging;
 
         SliderRow(int x, int y, int w, int h, String title, String description,
-                  String ignoredValue, int min, int max, int current, int kind) {
+                  int current, int min, int max, String unit, int kind) {
             super(x, y, w, h, title);
-            this.title = title;
-            this.description = description;
-            this.min = min;
-            this.max = max;
-            this.current = current;
-            this.kind = kind;
+            this.title = title; this.description = description; this.current = current;
+            this.min = min; this.max = max; this.unit = unit; this.kind = kind;
         }
 
         @Override
         protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float delta) {
-            drawRow(g);
+            box(g);
+            g.drawString(font, Component.literal(title), getX() + 12, getY() + 8, TEXT, false);
+            g.drawString(font, Component.literal(description), getX() + 12, getY() + 25, MUTED, false);
 
-            String value = switch (kind) {
-                case 0 -> renderDistance + " Chunks";
-                case 1 -> simulationDistance + " Chunks";
-                default -> fps + " FPS";
-            };
+            String value = current + " " + unit;
+            g.drawString(font, Component.literal(value), getX() + width - font.width(value) - 12, getY() + 8, ACCENT, false);
 
-            g.drawString(font, Component.literal(title), getX() + 16, getY() + 10, TEXT, false);
-            g.drawString(font, Component.literal(description), getX() + 16, getY() + 28, MUTED, false);
-            g.drawString(font, Component.literal(value), getX() + width - 104, getY() + 10, CYAN, false);
-
-            int tx = getX() + 16;
-            int tw = width - 32;
-            int ty = getY() + height - 10;
-            g.fill(tx, ty, tx + tw, ty + 3, 0xFF263A49);
-
-            double ratio = (current - min) / (double) (max - min);
-            int knob = tx + (int) Math.round(ratio * tw);
-
-            g.fill(tx, ty, knob, ty + 3, CYAN);
-            g.fill(knob - 4, ty - 4, knob + 5, ty + 9, CYAN);
+            int tx = getX() + 12, tw = width - 24, ty = getY() + height - 9;
+            g.fill(tx, ty, tx + tw, ty + 3, 0xFF11171D);
+            int knob = tx + (int) Math.round(((current - min) / (double)(max - min)) * tw);
+            g.fill(tx, ty, knob, ty + 3, ACCENT);
+            g.fill(knob - 3, ty - 3, knob + 4, ty + 7, ACCENT);
         }
 
         @Override
-        public void onClick(MouseButtonEvent event, boolean doubleClick) {
-            dragTo(event.x());
+        public void onClick(MouseButtonEvent e, boolean doubleClick) {
+            dragging = true;
+            setValue(e.x());
         }
 
         @Override
-        public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-            dragTo(event.x());
-            return true;
+        public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
+            if (dragging) setValue(e.x());
+            return dragging;
         }
 
         @Override
-        public boolean mouseReleased(MouseButtonEvent event) {
-            VoidBoostConfig.get().markDirty();
-            Minecraft.getInstance().options.save();
-            return true;
-        }
-
-        private void dragTo(double mouseX) {
-            current = sliderValue(mouseX, getX() + 16, width - 32, min, max);
-
-            if (kind == 0) {
-                renderDistance = current;
-                VoidBoostConfig.get().maxRenderDistance = current;
-            } else if (kind == 1) {
-                simulationDistance = current;
-                Minecraft.getInstance().options.simulationDistance().set(current);
-            } else {
-                fps = current;
-                VoidBoostConfig.get().targetFps = current;
+        public boolean mouseReleased(MouseButtonEvent e) {
+            if (dragging) {
+                dragging = false;
+                VoidBoostConfig.get().markDirty();
+                Minecraft.getInstance().options.save();
+                return true;
             }
+            return false;
+        }
+
+        private void setValue(double mx) {
+            int tx = getX() + 12, tw = width - 24;
+            double t = Math.max(0, Math.min(1, (mx - tx) / (double) tw));
+            current = clamp((int)Math.round(min + t * (max - min)), min, max);
+            if (kind == 0) { renderDistance = current; VoidBoostConfig.get().maxRenderDistance = current; }
+            else if (kind == 1) { simulationDistance = current; Minecraft.getInstance().options.simulationDistance().set(current); }
+            else { fps = current; VoidBoostConfig.get().targetFps = current; }
         }
     }
 
     private final class IntSliderRow extends Base {
-        private final String title;
-        private final String description;
-        private final int min;
-        private final int max;
+        private final String title, description;
+        private final int min, max;
         private int current;
-        private final java.util.function.IntConsumer change;
+        private final IntConsumer change;
+        private boolean dragging;
 
         IntSliderRow(int x, int y, int w, int h, String title, String description,
-                     int current, int min, int max, java.util.function.IntConsumer change) {
+                     int current, int min, int max, IntConsumer change) {
             super(x, y, w, h, title);
-            this.title = title;
-            this.description = description;
-            this.current = current;
-            this.min = min;
-            this.max = max;
-            this.change = change;
+            this.title = title; this.description = description; this.current = current;
+            this.min = min; this.max = max; this.change = change;
         }
 
         @Override
         protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float delta) {
-            drawRow(g);
-            g.drawString(font, Component.literal(title), getX() + 16, getY() + 10, TEXT, false);
-            g.drawString(font, Component.literal(description), getX() + 16, getY() + 28, MUTED, false);
-            g.drawString(font, Component.literal(current + " "), getX() + width - 64, getY() + 10, CYAN, false);
-
-            int tx = getX() + 16;
-            int tw = width - 32;
-            int ty = getY() + height - 10;
-            g.fill(tx, ty, tx + tw, ty + 3, 0xFF263A49);
-            double ratio = (current - min) / (double) (max - min);
-            int knob = tx + (int) Math.round(ratio * tw);
-            g.fill(tx, ty, knob, ty + 3, CYAN);
-            g.fill(knob - 4, ty - 4, knob + 5, ty + 9, CYAN);
+            box(g);
+            g.drawString(font, Component.literal(title), getX() + 12, getY() + 8, TEXT, false);
+            g.drawString(font, Component.literal(description), getX() + 12, getY() + 25, MUTED, false);
+            String value = Integer.toString(current);
+            g.drawString(font, Component.literal(value), getX() + width - font.width(value) - 12, getY() + 8, ACCENT, false);
+            int tx = getX() + 12, tw = width - 24, ty = getY() + height - 9;
+            g.fill(tx, ty, tx + tw, ty + 3, 0xFF11171D);
+            int knob = tx + (int)Math.round(((current - min) / (double)(max - min)) * tw);
+            g.fill(tx, ty, knob, ty + 3, ACCENT);
+            g.fill(knob - 3, ty - 3, knob + 4, ty + 7, ACCENT);
         }
 
         @Override
-        public void onClick(MouseButtonEvent event, boolean doubleClick) {
-            dragTo(event.x());
-            draggingIntSlider = this;
+        public void onClick(MouseButtonEvent e, boolean doubleClick) {
+            dragging = true;
+            setValue(e.x());
         }
 
         @Override
-        public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-            dragTo(event.x());
-            return true;
+        public boolean mouseDragged(MouseButtonEvent e, double dx, double dy) {
+            if (dragging) setValue(e.x());
+            return dragging;
         }
 
         @Override
-        public boolean mouseReleased(MouseButtonEvent event) {
-            draggingIntSlider = null;
-            VoidBoostConfig.get().markDirty();
-            Minecraft.getInstance().options.save();
-            return true;
+        public boolean mouseReleased(MouseButtonEvent e) {
+            if (dragging) {
+                dragging = false;
+                VoidBoostConfig.get().markDirty();
+                Minecraft.getInstance().options.save();
+                return true;
+            }
+            return false;
         }
 
-        private void dragTo(double mouseX) {
-            current = sliderValue(mouseX, getX() + 16, width - 32, min, max);
+        private void setValue(double mx) {
+            int tx = getX() + 12, tw = width - 24;
+            double t = Math.max(0, Math.min(1, (mx - tx) / (double)tw));
+            current = clamp((int)Math.round(min + t * (max - min)), min, max);
             change.accept(current);
             VoidBoostConfig.get().markDirty();
         }
     }
 
     private final class ToggleRow extends Base {
-        private final String title;
-        private final String description;
+        private final String title, description;
         private final boolean on;
         private final Runnable action;
 
-        ToggleRow(int x, int y, int w, int h, String title, String description,
-                  boolean on, Runnable action) {
+        ToggleRow(int x, int y, int w, int h, String title, String description, boolean on, Runnable action) {
             super(x, y, w, h, title);
-            this.title = title;
-            this.description = description;
-            this.on = on;
-            this.action = action;
+            this.title = title; this.description = description; this.on = on; this.action = action;
         }
 
         @Override
         protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float delta) {
-            drawRow(g);
-            g.drawString(font, Component.literal(title), getX() + 16, getY() + 10, TEXT, false);
-            g.drawString(font, Component.literal(description), getX() + 16, getY() + 28, MUTED, false);
+            box(g);
+            g.drawString(font, Component.literal(title), getX() + 12, getY() + 8, TEXT, false);
+            g.drawString(font, Component.literal(description), getX() + 12, getY() + 25, MUTED, false);
 
             String state = on ? "ON" : "OFF";
-            int controlX = getX() + width - 62;
-            g.drawString(font, Component.literal(state), controlX - 42, getY() + 21,
-                    on ? CYAN : MUTED, false);
-            drawToggle(g, controlX, getY() + 17, on);
+            int sx = getX() + width - font.width(state) - 42;
+            g.drawString(font, Component.literal(state), sx, getY() + 18, on ? ACCENT : MUTED, false);
+
+            int cx = getX() + width - 26, cy = getY() + 15;
+            g.fill(cx - 7, cy - 7, cx + 8, cy + 8, on ? ACCENT : BUTTON_EDGE);
+            if (on) {
+                g.fill(cx - 3, cy - 3, cx + 4, cy + 4, ACCENT_DARK);
+                g.fill(cx - 1, cy - 1, cx + 3, cy + 3, ACCENT);
+            } else {
+                g.fill(cx - 5, cy - 5, cx + 6, cy + 6, 0xFF141A20);
+            }
         }
 
         @Override
-        public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        public void onClick(MouseButtonEvent e, boolean doubleClick) {
             action.run();
         }
     }
 
     private final class ChoiceRow extends Base {
-        private final String title;
-        private final String description;
-        private final String value;
+        private final String title, description, value;
         private final Runnable action;
 
-        ChoiceRow(int x, int y, int w, int h, String title, String description,
-                  String value, Runnable action) {
+        ChoiceRow(int x, int y, int w, int h, String title, String description, String value, Runnable action) {
             super(x, y, w, h, title);
-            this.title = title;
-            this.description = description;
-            this.value = value;
-            this.action = action;
+            this.title = title; this.description = description; this.value = value; this.action = action;
         }
 
         @Override
         protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float delta) {
-            drawRow(g);
-            g.drawString(font, Component.literal(title), getX() + 16, getY() + 10, TEXT, false);
-            g.drawString(font, Component.literal(description), getX() + 16, getY() + 28, MUTED, false);
-            g.drawString(font, Component.literal(value), getX() + width - 104, getY() + 21, CYAN, false);
-            drawChevron(g, getX() + width - 22, getY() + 21, MUTED);
+            box(g);
+            g.drawString(font, Component.literal(title), getX() + 12, getY() + 8, TEXT, false);
+            g.drawString(font, Component.literal(description), getX() + 12, getY() + 25, MUTED, false);
+            g.drawString(font, Component.literal(value), getX() + width - font.width(value) - 30, getY() + 17, ACCENT, false);
+            g.drawString(font, Component.literal("›"), getX() + width - 16, getY() + 17, MUTED, false);
         }
 
         @Override
-        public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        public void onClick(MouseButtonEvent e, boolean doubleClick) {
             action.run();
         }
     }
 
     private final class ProfileRow extends Base {
-        private final String title;
-        private final String description;
+        private final String title, description;
         private final Runnable action;
 
         ProfileRow(int x, int y, int w, int h, String title, String description, Runnable action) {
             super(x, y, w, h, title);
-            this.title = title;
-            this.description = description;
-            this.action = action;
+            this.title = title; this.description = description; this.action = action;
         }
 
         @Override
         protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float delta) {
-            drawRow(g);
-            g.drawString(font, Component.literal(title), getX() + 16, getY() + 10, TEXT, false);
-            g.drawString(font, Component.literal(description), getX() + 16, getY() + 28, MUTED, false);
-            g.drawString(font, Component.literal("APPLY"), getX() + width - 58, getY() + 21, CYAN, false);
+            box(g);
+            g.drawString(font, Component.literal(title), getX() + 12, getY() + 8, TEXT, false);
+            g.drawString(font, Component.literal(description), getX() + 12, getY() + 25, MUTED, false);
+            g.drawString(font, Component.literal("APPLY"), getX() + width - font.width("APPLY") - 12, getY() + 17, ACCENT, false);
         }
 
         @Override
-        public void onClick(MouseButtonEvent event, boolean doubleClick) {
+        public void onClick(MouseButtonEvent e, boolean doubleClick) {
             action.run();
             Minecraft.getInstance().options.save();
             rebuildWidgets();
         }
     }
 
-    private final class InfoRow extends Base {
-        private final String title;
-        private final String description;
-
-        InfoRow(int x, int y, int w, int h, String title, String description) {
-            super(x, y, w, h, title);
-            this.title = title;
-            this.description = description;
-        }
-
-        @Override
-        protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float delta) {
-            drawRow(g);
-            g.drawString(font, Component.literal(title), getX() + 16, getY() + 10, TEXT, false);
-            g.drawString(font, Component.literal(description), getX() + 16, getY() + 28, MUTED, false);
-        }
-    }
-
-    private static void drawToggle(GuiGraphics g, int x, int y, boolean on) {
-        int border = on ? CYAN : BORDER;
-        g.fill(x, y, x + 18, y + 18, border);
-        g.fill(x + 2, y + 2, x + 16, y + 16, on ? CYAN_DIM : 0xFF121C25);
-        if (on) {
-            g.fill(x + 5, y + 8, x + 8, y + 11, CYAN);
-            g.fill(x + 8, y + 11, x + 14, y + 13, CYAN);
-            g.fill(x + 12, y + 5, x + 15, y + 11, CYAN);
-        }
-    }
-
-    private static void drawChevron(GuiGraphics g, int x, int y, int color) {
-        g.fill(x, y - 5, x + 2, y - 3, color);
-        g.fill(x + 2, y - 3, x + 4, y - 1, color);
-        g.fill(x + 4, y - 1, x + 6, y + 1, color);
-        g.fill(x + 2, y + 1, x + 4, y + 3, color);
-        g.fill(x, y + 3, x + 2, y + 5, color);
-    }
-
-    private static void drawIcon(GuiGraphics g, int x, int y, String label, int color) {
-        if (label.equals("General")) {
-            g.fill(x + 6, y, x + 8, y + 14, color);
-            g.fill(x + 2, y + 4, x + 12, y + 6, color);
-            g.fill(x + 3, y + 9, x + 11, y + 11, color);
-        } else if (label.equals("Performance")) {
-            g.fill(x, y + 9, x + 14, y + 11, color);
-            g.fill(x + 2, y + 6, x + 4, y + 9, color);
-            g.fill(x + 10, y + 4, x + 12, y + 9, color);
-            g.fill(x + 6, y + 3, x + 8, y + 9, color);
-        } else if (label.equals("Visuals")) {
-            g.fill(x + 1, y + 5, x + 13, y + 9, color);
-            g.fill(x + 5, y + 3, x + 9, y + 11, color);
-            g.fill(x + 6, y + 6, x + 8, y + 8, 0xFF0A111B);
-        } else if (label.equals("PvP")) {
-            g.fill(x + 2, y + 2, x + 4, y + 13, color);
-            g.fill(x + 10, y + 2, x + 12, y + 13, color);
-            g.fill(x + 3, y + 4, x + 11, y + 6, color);
-            g.fill(x + 3, y + 10, x + 11, y + 12, color);
-        } else if (label.equals("HUD")) {
-            g.fill(x + 2, y + 2, x + 12, y + 10, color);
-            g.fill(x + 5, y + 11, x + 9, y + 13, color);
-        } else {
-            g.fill(x + 1, y + 2, x + 13, y + 4, color);
-            g.fill(x + 1, y + 6, x + 13, y + 8, color);
-            g.fill(x + 1, y + 10, x + 13, y + 12, color);
-        }
-    }
-
-    private static int clamp(int value, int min, int max) {
-        return Math.max(min, Math.min(max, value));
+    private static int clamp(int v, int min, int max) {
+        return Math.max(min, Math.min(max, v));
     }
 }
