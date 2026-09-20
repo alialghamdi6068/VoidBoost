@@ -196,8 +196,8 @@ public final class VoidBoostScreen extends Screen {
 
     private void general(int x, int y, int w, int h) {
         int rowY = y + 154;
-        int rowH = 58;
-        int gap = 14;
+        int rowH = h < 650 ? 44 : 58;
+        int gap = h < 650 ? 8 : 14;
 
         addRenderableWidget(new ProfileRow(
                 x + 22, rowY, w - 44, rowH,
@@ -229,8 +229,8 @@ public final class VoidBoostScreen extends Screen {
 
     private void simplePage(int x, int y, int w, int h, int p) {
         int rowY = y + 154;
-        int rowH = 58;
-        int gap = 14;
+        int rowH = h < 650 ? 44 : 58;
+        int gap = h < 650 ? 8 : 14;
         int rw = w - 44;
         VoidBoostConfig c = VoidBoostConfig.get();
 
@@ -302,7 +302,8 @@ public final class VoidBoostScreen extends Screen {
     }
 
     private void addToggle(int x, int y, int w, String title, String desc, boolean value, Runnable action) {
-        addRenderableWidget(new ToggleRow(x + 22, y, w, 58, title, desc, value, () -> {
+        int rowH = layout()[5] < 650 ? 44 : 58;
+        addRenderableWidget(new ToggleRow(x + 22, y, w, rowH, title, desc, value, () -> {
             action.run();
             VoidBoostConfig.get().markDirty();
             rebuildWidgets();
