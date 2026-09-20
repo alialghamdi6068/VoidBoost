@@ -271,7 +271,7 @@ public final class VoidBoostScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
-        int closeX = width - 86;
+        int closeX = width - 74;
         if (e.x() >= closeX && e.y() <= 82) {
             Minecraft.getInstance().setScreen(parent);
             return true;
@@ -360,7 +360,7 @@ public final class VoidBoostScreen extends Screen {
 
         // Sidebar title and footer.
         g.drawString(font, Component.literal("VOIDBOOST"), sx + 20, py + 24, TEXT, false);
-        g.drawString(font, Component.literal("Performance Client"), sx + 20, py + 42, MUTED, false);
+        g.drawString(font, Component.literal("Boost your game"), sx + 20, py + 42, MUTED, false);
 
         g.drawString(font, Component.literal("VOIDBOOST"), sx + 20, bottom - 50, MUTED, false);
         g.drawString(font, Component.literal("Boost your game"), sx + 20, bottom - 33, MUTED, false);
