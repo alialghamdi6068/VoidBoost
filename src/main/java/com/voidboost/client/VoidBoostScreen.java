@@ -599,20 +599,34 @@ public final class VoidBoostScreen extends Screen {
 
         @Override
         public void onClick(MouseButtonEvent event, boolean doubleClick) {
-            current = sliderValue(event.x(), getX() + 16, width - 32, min, max);
+            dragTo(event.x());
+        }
+
+        @Override
+        public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+            dragTo(event.x());
+            return true;
+        }
+
+        @Override
+        public boolean mouseReleased(MouseButtonEvent event) {
+            VoidBoostConfig.get().markDirty();
+            Minecraft.getInstance().options.save();
+            return true;
+        }
+
+        private void dragTo(double mouseX) {
+            current = sliderValue(mouseX, getX() + 16, width - 32, min, max);
 
             if (kind == 0) {
                 renderDistance = current;
                 VoidBoostConfig.get().maxRenderDistance = current;
-                draggingRender = true;
             } else if (kind == 1) {
                 simulationDistance = current;
                 Minecraft.getInstance().options.simulationDistance().set(current);
-                draggingSimulation = true;
             } else {
                 fps = current;
                 VoidBoostConfig.get().targetFps = current;
-                draggingFps = true;
             }
         }
     }
@@ -657,6 +671,20 @@ public final class VoidBoostScreen extends Screen {
         public void onClick(MouseButtonEvent event, boolean doubleClick) {
             dragTo(event.x());
             draggingIntSlider = this;
+        }
+
+        @Override
+        public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+            dragTo(event.x());
+            return true;
+        }
+
+        @Override
+        public boolean mouseReleased(MouseButtonEvent event) {
+            draggingIntSlider = null;
+            VoidBoostConfig.get().markDirty();
+            Minecraft.getInstance().options.save();
+            return true;
         }
 
         private void dragTo(double mouseX) {
