@@ -37,6 +37,7 @@ public final class VoidBoostScreen extends Screen {
     private boolean draggingRender;
     private boolean draggingSimulation;
     private boolean draggingFps;
+    private IntSliderRow draggingIntSlider;
 
     private int renderDistance = 12;
     private int simulationDistance = 8;
@@ -113,8 +114,8 @@ public final class VoidBoostScreen extends Screen {
 
     private void performance(int x, int y, int w, int h) {
         int rowY = y + 154;
-        int rowH = 58;
-        int gap = 14;
+        int rowH = h < 650 ? 44 : 58;
+        int gap = h < 650 ? 8 : 14;
 
         addRenderableWidget(new SliderRow(
                 x + 22, rowY, w - 44, rowH,
@@ -364,12 +365,18 @@ public final class VoidBoostScreen extends Screen {
             return true;
         }
 
+        if (draggingIntSlider != null) {
+            draggingIntSlider.dragTo(e.x());
+            return true;
+        }
+
         return super.mouseDragged(e, dx, dy);
     }
 
     @Override
     public boolean mouseReleased(MouseButtonEvent e) {
-        if (draggingRender || draggingSimulation || draggingFps) {
+        boolean wasDragging = draggingRender || draggingSimulation || draggingFps || draggingIntSlider != null;
+        if (wasDragging) {
             VoidBoostConfig.get().markDirty();
             Minecraft.getInstance().options.save();
         }
@@ -377,6 +384,7 @@ public final class VoidBoostScreen extends Screen {
         draggingRender = false;
         draggingSimulation = false;
         draggingFps = false;
+        draggingIntSlider = null;
         return super.mouseReleased(e);
     }
 
@@ -647,7 +655,12 @@ public final class VoidBoostScreen extends Screen {
 
         @Override
         public void onClick(MouseButtonEvent event, boolean doubleClick) {
-            current = sliderValue(event.x(), getX() + 16, width - 32, min, max);
+            dragTo(event.x());
+            draggingIntSlider = this;
+        }
+
+        private void dragTo(double mouseX) {
+            current = sliderValue(mouseX, getX() + 16, width - 32, min, max);
             change.accept(current);
             VoidBoostConfig.get().markDirty();
         }
@@ -675,9 +688,10 @@ public final class VoidBoostScreen extends Screen {
             g.drawString(font, Component.literal(description), getX() + 16, getY() + 28, MUTED, false);
 
             String state = on ? "ON" : "OFF";
-            g.drawString(font, Component.literal(state), getX() + width - 104, getY() + 21,
+            int controlX = getX() + width - 62;
+            g.drawString(font, Component.literal(state), controlX - 42, getY() + 21,
                     on ? CYAN : MUTED, false);
-            drawToggle(g, getX() + width - 58, getY() + 17, on);
+            drawToggle(g, controlX, getY() + 17, on);
         }
 
         @Override
@@ -707,7 +721,7 @@ public final class VoidBoostScreen extends Screen {
             g.drawString(font, Component.literal(title), getX() + 16, getY() + 10, TEXT, false);
             g.drawString(font, Component.literal(description), getX() + 16, getY() + 28, MUTED, false);
             g.drawString(font, Component.literal(value), getX() + width - 104, getY() + 21, CYAN, false);
-            g.drawString(font, Component.literal("›"), getX() + width - 20, getY() + 20, MUTED, false);
+            drawChevron(g, getX() + width - 22, getY() + 21, MUTED);
         }
 
         @Override
@@ -763,14 +777,22 @@ public final class VoidBoostScreen extends Screen {
     }
 
     private static void drawToggle(GuiGraphics g, int x, int y, boolean on) {
-        g.fill(x, y, x + 42, y + 20, on ? CYAN_DIM : 0xFF1A2631);
-        g.fill(
-                x + (on ? 23 : 2),
-                y + 2,
-                x + (on ? 39 : 18),
-                y + 18,
-                on ? CYAN : 0xFF71818B
-        );
+        int border = on ? CYAN : BORDER;
+        g.fill(x, y, x + 18, y + 18, border);
+        g.fill(x + 2, y + 2, x + 16, y + 16, on ? CYAN_DIM : 0xFF121C25);
+        if (on) {
+            g.fill(x + 5, y + 8, x + 8, y + 11, CYAN);
+            g.fill(x + 8, y + 11, x + 14, y + 13, CYAN);
+            g.fill(x + 12, y + 5, x + 15, y + 11, CYAN);
+        }
+    }
+
+    private static void drawChevron(GuiGraphics g, int x, int y, int color) {
+        g.fill(x, y - 5, x + 2, y - 3, color);
+        g.fill(x + 2, y - 3, x + 4, y - 1, color);
+        g.fill(x + 4, y - 1, x + 6, y + 1, color);
+        g.fill(x + 2, y + 1, x + 4, y + 3, color);
+        g.fill(x, y + 3, x + 2, y + 5, color);
     }
 
     private static void drawIcon(GuiGraphics g, int x, int y, String label, int color) {
