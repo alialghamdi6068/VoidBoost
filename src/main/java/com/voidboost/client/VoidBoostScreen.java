@@ -227,23 +227,85 @@ public final class VoidBoostScreen extends Screen {
     }
 
     private void simplePage(int x, int y, int w, int h, int p) {
-        String title = switch (p) {
-            case 2 -> "Visuals";
-            case 3 -> "PvP";
-            case 4 -> "HUD";
-            default -> "Advanced";
-        };
+        int rowY = y + 154;
+        int rowH = 58;
+        int gap = 14;
+        int rw = w - 44;
+        VoidBoostConfig c = VoidBoostConfig.get();
 
-        String desc = switch (p) {
-            case 2 -> "Visual rendering controls and optimization.";
-            case 3 -> "Low-latency combat settings.";
-            case 4 -> "On-screen performance information.";
-            default -> "Advanced client-side controls.";
-        };
+        if (p == 2) {
+            addToggle(x, rowY, rw, "Weather Effects", "Keep weather rendering enabled.", c.weatherEffects,
+                    () -> { c.weatherEffects = !c.weatherEffects; });
+            rowY += rowH + gap;
+            addToggle(x, rowY, rw, "Cloud Optimization", "Disable clouds to reduce render work.", c.cloudOptimization,
+                    () -> { c.cloudOptimization = !c.cloudOptimization; });
+            rowY += rowH + gap;
+            addToggle(x, rowY, rw, "Vignette Optimization", "Reduce the vignette rendering cost.", c.vignetteOptimization,
+                    () -> { c.vignetteOptimization = !c.vignetteOptimization; });
+            rowY += rowH + gap;
+            addToggle(x, rowY, rw, "Ambient Occlusion", "Reduce ambient occlusion calculations.", c.ambientOcclusionOptimization,
+                    () -> { c.ambientOcclusionOptimization = !c.ambientOcclusionOptimization; });
+            rowY += rowH + gap;
+            addToggle(x, rowY, rw, "Mipmap Optimization", "Lower mipmap work for better performance.", c.mipmapOptimization,
+                    () -> { c.mipmapOptimization = !c.mipmapOptimization; });
+            rowY += rowH + gap;
+            addToggle(x, rowY, rw, "Biome Blend Optimization", "Reduce biome color blending work.", c.biomeBlendOptimization,
+                    () -> { c.biomeBlendOptimization = !c.biomeBlendOptimization; });
+            rowY += rowH + gap;
+            addToggle(x, rowY, rw, "View Bob Optimization", "Disable view bobbing for lower visual overhead.", c.viewBobOptimization,
+                    () -> { c.viewBobOptimization = !c.viewBobOptimization; });
+        } else if (p == 3) {
+            addToggle(x, rowY, rw, "Competitive Mode", "Use the low-latency competitive profile.", c.competitiveMode,
+                    () -> { c.competitiveMode = !c.competitiveMode; });
+            rowY += rowH + gap;
+            addToggle(x, rowY, rw, "Entity Render Optimization", "Reduce distant entity rendering work.", c.entityRenderOptimization,
+                    () -> { c.entityRenderOptimization = !c.entityRenderOptimization; });
+            rowY += rowH + gap;
+            addToggle(x, rowY, rw, "Animation Optimization", "Reduce expensive animation updates.", c.animationOptimization,
+                    () -> { c.animationOptimization = !c.animationOptimization; });
+            rowY += rowH + gap;
+            addToggle(x, rowY, rw, "Fog Optimization", "Reduce fog rendering overhead.", c.fogOptimization,
+                    () -> { c.fogOptimization = !c.fogOptimization; });
+            rowY += rowH + gap;
+            addRenderableWidget(new IntSliderRow(x + 22, rowY, rw, rowH,
+                    "Entity Distance", "Maximum distance for entity processing.",
+                    c.maxEntityDistance, 32, 128, v -> c.maxEntityDistance = v));
+        } else if (p == 4) {
+            addToggle(x, rowY, rw, "Performance Monitor", "Show the VoidBoost performance monitor.", c.performanceMonitor,
+                    () -> { c.performanceMonitor = !c.performanceMonitor; });
+            rowY += rowH + gap;
+            addToggle(x, rowY, rw, "Dynamic Render Distance", "Adapt render distance to current FPS.", c.dynamicRenderDistance,
+                    () -> { c.dynamicRenderDistance = !c.dynamicRenderDistance; });
+            rowY += rowH + gap;
+            addRenderableWidget(new IntSliderRow(x + 22, rowY, rw, rowH,
+                    "Dynamic Target FPS", "FPS target used by adaptive rendering.",
+                    c.dynamicTargetFps, 60, 240, v -> c.dynamicTargetFps = v));
+        } else {
+            addToggle(x, rowY, rw, "Dynamic Render Distance", "Automatically adjust render distance.", c.dynamicRenderDistance,
+                    () -> { c.dynamicRenderDistance = !c.dynamicRenderDistance; });
+            rowY += rowH + gap;
+            addToggle(x, rowY, rw, "Animation Optimization", "Reduce animation update overhead.", c.animationOptimization,
+                    () -> { c.animationOptimization = !c.animationOptimization; });
+            rowY += rowH + gap;
+            addToggle(x, rowY, rw, "Fog Optimization", "Reduce fog rendering overhead.", c.fogOptimization,
+                    () -> { c.fogOptimization = !c.fogOptimization; });
+            rowY += rowH + gap;
+            addRenderableWidget(new IntSliderRow(x + 22, rowY, rw, rowH,
+                    "Dynamic Target FPS", "Target used by adaptive render distance.",
+                    c.dynamicTargetFps, 60, 240, v -> c.dynamicTargetFps = v));
+            rowY += rowH + gap;
+            addRenderableWidget(new IntSliderRow(x + 22, rowY, rw, rowH,
+                    "Max Entity Distance", "Limit distant entity processing.",
+                    c.maxEntityDistance, 32, 128, v -> c.maxEntityDistance = v));
+        }
+    }
 
-        addRenderableWidget(new InfoRow(
-                x + 22, y + 154, w - 44, 58, title, desc
-        ));
+    private void addToggle(int x, int y, int w, String title, String desc, boolean value, Runnable action) {
+        addRenderableWidget(new ToggleRow(x + 22, y, w, 58, title, desc, value, () -> {
+            action.run();
+            VoidBoostConfig.get().markDirty();
+            rebuildWidgets();
+        }));
     }
 
     private String particles() {
