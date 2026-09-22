@@ -56,7 +56,9 @@ public final class VoidBoostAI {
         smoothedFps = smoothedFps * 0.70 + fps * 0.30;
 
         // Tier 0 targets the full high-FPS range rather than settling around 120 FPS.
-        int target = Math.max(120, Math.min(240, c.dynamicTargetFps));
+        // Tier 0 is a maximum-performance controller. Use the highest
+        // supported target as the recovery target instead of settling at 120/240.
+        int target = 260;
         double fpsPressure = clamp((target - smoothedFps) / Math.max(30.0, target), 0.0, 1.0);
 
         // Expensive OS metrics are sampled less often; the FPS signal stays responsive.
@@ -112,7 +114,10 @@ public final class VoidBoostAI {
     }
 
     private static void updateEffectiveBudgets(VoidBoostConfig c) {
-        int configuredEntity = clampInt(c.maxEntityDistance, 32, 128);
+        int configuredEntity = clampInt(c.maxEntityDistance, 24, 128);
+        // Tier 0 intentionally keeps the non-critical render radius tight.
+        // Players/projectiles bypass this culler for PvP visibility.
+        configuredEntity = Math.min(configuredEntity, 24);
 
         // React before FPS becomes severely low. This lets Tier 0 recover FPS sooner.
         if (smoothedPressure >= 0.35) {
@@ -137,6 +142,8 @@ public final class VoidBoostAI {
         }
 
         int configuredRender = clampInt(c.maxRenderDistance, 4, 32);
+        // Maximum-FPS Tier 0 never lets world rendering grow beyond four chunks.
+        configuredRender = Math.min(configuredRender, 4);
         if (smoothedPressure >= 0.60 || smoothedRamPressure >= 0.88 || smoothedCpuPressure >= 0.92) {
             effectiveRenderDistance = 4;
         } else if (smoothedPressure >= 0.35 || smoothedRamPressure >= 0.82 || smoothedCpuPressure >= 0.84) {
@@ -177,7 +184,7 @@ public final class VoidBoostAI {
     }
 
     public static int entityDistance(int configured) {
-        return performanceEnabled ? effectiveEntityDistance : configured;
+        return performanceEnabled ? Math.min(24, effectiveEntityDistance) : configured;
     }
 
     public static int particleBudget(int configured) {
