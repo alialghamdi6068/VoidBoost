@@ -366,7 +366,16 @@ public final class VoidBoostScreen extends Screen {
 
         private int valueAt(double mouseX) {
             double t = Math.max(0, Math.min(1, (mouseX - (getX() + 12)) / (double) (width - 24)));
-            return (int) Math.round(min + t * (max - min));
+            int raw = (int) Math.round(min + t * (max - min));
+            if (title.equals("Max Framerate")) {
+                int[] choices = {60, 120, 144, 165, 180, 240, 260};
+                int nearest = choices[0];
+                for (int choice : choices) {
+                    if (Math.abs(choice - raw) < Math.abs(nearest - raw)) nearest = choice;
+                }
+                return nearest;
+            }
+            return raw;
         }
 
         @Override
@@ -384,7 +393,11 @@ public final class VoidBoostScreen extends Screen {
 
         @Override
         public void onClick(MouseButtonEvent e, boolean doubleClick) {
-            value = valueAt(e.x()); setter.accept(value); dragging = true; VoidBoostConfig.get().markDirty();
+            value = valueAt(e.x());
+            setter.accept(value);
+            dragging = true;
+            VoidBoostConfig.get().markDirty();
+            Minecraft.getInstance().options.save();
         }
 
         @Override
