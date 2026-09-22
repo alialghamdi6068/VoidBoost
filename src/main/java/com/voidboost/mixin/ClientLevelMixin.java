@@ -13,13 +13,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ClientLevelMixin {
     private static int voidboost$particleCounter;
 
-    @Inject(
-            method = "addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V",
-            at = @At("HEAD"),
-            cancellable = true
-    )
+    /**
+     * Intercepts the final particle creation path. This covers normal particles
+     * and always-visible/override-limiter particles without duplicating injections
+     * on multiple public overloads.
+     */
+    @Inject(method = "doAddParticle", at = @At("HEAD"), cancellable = true)
     private void voidboost$filterParticles(
-            ParticleOptions options,
+            ParticleOptions particle,
+            boolean overrideLimiter,
+            boolean alwaysShow,
             double x,
             double y,
             double z,
@@ -28,7 +31,6 @@ public abstract class ClientLevelMixin {
             double vz,
             CallbackInfo ci
     ) {
-        // Hot path: no config object or AI lookup.
         int mode = VoidBoostRuntime.particleMode();
         if (mode == 0) return;
 
