@@ -45,7 +45,7 @@ public final class VoidBoostAI {
 
         if (!c.performanceMode) {
             smoothedPressure *= 0.8;
-            effectiveEntityDistance = clampInt(c.maxEntityDistance, 32, 128);
+            effectiveEntityDistance = clampInt(c.maxEntityDistance, 24, 128);
             effectiveParticleBudget = clampInt(c.particleLimitPercent, 1, 100);
             effectiveRenderDistance = clampInt(c.maxRenderDistance, 4, 32);
             VoidBoostRuntime.update(false, false, effectiveEntityDistance, false, false, effectiveParticleBudget, c.performanceMonitor);
@@ -121,13 +121,13 @@ public final class VoidBoostAI {
 
         // React before FPS becomes severely low. This lets Tier 0 recover FPS sooner.
         if (smoothedPressure >= 0.35) {
-            effectiveEntityDistance = 32;
+            effectiveEntityDistance = 24;
         } else if (smoothedPressure >= 0.20) {
-            effectiveEntityDistance = Math.max(32, configuredEntity - 16);
+            effectiveEntityDistance = Math.max(24, configuredEntity - 8);
         } else if (smoothedPressure >= 0.10) {
-            effectiveEntityDistance = Math.max(32, configuredEntity - 8);
+            effectiveEntityDistance = Math.max(24, configuredEntity - 4);
         } else {
-            effectiveEntityDistance = configuredEntity;
+            effectiveEntityDistance = Math.min(24, configuredEntity);
         }
 
         int configuredParticles = clampInt(c.particleLimitPercent, 1, 100);
@@ -153,13 +153,22 @@ public final class VoidBoostAI {
         } else {
             effectiveRenderDistance = configuredRender;
         }
+
+        // Never allow the adaptive controller to silently weaken Tier 0.
+        effectiveEntityDistance = Math.min(24, effectiveEntityDistance);
+        effectiveRenderDistance = 4;
     }
 
     /** Applies the permanent Tier 0 performance profile. */
     private static void applyTier0Options(Minecraft client, VoidBoostConfig c) {
         try {
-            if (c.dynamicRenderDistance && client.options.renderDistance().get() > effectiveRenderDistance) {
+            if (c.dynamicRenderDistance && client.options.renderDistance().get() != effectiveRenderDistance) {
                 client.options.renderDistance().set(effectiveRenderDistance);
+            }
+            // Tier 0 keeps simulation work at the minimum and removes VSync/FPS
+            // limiter drift caused by changes in the vanilla video settings screen.
+            if (client.options.simulationDistance().get() != 4) {
+                client.options.simulationDistance().set(4);
             }
         } catch (RuntimeException ignored) {
             // Version-specific option changes must never crash the client.
