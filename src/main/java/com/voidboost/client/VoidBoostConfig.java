@@ -60,6 +60,7 @@ public final class VoidBoostConfig {
     private static boolean savedVsync;
     private static int savedMaxFps;
     private static int savedRenderDistance;
+    private static int savedSimulationDistance;
     private static long appliedOptionsSignature = Long.MIN_VALUE;
     private static boolean fogStateCaptured;
     private static boolean fogDisabledByVoidBoost;
@@ -133,10 +134,11 @@ public final class VoidBoostConfig {
         INSTANCE.competitiveMode = true;
         INSTANCE.maxFpsPreset = false;
         INSTANCE.ultimateLocked = true;
-        INSTANCE.targetFps = 240;
+        INSTANCE.targetFps = 1000;
         INSTANCE.dynamicTargetFps = 240;
         INSTANCE.maxEntityDistance = 32;
         INSTANCE.maxRenderDistance = 4;
+        setSimulationDistance(4);
         save();
         appliedOptionsSignature = Long.MIN_VALUE;
     }
@@ -155,6 +157,7 @@ public final class VoidBoostConfig {
                 INSTANCE.competitiveMode = false; INSTANCE.maxFpsPreset = false; INSTANCE.ultimateLocked = false;
                 INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 120;
                 INSTANCE.maxEntityDistance = 56; INSTANCE.maxRenderDistance = 10;
+                setSimulationDistance(8);
             }
             case "Competitive" -> {
                 INSTANCE.performanceMode = true; INSTANCE.performanceMonitor = false;
@@ -168,6 +171,7 @@ public final class VoidBoostConfig {
                 INSTANCE.competitiveMode = true; INSTANCE.maxFpsPreset = false; INSTANCE.ultimateLocked = false;
                 INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 180;
                 INSTANCE.maxEntityDistance = 44; INSTANCE.maxRenderDistance = 8;
+                setSimulationDistance(6);
             }
             case "MAX FPS" -> {
                 INSTANCE.performanceMode = true; INSTANCE.performanceMonitor = false;
@@ -179,8 +183,9 @@ public final class VoidBoostConfig {
                 INSTANCE.ambientOcclusionOptimization = true; INSTANCE.mipmapOptimization = true;
                 INSTANCE.biomeBlendOptimization = true; INSTANCE.viewBobOptimization = true; INSTANCE.vsyncOptimization = true;
                 INSTANCE.competitiveMode = false; INSTANCE.maxFpsPreset = true; INSTANCE.ultimateLocked = false;
-                INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 240;
-                INSTANCE.maxEntityDistance = 36; INSTANCE.maxRenderDistance = 6;
+                INSTANCE.targetFps = 1000; INSTANCE.dynamicTargetFps = 240;
+                INSTANCE.maxEntityDistance = 32; INSTANCE.maxRenderDistance = 4;
+                setSimulationDistance(4);
             }
             case "ULTIMATE FPS" -> applyUltimateLockedPreset();
             default -> { return; }
@@ -274,6 +279,7 @@ public final class VoidBoostConfig {
         savedVsync = client.options.enableVsync().get();
         savedMaxFps = client.options.framerateLimit().get();
         savedRenderDistance = client.options.renderDistance().get();
+        savedSimulationDistance = client.options.simulationDistance().get();
         optionsCaptured = true;
     }
 
@@ -307,6 +313,8 @@ public final class VoidBoostConfig {
         client.options.enableVsync().set(savedVsync);
         client.options.framerateLimit().set(savedMaxFps);
         client.options.renderDistance().set(savedRenderDistance);
+        client.options.simulationDistance().set(savedSimulationDistance);
+        client.options.save();
         optionsCaptured = false;
     }
 
@@ -329,6 +337,13 @@ public final class VoidBoostConfig {
         else if (fps > target + 15 && current < maxDistance) desired = Math.min(maxDistance, current + 1);
         else if (fps < target - 15 && current > 4) desired = Math.max(4, current - 1);
         if (desired != current) client.options.renderDistance().set(desired);
+    }
+
+    private static void setSimulationDistance(int value) {
+        try {
+            Minecraft.getInstance().options.simulationDistance().set(Math.max(4, Math.min(32, value)));
+            Minecraft.getInstance().options.save();
+        } catch (Exception ignored) {}
     }
 
     public static void markDirty() { appliedOptionsSignature = Long.MIN_VALUE; save(); }
