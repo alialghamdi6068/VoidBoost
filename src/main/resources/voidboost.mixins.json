@@ -5,6 +5,7 @@
   "client": [
     "ClientLevelMixin",
     "EntityRenderMixin",
+    "BlockEntityRenderMixin",
     "PerformanceHudMixin"
   ],
   "injectors": {
