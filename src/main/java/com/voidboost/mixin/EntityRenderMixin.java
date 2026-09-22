@@ -4,6 +4,8 @@ import com.voidboost.client.VoidBoostRuntime;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,7 +30,14 @@ public abstract class EntityRenderMixin {
         // Players and projectiles are gameplay-critical for PvP and remain visible.
         if (entity instanceof Player || entity instanceof Projectile) return;
 
-        if (entity.distanceToSqr(x, y, z) > VoidBoostRuntime.entityDistanceSquared()) {
+        // Item drops and XP orbs are unusually numerous in farms and PvP arenas.
+        // Cull them earlier than other non-critical entities to remove render
+        // submission work before vanilla/Sodium reaches model rendering.
+        double distanceSquared = entity instanceof ItemEntity || entity instanceof ExperienceOrb
+                ? 12.0D * 12.0D
+                : VoidBoostRuntime.entityDistanceSquared();
+
+        if (entity.distanceToSqr(x, y, z) > distanceSquared) {
             cir.setReturnValue(false);
         }
     }
