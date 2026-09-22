@@ -42,7 +42,7 @@ public final class VoidBoostConfig {
     public boolean ultimateLocked = false;
     public int targetFps = 260;
     public int dynamicTargetFps = 240;
-    public int maxEntityDistance = 32;
+    public int maxEntityDistance = 24;
     public int maxRenderDistance = 4;
 
     private static boolean optionsCaptured;
@@ -90,7 +90,7 @@ public final class VoidBoostConfig {
         particleLimitPercent = Math.max(1, Math.min(100, particleLimitPercent));
         dynamicTargetFps = Math.max(60, Math.min(240, dynamicTargetFps));
         targetFps = Math.max(30, Math.min(260, targetFps));
-        maxEntityDistance = Math.max(32, Math.min(128, maxEntityDistance));
+        maxEntityDistance = Math.max(24, Math.min(128, maxEntityDistance));
         maxRenderDistance = Math.max(4, Math.min(32, maxRenderDistance));
     }
 
@@ -226,7 +226,7 @@ public final class VoidBoostConfig {
                 INSTANCE.biomeBlendOptimization = true; INSTANCE.viewBobOptimization = true; INSTANCE.vsyncOptimization = true;
                 INSTANCE.competitiveMode = false; INSTANCE.maxFpsPreset = true; INSTANCE.ultimateLocked = false;
                 INSTANCE.targetFps = 260; INSTANCE.dynamicTargetFps = 240;
-                INSTANCE.maxEntityDistance = 32; INSTANCE.maxRenderDistance = 4;
+                INSTANCE.maxEntityDistance = 24; INSTANCE.maxRenderDistance = 4;
                 setSimulationDistance(4);
             }
             case "ULTIMATE FPS" -> applyUltimateLockedPreset();
@@ -268,7 +268,7 @@ public final class VoidBoostConfig {
                 client.options.cloudStatus().set(INSTANCE.cloudOptimization ? CloudStatus.OFF : savedCloudStatus);
                 client.options.bobView().set(INSTANCE.viewBobOptimization ? false : savedBobView);
 
-                int configuredLimit = Math.max(4, Math.min(32, INSTANCE.maxRenderDistance));
+                int configuredLimit = 4;
                 int adaptiveLimit = Math.max(4, Math.min(configuredLimit, VoidBoostAI.renderDistanceLimit(configuredLimit)));
                 if (client.options.renderDistance().get() > adaptiveLimit) client.options.renderDistance().set(adaptiveLimit);
                 client.options.framerateLimit().set(Math.max(30, Math.min(260, INSTANCE.targetFps)));
@@ -384,7 +384,7 @@ public final class VoidBoostConfig {
     private static void updateDynamicRenderDistance(Minecraft client) {
         if (client.level == null) return;
         int current = client.options.renderDistance().get();
-        int configuredMax = Math.max(4, Math.min(32, INSTANCE.maxRenderDistance));
+        int configuredMax = 4;
         int maxDistance = Math.max(4, Math.min(configuredMax, VoidBoostAI.renderDistanceLimit(configuredMax)));
         int target = Math.max(60, Math.min(240, INSTANCE.dynamicTargetFps));
         int fps = client.getFps();
