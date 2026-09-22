@@ -26,8 +26,13 @@ public interface BlockEntityRenderMixin {
     ) {
         if (!VoidBoostRuntime.entityCullingEnabled()) return;
 
-        Vec3 center = Vec3.atCenterOf(blockEntity.getBlockPos());
-        if (center.distanceToSqr(cameraPos) > VoidBoostRuntime.entityDistanceSquared()) {
+        // Keep this hot path allocation-free: block entities can be checked
+        // hundreds of times per frame in storage/redstone-heavy areas.
+        var pos = blockEntity.getBlockPos();
+        double dx = pos.getX() + 0.5D - cameraPos.x;
+        double dy = pos.getY() + 0.5D - cameraPos.y;
+        double dz = pos.getZ() + 0.5D - cameraPos.z;
+        if (dx * dx + dy * dy + dz * dz > VoidBoostRuntime.entityDistanceSquared()) {
             cir.setReturnValue(false);
         }
     }
