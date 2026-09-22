@@ -28,7 +28,7 @@ public final class VoidBoostRuntime {
             boolean performanceMonitor
     ) {
         entityCullingEnabled = performanceEnabled && entityOptimization;
-        int distance = Math.max(32, Math.min(128, entityDistance));
+        int distance = Math.max(24, Math.min(128, entityDistance));
         entityDistanceSquared = (double) distance * distance;
 
         if (!performanceEnabled) {
