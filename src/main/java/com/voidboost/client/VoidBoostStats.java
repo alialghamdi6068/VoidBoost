@@ -10,18 +10,20 @@ public final class VoidBoostStats {
     private VoidBoostStats() {}
 
     public static void particleAttempt() {
-        if (!VoidBoostConfig.get().performanceMonitor) return;
+        if (!VoidBoostRuntime.statsEnabled()) return;
         particles++;
     }
 
     public static void frame() {
-        if (!VoidBoostConfig.get().performanceMonitor) return;
+        if (!VoidBoostRuntime.statsEnabled()) return;
+
         long now = System.nanoTime();
         if (lastFrameNanos != 0L) {
             double ms = (now - lastFrameNanos) / 1_000_000.0;
             smoothedFrameMs = smoothedFrameMs == 0.0 ? ms : smoothedFrameMs * 0.9 + ms * 0.1;
         }
         lastFrameNanos = now;
+
         if (now - windowStart >= 1_000_000_000L) {
             particlesPerSecond = particles;
             particles = 0;
