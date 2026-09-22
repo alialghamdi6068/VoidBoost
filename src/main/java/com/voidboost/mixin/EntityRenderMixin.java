@@ -17,7 +17,7 @@ public abstract class EntityRenderMixin {
     @Inject(method = "shouldRender", at = @At("HEAD"), cancellable = true)
     private <T extends Entity> void voidboost$entityDistance(T entity, Frustum frustum, double x, double y, double z, CallbackInfoReturnable<Boolean> cir) {
         VoidBoostConfig c = VoidBoostConfig.get();
-        if (!c.entityRenderOptimization) return;
+        if (!c.performanceMode || !c.entityRenderOptimization) return;
 
         // Players and projectiles are gameplay-critical for PvP and must remain visible.
         if (entity instanceof Player || entity instanceof Projectile) return;
