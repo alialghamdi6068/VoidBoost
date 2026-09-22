@@ -44,7 +44,7 @@ public final class VoidBoostScreen extends Screen {
         Minecraft mc = Minecraft.getInstance();
         renderDistance = clamp(c.maxRenderDistance, 4, 32);
         simulationDistance = clamp(mc.options.simulationDistance().get(), 4, 32);
-        fps = clamp(c.targetFps, 30, 1000);
+        fps = clamp(c.targetFps, 30, 260);
         rebuildWidgets();
     }
 
@@ -203,7 +203,7 @@ public final class VoidBoostScreen extends Screen {
         VoidBoostConfig c = VoidBoostConfig.get();
         renderDistance = clamp(c.maxRenderDistance, 4, 32);
         simulationDistance = clamp(Minecraft.getInstance().options.simulationDistance().get(), 4, 32);
-        fps = clamp(c.targetFps, 30, 1000);
+        fps = clamp(c.targetFps, 30, 260);
     }
 
     private void resetToVanilla() {
@@ -229,11 +229,35 @@ public final class VoidBoostScreen extends Screen {
         c.competitiveMode = false;
         c.maxFpsPreset = false;
         c.ultimateLocked = false;
-        c.targetFps = 240;
+        c.targetFps = 260;
         c.dynamicTargetFps = 120;
         c.maxRenderDistance = 12;
         c.maxEntityDistance = 64;
         c.markDirty();
+    }
+
+    private String fpsLabel() {
+        return fps >= 260 ? "Unlimited" : Integer.toString(fps);
+    }
+
+    private void cycleFpsLimit() {
+        VoidBoostConfig c = VoidBoostConfig.get();
+        int[] limits = {60, 120, 144, 165, 180, 240, 260};
+        int current = fps >= 260 ? 260 : fps;
+        int next = limits[limits.length - 1];
+        for (int i = 0; i < limits.length; i++) {
+            if (current < limits[i]) {
+                next = limits[i];
+                break;
+            }
+        }
+        fps = next;
+        c.targetFps = next;
+        c.maxFpsPreset = next >= 260;
+        c.markDirty();
+        Minecraft.getInstance().options.framerateLimit().set(next);
+        Minecraft.getInstance().options.save();
+        rebuildWidgets();
     }
 
     private String particles() {
