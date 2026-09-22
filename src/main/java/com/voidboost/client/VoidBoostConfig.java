@@ -108,7 +108,6 @@ public final class VoidBoostConfig {
         if (client.level == null) return;
         tickCounter++;
         if (optionsDirty) applyVanillaPerformanceOptions(client);
-        if (INSTANCE.dynamicRenderDistance && tickCounter % 20 == 0) updateDynamicRenderDistance(client);
     }
 
     public static void resetToVanilla() {
@@ -268,12 +267,18 @@ public final class VoidBoostConfig {
                 client.options.cloudStatus().set(INSTANCE.cloudOptimization ? CloudStatus.OFF : savedCloudStatus);
                 client.options.bobView().set(INSTANCE.viewBobOptimization ? false : savedBobView);
 
-                int configuredLimit = 4;
-                // Keep the simulation radius at the minimum while Tier 0 is active.
-                // This reduces client-side world ticking around the player.
+                // Tier 0 adapts between the configured 4-32 chunk cap and the
+                // minimum only when pressure requires it. The AI owns the decision.
                 client.options.simulationDistance().set(4);
+                int configuredLimit = Math.max(4, Math.min(32, INSTANCE.maxRenderDistance));
                 int adaptiveLimit = Math.max(4, Math.min(configuredLimit, VoidBoostAI.renderDistanceLimit(configuredLimit)));
-                if (client.options.renderDistance().get() > adaptiveLimit) client.options.renderDistance().set(adaptiveLimit);
+                if (INSTANCE.dynamicRenderDistance) {
+                    if (client.options.renderDistance().get() != adaptiveLimit) {
+                        client.options.renderDistance().set(adaptiveLimit);
+                    }
+                } else if (client.options.renderDistance().get() != configuredLimit) {
+                    client.options.renderDistance().set(configuredLimit);
+                }
                 client.options.framerateLimit().set(Math.max(30, Math.min(260, INSTANCE.targetFps)));
             } else {
                 restorePerformanceOnlyOptions(client);
@@ -382,20 +387,6 @@ public final class VoidBoostConfig {
         if (disable == fogDisabledByVoidBoost) return;
         FogRenderer.toggleFog();
         fogDisabledByVoidBoost = disable;
-    }
-
-    private static void updateDynamicRenderDistance(Minecraft client) {
-        if (client.level == null) return;
-        int current = client.options.renderDistance().get();
-        int configuredMax = 4;
-        int maxDistance = Math.max(4, Math.min(configuredMax, VoidBoostAI.renderDistanceLimit(configuredMax)));
-        int target = 260;
-        int fps = client.getFps();
-        int desired = Math.min(current, maxDistance);
-        if (current > maxDistance) desired = maxDistance;
-        else if (fps > target + 15 && current < maxDistance) desired = Math.min(maxDistance, current + 1);
-        else if (fps < target - 15 && current > 4) desired = Math.max(4, current - 1);
-        if (desired != current) client.options.renderDistance().set(desired);
     }
 
     private static void setSimulationDistance(int value) {
