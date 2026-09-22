@@ -385,7 +385,7 @@ public final class VoidBoostScreen extends Screen {
 
         @Override
         public void onClick(MouseButtonEvent e, boolean doubleClick) {
-            value = valueAt(e.x()); setter.accept(value); dragging = true; VoidBoostConfig.get().markDirty(); rebuildWidgets();
+            value = valueAt(e.x()); setter.accept(value); dragging = true; VoidBoostConfig.get().markDirty();
         }
 
         @Override
