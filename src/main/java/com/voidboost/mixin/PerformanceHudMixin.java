@@ -9,21 +9,32 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Gui.class)
 public abstract class PerformanceHudMixin {
+    @Unique
     private static int cachedFps;
+    @Unique
     private static String cachedFrameText = "0.0 ms";
+    @Unique
     private static int cachedEntities;
+    @Unique
     private static int cachedParticles;
+    @Unique
     private static long cachedUsedMb;
+    @Unique
     private static long cachedMaxMb;
+    @Unique
     private static String cachedRamText = "0 / 0 MB";
+    @Unique
     private static String cachedCpuText = "CPU: 0%";
+    @Unique
     private static String cachedAiText = "AI: IDLE";
+    @Unique
     private static long nextHudUpdateNanos;
 
     @Inject(method = "render", at = @At("HEAD"))
