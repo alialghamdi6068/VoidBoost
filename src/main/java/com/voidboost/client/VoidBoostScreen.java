@@ -194,8 +194,7 @@ public final class VoidBoostScreen extends Screen {
     }
 
     private void heading(String title, String description, int x, int y) {
-        font.drawShadow(null, Component.literal(""), 0, 0, 0);
-        // Actual heading is drawn in render(); this method reserves the layout space.
+        // Layout helper; the title and description are rendered once by render().
     }
 
     private void addToggle(int x, int y, int w, String title, String desc, boolean value, Runnable change) {
