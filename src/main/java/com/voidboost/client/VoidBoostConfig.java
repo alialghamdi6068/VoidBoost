@@ -41,7 +41,7 @@ public final class VoidBoostConfig {
     public boolean maxFpsPreset = false;
     public boolean ultimateLocked = false;
     public int targetFps = 240;
-    public int dynamicTargetFps = 120;
+    public int dynamicTargetFps = 240;
     public int maxEntityDistance = 64;
     public int maxRenderDistance = 10;
 
@@ -194,7 +194,7 @@ public final class VoidBoostConfig {
                 INSTANCE.ambientOcclusionOptimization = true; INSTANCE.mipmapOptimization = true;
                 INSTANCE.biomeBlendOptimization = true; INSTANCE.viewBobOptimization = false; INSTANCE.vsyncOptimization = true;
                 INSTANCE.competitiveMode = false; INSTANCE.maxFpsPreset = false; INSTANCE.ultimateLocked = false;
-                INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 120;
+                INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 240;
                 INSTANCE.maxEntityDistance = 56; INSTANCE.maxRenderDistance = 10;
                 setSimulationDistance(8);
             }
@@ -208,7 +208,7 @@ public final class VoidBoostConfig {
                 INSTANCE.ambientOcclusionOptimization = true; INSTANCE.mipmapOptimization = true;
                 INSTANCE.biomeBlendOptimization = true; INSTANCE.viewBobOptimization = true; INSTANCE.vsyncOptimization = true;
                 INSTANCE.competitiveMode = true; INSTANCE.maxFpsPreset = false; INSTANCE.ultimateLocked = false;
-                INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 180;
+                INSTANCE.targetFps = 240; INSTANCE.dynamicTargetFps = 240;
                 INSTANCE.maxEntityDistance = 44; INSTANCE.maxRenderDistance = 8;
                 setSimulationDistance(6);
             }
