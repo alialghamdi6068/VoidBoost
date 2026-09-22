@@ -153,7 +153,7 @@ public final class VoidBoostScreen extends Screen {
         addSlider(x2, y, w, h, "Dynamic Target FPS", c.dynamicTargetFps, 60, 240, "FPS", v -> c.dynamicTargetFps = v);
         y += 36;
 
-        addLabel(x1, y, w, h, "Adaptive Tier", "Auto • " + (VoidBoostAI.level() == 0 ? "Idle" : "Tier " + VoidBoostAI.level()));
+        addLabel(x1, y, w, h, "Adaptive Tier", "Tier 0 • MAX");
         addLabel(x2, y, w, h, "Current Load", Math.round(VoidBoostAI.pressure() * 100) + "%");
     }
 
