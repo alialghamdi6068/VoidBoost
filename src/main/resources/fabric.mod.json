@@ -4,11 +4,15 @@
   "version": "${version}",
   "name": "VoidBoost",
   "description": "Client-side performance and PvP rendering optimizer for Minecraft 1.21.11.",
-  "authors": ["VoidFlame"],
+  "authors": [
+    "VoidFlame"
+  ],
   "license": "MIT",
   "environment": "client",
   "entrypoints": {
-    "client": ["com.voidboost.client.VoidBoostClient"]
+    "client": [
+      "com.voidboost.client.VoidBoostClient"
+    ]
   },
   "mixins": [
     {
@@ -21,5 +25,8 @@
     "minecraft": "~1.21.11",
     "java": ">=21",
     "fabric-api": "*"
+  },
+  "suggests": {
+    "sodium": ">=0.8.0"
   }
 }
