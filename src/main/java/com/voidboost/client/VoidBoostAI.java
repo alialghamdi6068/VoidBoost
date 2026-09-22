@@ -21,7 +21,7 @@ public final class VoidBoostAI {
 
     public static void tick(Minecraft client) {
         long now = System.nanoTime();
-        if (now - lastUpdate < 75_000_000L || client.level == null) return;
+        if (now - lastUpdate < 25_000_000L || client.level == null) return;
         lastUpdate = now;
 
         VoidBoostConfig c = VoidBoostConfig.get();
@@ -34,7 +34,7 @@ public final class VoidBoostAI {
         }
 
         int fps = Math.max(1, client.getFps());
-        smoothedFps = smoothedFps * 0.70 + fps * 0.30;
+        smoothedFps = smoothedFps * 0.55 + fps * 0.45;
 
         int target = Math.max(60, Math.min(240, c.dynamicTargetFps));
         double fpsPressure = clamp((target - smoothedFps) / Math.max(30.0, target), 0.0, 1.0);
@@ -43,16 +43,16 @@ public final class VoidBoostAI {
         long max = runtime.maxMemory();
         long used = runtime.totalMemory() - runtime.freeMemory();
         double ramPressure = max <= 0 ? 0.0 : clamp((double) used / max, 0.0, 1.0);
-        smoothedRamPressure = smoothedRamPressure * 0.82 + ramPressure * 0.18;
+        smoothedRamPressure = smoothedRamPressure * 0.65 + ramPressure * 0.35;
 
         int entities = client.level.getEntityCount();
         double entityPressure = clamp((entities - 40.0) / 180.0, 0.0, 1.0);
-        smoothedEntityPressure = smoothedEntityPressure * 0.72 + entityPressure * 0.28;
+        smoothedEntityPressure = smoothedEntityPressure * 0.60 + entityPressure * 0.40;
 
         double pressure = Math.max(fpsPressure,
                 Math.max(Math.max(0.0, smoothedRamPressure - 0.76) * 3.0,
                         smoothedEntityPressure * 0.80));
-        smoothedPressure = smoothedPressure * 0.72 + pressure * 0.28;
+        smoothedPressure = smoothedPressure * 0.60 + pressure * 0.40;
 
         int strength = c.ultimateLocked ? 5 : c.maxFpsPreset ? 5 : c.competitiveMode ? 4 : 3;
 
@@ -93,7 +93,7 @@ public final class VoidBoostAI {
         }
 
         // Twelve consecutive samples are required before reducing optimization.
-        if (++stableTicks < 20) return;
+        if (++stableTicks < 8) return;
         level = desired;
         stableTicks = 0;
         applyAdaptiveOptions(client, c, target);
