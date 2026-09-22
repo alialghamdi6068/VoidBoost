@@ -284,15 +284,25 @@ public final class VoidBoostConfig {
     }
 
     private static long optionsSignature() {
+        // Keep this allocation-free: this method is reached every client tick.
         long result = 17;
-        boolean[] flags = {
-                INSTANCE.performanceMode, INSTANCE.ultimateLocked, INSTANCE.entityShadows, INSTANCE.competitiveMode,
-                INSTANCE.weatherEffects, INSTANCE.disableParticles, INSTANCE.reducedParticles, INSTANCE.animationOptimization,
-                INSTANCE.fogOptimization, INSTANCE.dynamicRenderDistance, INSTANCE.cloudOptimization, INSTANCE.vignetteOptimization,
-                INSTANCE.ambientOcclusionOptimization, INSTANCE.mipmapOptimization, INSTANCE.biomeBlendOptimization,
-                INSTANCE.viewBobOptimization, INSTANCE.vsyncOptimization
-        };
-        for (boolean flag : flags) result = 31 * result + (flag ? 1 : 0);
+        result = 31 * result + (INSTANCE.performanceMode ? 1 : 0);
+        result = 31 * result + (INSTANCE.ultimateLocked ? 1 : 0);
+        result = 31 * result + (INSTANCE.entityShadows ? 1 : 0);
+        result = 31 * result + (INSTANCE.competitiveMode ? 1 : 0);
+        result = 31 * result + (INSTANCE.weatherEffects ? 1 : 0);
+        result = 31 * result + (INSTANCE.disableParticles ? 1 : 0);
+        result = 31 * result + (INSTANCE.reducedParticles ? 1 : 0);
+        result = 31 * result + (INSTANCE.animationOptimization ? 1 : 0);
+        result = 31 * result + (INSTANCE.fogOptimization ? 1 : 0);
+        result = 31 * result + (INSTANCE.dynamicRenderDistance ? 1 : 0);
+        result = 31 * result + (INSTANCE.cloudOptimization ? 1 : 0);
+        result = 31 * result + (INSTANCE.vignetteOptimization ? 1 : 0);
+        result = 31 * result + (INSTANCE.ambientOcclusionOptimization ? 1 : 0);
+        result = 31 * result + (INSTANCE.mipmapOptimization ? 1 : 0);
+        result = 31 * result + (INSTANCE.biomeBlendOptimization ? 1 : 0);
+        result = 31 * result + (INSTANCE.viewBobOptimization ? 1 : 0);
+        result = 31 * result + (INSTANCE.vsyncOptimization ? 1 : 0);
         result = 31 * result + INSTANCE.targetFps;
         result = 31 * result + INSTANCE.dynamicTargetFps;
         result = 31 * result + INSTANCE.maxEntityDistance;
