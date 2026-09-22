@@ -203,33 +203,8 @@ public final class VoidBoostScreen extends Screen {
     }
 
     private void resetToVanilla() {
-        VoidBoostConfig c = VoidBoostConfig.get();
-        c.performanceMode = false;
-        c.performanceMonitor = false;
-        c.disableParticles = false;
-        c.reducedParticles = false;
-        c.particleLimitPercent = 100;
-        c.entityShadows = true;
-        c.weatherEffects = true;
-        c.animationOptimization = false;
-        c.fogOptimization = false;
-        c.entityRenderOptimization = false;
-        c.dynamicRenderDistance = false;
-        c.cloudOptimization = false;
-        c.vignetteOptimization = false;
-        c.ambientOcclusionOptimization = false;
-        c.mipmapOptimization = false;
-        c.biomeBlendOptimization = false;
-        c.viewBobOptimization = false;
-        c.vsyncOptimization = false;
-        c.competitiveMode = false;
-        c.maxFpsPreset = false;
-        c.ultimateLocked = false;
-        c.targetFps = 260;
-        c.dynamicTargetFps = 120;
-        c.maxRenderDistance = 32;
-        c.maxEntityDistance = 64;
-        c.markDirty();
+        VoidBoostConfig.resetToVanilla();
+        syncFromConfig();
     }
 
     private String fpsLabel() {
@@ -253,7 +228,6 @@ public final class VoidBoostScreen extends Screen {
         }
         fps = next;
         c.targetFps = next;
-        // Manual FPS selection is independent from the MAX FPS preset.
         c.maxFpsPreset = false;
         c.ultimateLocked = false;
         c.markDirty();
@@ -290,17 +264,17 @@ public final class VoidBoostScreen extends Screen {
         int left = Math.max(18, width / 2 - 330);
         int top = Math.max(28, height / 2 - 205);
         int totalW = Math.min(660, width - left * 2);
+        int panelBottom = Math.min(height - 22, top + 270);
 
-        // Clean outer panel + crisp 1px border.
-        g.fill(left - 5, top - 6, left + totalW + 5, Math.min(height - 22, top + 232), PANEL);
-        border(g, left - 5, top - 6, left + totalW + 5, Math.min(height - 22, top + 232), PANEL_EDGE);
+        g.fill(left - 5, top - 6, left + totalW + 5, panelBottom, PANEL);
+        border(g, left - 5, top - 6, left + totalW + 5, panelBottom, PANEL_EDGE);
 
         g.drawCenteredString(font, Component.literal("VoidBoost"), width / 2, Math.max(10, top - 24), TEXT);
         g.drawString(font, Component.literal("Minecraft 1.21.11 • Fabric"), left, Math.max(11, top - 22), MUTED, false);
 
         super.render(g, mouseX, mouseY, delta);
 
-        g.drawCenteredString(font, Component.literal("ESC  Close"), width / 2, Math.min(height - 12, top + 218), MUTED);
+        g.drawCenteredString(font, Component.literal("ESC  Close"), width / 2, Math.min(height - 12, panelBottom - 12), MUTED);
     }
 
     @Override
