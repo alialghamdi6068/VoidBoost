@@ -1,6 +1,9 @@
 package com.voidboost.client;
 
+import com.sun.management.OperatingSystemMXBean;
 import net.minecraft.client.Minecraft;
+
+import java.lang.management.ManagementFactory;
 
 /**
  * Local adaptive performance controller.
@@ -14,12 +17,15 @@ public final class VoidBoostAI {
     private static final long FAST_INTERVAL_NS = 25_000_000L;
     private static final long LOAD_SAMPLE_INTERVAL_NS = 100_000_000L;
 
+    private static final OperatingSystemMXBean OS_BEAN = getOperatingSystemBean();
+
     private static double smoothedFps = 144.0;
     private static double smoothedPressure;
     private static double smoothedRamPressure;
+    private static double smoothedCpuPressure;
     private static double smoothedEntityPressure;
 
-    private static volatile int effectiveEntityDistance = 40;
+    private static volatile int effectiveEntityDistance = 64;
     private static volatile int effectiveParticleBudget = 100;
     private static volatile int effectiveRenderDistance = 10;
     private static volatile boolean performanceEnabled;
@@ -39,9 +45,9 @@ public final class VoidBoostAI {
 
         if (!c.performanceMode) {
             smoothedPressure *= 0.8;
-            effectiveEntityDistance = c.maxEntityDistance;
-            effectiveParticleBudget = c.particleLimitPercent;
-            effectiveRenderDistance = c.maxRenderDistance;
+            effectiveEntityDistance = clampInt(c.maxEntityDistance, 32, 128);
+            effectiveParticleBudget = clampInt(c.particleLimitPercent, 1, 100);
+            effectiveRenderDistance = clampInt(c.maxRenderDistance, 4, 32);
             return;
         }
 
@@ -57,37 +63,55 @@ public final class VoidBoostAI {
             lastLoadSample = now;
 
             Runtime runtime = Runtime.getRuntime();
-            long max = runtime.maxMemory();
-            long used = runtime.totalMemory() - runtime.freeMemory();
-            double ramPressure = max <= 0 ? 0.0 : clamp((double) used / max, 0.0, 1.0);
+            long maxHeap = runtime.maxMemory();
+            long usedHeap = runtime.totalMemory() - runtime.freeMemory();
+            double heapPressure = maxHeap <= 0 ? 0.0 : clamp((double) usedHeap / maxHeap, 0.0, 1.0);
+
+            double physicalRamPressure = heapPressure;
+            double processCpuPressure = 0.0;
+            if (OS_BEAN != null) {
+                long totalMemory = OS_BEAN.getTotalMemorySize();
+                long freeMemory = OS_BEAN.getFreeMemorySize();
+                if (totalMemory > 0L) {
+                    physicalRamPressure = clamp((double) (totalMemory - freeMemory) / totalMemory, 0.0, 1.0);
+                }
+
+                double cpu = OS_BEAN.getProcessCpuLoad();
+                if (cpu >= 0.0) {
+                    processCpuPressure = clamp(cpu, 0.0, 1.0);
+                }
+            }
+
+            double ramPressure = Math.max(heapPressure, physicalRamPressure);
             smoothedRamPressure = smoothedRamPressure * 0.65 + ramPressure * 0.35;
+            smoothedCpuPressure = smoothedCpuPressure * 0.65 + processCpuPressure * 0.35;
 
             int entities = client.level.getEntityCount();
             double entityPressure = clamp((entities - 40.0) / 180.0, 0.0, 1.0);
             smoothedEntityPressure = smoothedEntityPressure * 0.60 + entityPressure * 0.40;
         }
 
-        double pressure = Math.max(fpsPressure,
-                Math.max(Math.max(0.0, smoothedRamPressure - 0.76) * 3.0,
-                        smoothedEntityPressure * 0.80));
-        smoothedPressure = smoothedPressure * 0.60 + pressure * 0.40;
+        double ramLoad = Math.max(0.0, smoothedRamPressure - 0.76) * 3.0;
+        double cpuLoad = Math.max(0.0, smoothedCpuPressure - 0.72) * 3.0;
+        double entityLoad = smoothedEntityPressure * 0.80;
+        double pressure = Math.max(fpsPressure, Math.max(Math.max(ramLoad, cpuLoad), entityLoad));
+        smoothedPressure = smoothedPressure * 0.60 + clamp(pressure, 0.0, 1.0) * 0.40;
 
         updateEffectiveBudgets(c);
         applyTier0Options(client, c);
     }
 
     private static void updateEffectiveBudgets(VoidBoostConfig c) {
-        int configuredEntity = Math.max(32, Math.min(128, c.maxEntityDistance));
-        int entityBase = Math.max(32, configuredEntity - 24);
+        int configuredEntity = clampInt(c.maxEntityDistance, 32, 128);
         if (smoothedPressure >= 0.70) {
             effectiveEntityDistance = 32;
         } else if (smoothedPressure >= 0.45) {
-            effectiveEntityDistance = Math.max(32, entityBase - 8);
+            effectiveEntityDistance = Math.max(32, configuredEntity - 8);
         } else {
-            effectiveEntityDistance = entityBase;
+            effectiveEntityDistance = configuredEntity;
         }
 
-        int configuredParticles = Math.max(1, Math.min(100, c.particleLimitPercent));
+        int configuredParticles = clampInt(c.particleLimitPercent, 1, 100);
         // Respect the user's particle limit. Only severe load can tighten it further.
         if (smoothedPressure >= 0.85) {
             effectiveParticleBudget = Math.min(configuredParticles, 5);
@@ -97,16 +121,15 @@ public final class VoidBoostAI {
             effectiveParticleBudget = configuredParticles;
         }
 
-        int configuredRender = Math.max(4, Math.min(32, c.maxRenderDistance));
-        int base = Math.max(4, configuredRender - 2);
-        if (smoothedPressure >= 0.75 || smoothedRamPressure >= 0.88) {
+        int configuredRender = clampInt(c.maxRenderDistance, 4, 32);
+        if (smoothedPressure >= 0.75 || smoothedRamPressure >= 0.88 || smoothedCpuPressure >= 0.92) {
             effectiveRenderDistance = 4;
-        } else if (smoothedPressure >= 0.55 || smoothedRamPressure >= 0.82) {
-            effectiveRenderDistance = Math.max(4, base - 2);
-        } else if (smoothedPressure >= 0.35 || smoothedRamPressure >= 0.76) {
-            effectiveRenderDistance = Math.max(4, base - 1);
+        } else if (smoothedPressure >= 0.55 || smoothedRamPressure >= 0.82 || smoothedCpuPressure >= 0.84) {
+            effectiveRenderDistance = Math.max(4, configuredRender - 2);
+        } else if (smoothedPressure >= 0.35 || smoothedRamPressure >= 0.76 || smoothedCpuPressure >= 0.76) {
+            effectiveRenderDistance = Math.max(4, configuredRender - 1);
         } else {
-            effectiveRenderDistance = base;
+            effectiveRenderDistance = configuredRender;
         }
     }
 
@@ -116,12 +139,18 @@ public final class VoidBoostAI {
             if (c.dynamicRenderDistance && client.options.renderDistance().get() > effectiveRenderDistance) {
                 client.options.renderDistance().set(effectiveRenderDistance);
             }
-
-            // FPS is managed by the normal config option pipeline. Do not override
-            // the user's manual 60/120/144/165/180/240/Unlimited selection here.
         } catch (RuntimeException ignored) {
             // Version-specific option changes must never crash the client.
         }
+    }
+
+    private static OperatingSystemMXBean getOperatingSystemBean() {
+        java.lang.management.OperatingSystemMXBean bean = ManagementFactory.getOperatingSystemMXBean();
+        return bean instanceof OperatingSystemMXBean os ? os : null;
+    }
+
+    private static int clampInt(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private static double clamp(double value, double min, double max) {
@@ -132,23 +161,14 @@ public final class VoidBoostAI {
         return LOCKED_TIER;
     }
 
-    /**
-     * Cached hot-path distance. Players and projectiles are exempt in EntityRenderMixin.
-     */
     public static int entityDistance(int configured) {
         return performanceEnabled ? effectiveEntityDistance : configured;
     }
 
-    /**
-     * Cached hot-path particle budget.
-     */
     public static int particleBudget(int configured) {
         return performanceEnabled ? Math.min(configured, effectiveParticleBudget) : configured;
     }
 
-    /**
-     * Cached adaptive render-distance limit.
-     */
     public static int renderDistanceLimit(int configured) {
         return performanceEnabled ? Math.min(configured, effectiveRenderDistance) : configured;
     }
@@ -156,5 +176,6 @@ public final class VoidBoostAI {
     public static double fps() { return smoothedFps; }
     public static double pressure() { return smoothedPressure; }
     public static double ramPressure() { return smoothedRamPressure; }
+    public static double cpuPressure() { return smoothedCpuPressure; }
     public static double entityPressure() { return smoothedEntityPressure; }
 }
