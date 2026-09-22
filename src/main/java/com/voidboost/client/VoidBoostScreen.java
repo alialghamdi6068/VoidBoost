@@ -240,16 +240,22 @@ public final class VoidBoostScreen extends Screen {
         VoidBoostConfig c = VoidBoostConfig.get();
         int[] limits = {60, 120, 144, 165, 180, 240, 260};
         int current = fps >= 260 ? 260 : fps;
-        int next = limits[limits.length - 1];
+        int next = limits[0];
         for (int i = 0; i < limits.length; i++) {
             if (current < limits[i]) {
                 next = limits[i];
                 break;
             }
+            if (current == limits[i]) {
+                next = limits[(i + 1) % limits.length];
+                break;
+            }
         }
         fps = next;
         c.targetFps = next;
-        c.maxFpsPreset = next >= 260;
+        // Manual FPS selection is independent from the MAX FPS preset.
+        c.maxFpsPreset = false;
+        c.ultimateLocked = false;
         c.markDirty();
         Minecraft.getInstance().options.framerateLimit().set(next);
         Minecraft.getInstance().options.save();
