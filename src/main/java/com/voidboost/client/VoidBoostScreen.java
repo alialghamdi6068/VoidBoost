@@ -96,7 +96,7 @@ public final class VoidBoostScreen extends Screen {
         y += 36;
 
         addChoice(x1, y, w, h, "Max Framerate", fpsLabel(), this::cycleFpsLimit);
-        addToggle(x2, y, w, h, "VSync", !c.vsyncOptimization, () -> c.vsyncOptimization = !c.vsyncOptimization);
+        addToggle(x2, y, w, h, "Disable VSync", c.vsyncOptimization, () -> c.vsyncOptimization = !c.vsyncOptimization);
         y += 36;
 
         addToggle(x1, y, w, h, "FPS Boost", c.performanceMode, () -> c.performanceMode = !c.performanceMode);
@@ -227,7 +227,7 @@ public final class VoidBoostScreen extends Screen {
         c.ultimateLocked = false;
         c.targetFps = 260;
         c.dynamicTargetFps = 120;
-        c.maxRenderDistance = 12;
+        c.maxRenderDistance = 32;
         c.maxEntityDistance = 64;
         c.markDirty();
     }
