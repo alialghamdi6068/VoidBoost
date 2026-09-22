@@ -11,10 +11,10 @@ public final class VoidBoostRuntime {
     private static volatile boolean entityCullingEnabled;
     private static volatile double entityDistanceSquared = 128.0 * 128.0;
 
-    // 0 = no filtering, 1 = sampled/no stats, 2 = blocked/no stats,
-    // 3 = sampled/with stats, 4 = blocked/with stats.
+    // 0 = no particle filtering, 1 = adaptive sampling, 2 = block all particles.
     private static volatile int particleMode;
     private static volatile int particleKeepPercent = 100;
+    private static volatile boolean statsEnabled;
 
     private VoidBoostRuntime() {}
 
@@ -34,18 +34,34 @@ public final class VoidBoostRuntime {
         if (!performanceEnabled) {
             particleMode = 0;
         } else if (disableParticles) {
-            particleMode = performanceMonitor ? 4 : 2;
+            particleMode = 2;
         } else if (reducedParticles) {
-            particleMode = performanceMonitor ? 3 : 1;
+            particleMode = 1;
         } else {
             particleMode = 0;
         }
 
         particleKeepPercent = Math.max(1, Math.min(100, particleBudget));
+        statsEnabled = performanceMonitor;
     }
 
-    public static boolean entityCullingEnabled() { return entityCullingEnabled; }
-    public static double entityDistanceSquared() { return entityDistanceSquared; }
-    public static int particleMode() { return particleMode; }
-    public static int particleKeepPercent() { return particleKeepPercent; }
+    public static boolean entityCullingEnabled() {
+        return entityCullingEnabled;
+    }
+
+    public static double entityDistanceSquared() {
+        return entityDistanceSquared;
+    }
+
+    public static int particleMode() {
+        return particleMode;
+    }
+
+    public static int particleKeepPercent() {
+        return particleKeepPercent;
+    }
+
+    public static boolean statsEnabled() {
+        return statsEnabled;
+    }
 }
