@@ -109,6 +109,45 @@ public final class VoidBoostConfig {
         if (INSTANCE.dynamicRenderDistance && tickCounter % 20 == 0) updateDynamicRenderDistance(client);
     }
 
+    public static void resetToVanilla() {
+        Minecraft client = Minecraft.getInstance();
+        if (optionsCaptured) {
+            INSTANCE.targetFps = savedMaxFps;
+            INSTANCE.maxRenderDistance = Math.max(4, Math.min(32, savedRenderDistance));
+        } else {
+            INSTANCE.targetFps = Math.max(30, Math.min(260, client.options.framerateLimit().get()));
+            INSTANCE.maxRenderDistance = Math.max(4, Math.min(32, client.options.renderDistance().get()));
+        }
+        INSTANCE.performanceMode = false;
+        INSTANCE.performanceMonitor = false;
+        INSTANCE.disableParticles = false;
+        INSTANCE.reducedParticles = false;
+        INSTANCE.particleLimitPercent = 100;
+        INSTANCE.entityShadows = true;
+        INSTANCE.weatherEffects = true;
+        INSTANCE.animationOptimization = false;
+        INSTANCE.fogOptimization = false;
+        INSTANCE.entityRenderOptimization = false;
+        INSTANCE.dynamicRenderDistance = false;
+        INSTANCE.cloudOptimization = false;
+        INSTANCE.vignetteOptimization = false;
+        INSTANCE.ambientOcclusionOptimization = false;
+        INSTANCE.mipmapOptimization = false;
+        INSTANCE.biomeBlendOptimization = false;
+        INSTANCE.viewBobOptimization = false;
+        INSTANCE.vsyncOptimization = false;
+        INSTANCE.competitiveMode = false;
+        INSTANCE.maxFpsPreset = false;
+        INSTANCE.ultimateLocked = false;
+        INSTANCE.dynamicTargetFps = 120;
+        INSTANCE.maxEntityDistance = 64;
+        INSTANCE.markDirty();
+        applyVanillaPerformanceOptions(client);
+        INSTANCE.targetFps = Math.max(30, Math.min(260, client.options.framerateLimit().get()));
+        INSTANCE.maxRenderDistance = Math.max(4, Math.min(32, client.options.renderDistance().get()));
+        INSTANCE.markDirty();
+    }
+
     public static void applyBalancedPreset() { applyPreset("Balanced"); }
     public static void applyCompetitivePreset() { applyPreset("Competitive"); }
     public static void applyMaxFpsPreset() { applyPreset("MAX FPS"); }
