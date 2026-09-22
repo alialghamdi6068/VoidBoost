@@ -58,7 +58,7 @@ public final class VoidBoostAI {
         // Tier 0 targets the full high-FPS range rather than settling around 120 FPS.
         // Tier 0 is a maximum-performance controller. Use the highest
         // supported target as the recovery target instead of settling at 120/240.
-        int target = 260;
+        int target = clampInt(c.dynamicTargetFps, 60, 240);
         double fpsPressure = clamp((target - smoothedFps) / Math.max(30.0, target), 0.0, 1.0);
 
         // Expensive OS metrics are sampled less often; the FPS signal stays responsive.
@@ -142,8 +142,6 @@ public final class VoidBoostAI {
         }
 
         int configuredRender = clampInt(c.maxRenderDistance, 4, 32);
-        // Maximum-FPS Tier 0 never lets world rendering grow beyond four chunks.
-        configuredRender = Math.min(configuredRender, 4);
         if (smoothedPressure >= 0.60 || smoothedRamPressure >= 0.88 || smoothedCpuPressure >= 0.92) {
             effectiveRenderDistance = 4;
         } else if (smoothedPressure >= 0.35 || smoothedRamPressure >= 0.82 || smoothedCpuPressure >= 0.84) {
@@ -154,9 +152,10 @@ public final class VoidBoostAI {
             effectiveRenderDistance = configuredRender;
         }
 
-        // Never allow the adaptive controller to silently weaken Tier 0.
+        // Tier 0 never changes profile/tier. It only adjusts the active render
+        // budget inside the user's configured 4-32 chunk cap.
         effectiveEntityDistance = Math.min(24, effectiveEntityDistance);
-        effectiveRenderDistance = 4;
+        effectiveRenderDistance = clampInt(effectiveRenderDistance, 4, configuredRender);
     }
 
     /** Applies the permanent Tier 0 performance profile. */
@@ -164,6 +163,11 @@ public final class VoidBoostAI {
         try {
             if (c.dynamicRenderDistance && client.options.renderDistance().get() != effectiveRenderDistance) {
                 client.options.renderDistance().set(effectiveRenderDistance);
+            } else if (!c.dynamicRenderDistance) {
+                int configured = clampInt(c.maxRenderDistance, 4, 32);
+                if (client.options.renderDistance().get() != configured) {
+                    client.options.renderDistance().set(configured);
+                }
             }
             // Tier 0 keeps simulation work at the minimum and removes VSync/FPS
             // limiter drift caused by changes in the vanilla video settings screen.
