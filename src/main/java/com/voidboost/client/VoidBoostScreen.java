@@ -229,13 +229,10 @@ public final class VoidBoostScreen extends Screen {
         c.competitiveMode = false;
         c.maxFpsPreset = false;
         c.ultimateLocked = false;
-        c.targetFps = 1000;
+        c.targetFps = 240;
         c.dynamicTargetFps = 120;
-        Minecraft mc = Minecraft.getInstance();
-        mc.options.renderDistance().set(12);
-        mc.options.simulationDistance().set(8);
-        mc.options.framerateLimit().set(1000);
-        mc.options.save();
+        c.maxRenderDistance = 12;
+        c.maxEntityDistance = 64;
         c.markDirty();
     }
 
