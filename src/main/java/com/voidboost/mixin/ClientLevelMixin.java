@@ -40,13 +40,11 @@ public abstract class ClientLevelMixin {
 
         int keep = VoidBoostRuntime.particleKeepPercent();
         int sample = voidboost$particleCounter++;
-        if (sample >= 100_000_000) {
-            // Prevent the counter from wrapping through negative values after a long session.
+        if (voidboost$particleCounter >= 100) {
             voidboost$particleCounter = 0;
-            sample = 0;
         }
 
-        if ((sample % 100) >= keep) {
+        if (sample >= keep) {
             VoidBoostStats.particleAttempt();
             ci.cancel();
         }
