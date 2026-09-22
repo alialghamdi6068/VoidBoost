@@ -17,6 +17,7 @@ public abstract class ClientLevelMixin {
     @Inject(method = "addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V", at = @At("HEAD"), cancellable = true)
     private void voidboost$filterParticles(ParticleOptions options, double x, double y, double z, double vx, double vy, double vz, CallbackInfo ci) {
         VoidBoostConfig c = VoidBoostConfig.get();
+        if (!c.performanceMode) return;
 
         if (c.disableParticles) {
             VoidBoostStats.particleAttempt();
