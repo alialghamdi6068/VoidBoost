@@ -19,9 +19,9 @@ public final class VoidBoostConfig {
 
     public boolean performanceMode = true;
     public boolean performanceMonitor = false;
-    public boolean disableParticles = false;
-    public boolean reducedParticles = true;
-    public int particleLimitPercent = 50;
+    public boolean disableParticles = true;
+    public boolean reducedParticles = false;
+    public int particleLimitPercent = 1;
     public boolean entityShadows = false;
     public boolean weatherEffects = false;
     public boolean animationOptimization = true;
@@ -42,8 +42,8 @@ public final class VoidBoostConfig {
     public boolean ultimateLocked = false;
     public int targetFps = 240;
     public int dynamicTargetFps = 240;
-    public int maxEntityDistance = 64;
-    public int maxRenderDistance = 10;
+    public int maxEntityDistance = 32;
+    public int maxRenderDistance = 4;
 
     private static boolean optionsCaptured;
     private static boolean savedEntityShadows;
@@ -251,7 +251,7 @@ public final class VoidBoostConfig {
             captureVanillaPerformanceOptions(client);
 
             if (INSTANCE.performanceMode) {
-                double entityScale = INSTANCE.maxRenderDistance <= 4 ? 0.32 : INSTANCE.maxRenderDistance <= 6 ? 0.38 : INSTANCE.competitiveMode ? 0.45 : INSTANCE.maxFpsPreset ? 0.40 : 0.58;
+                double entityScale = INSTANCE.maxRenderDistance <= 4 ? 0.25 : INSTANCE.maxRenderDistance <= 6 ? 0.32 : INSTANCE.competitiveMode ? 0.40 : INSTANCE.maxFpsPreset ? 0.36 : 0.55;
                 client.options.entityDistanceScaling().set(entityScale);
                 client.options.vignette().set(!INSTANCE.vignetteOptimization);
                 client.options.ambientOcclusion().set(!INSTANCE.ambientOcclusionOptimization);
