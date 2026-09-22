@@ -62,6 +62,7 @@ public final class VoidBoostConfig {
     private static int savedRenderDistance;
     private static int savedSimulationDistance;
     private static long appliedOptionsSignature = Long.MIN_VALUE;
+    private static boolean optionsDirty = true;
     private static boolean fogStateCaptured;
     private static boolean fogDisabledByVoidBoost;
     private static int tickCounter;
@@ -82,6 +83,7 @@ public final class VoidBoostConfig {
         }
         INSTANCE.sanitize();
         appliedOptionsSignature = Long.MIN_VALUE;
+        optionsDirty = true;
     }
 
     private void sanitize() {
@@ -105,7 +107,7 @@ public final class VoidBoostConfig {
     public static void tick(Minecraft client) {
         if (client.level == null) return;
         tickCounter++;
-        applyVanillaPerformanceOptions(client);
+        if (optionsDirty) applyVanillaPerformanceOptions(client);
         if (INSTANCE.dynamicRenderDistance && tickCounter % 20 == 0) updateDynamicRenderDistance(client);
     }
 
@@ -180,6 +182,7 @@ public final class VoidBoostConfig {
         setSimulationDistance(4);
         save();
         appliedOptionsSignature = Long.MIN_VALUE;
+        optionsDirty = true;
     }
 
     public static void applyPreset(String preset) {
@@ -231,9 +234,11 @@ public final class VoidBoostConfig {
         }
         save();
         appliedOptionsSignature = Long.MIN_VALUE;
+        optionsDirty = true;
     }
 
     private static void applyVanillaPerformanceOptions(Minecraft client) {
+        if (!optionsDirty) return;
         long signature = optionsSignature();
         if (signature == appliedOptionsSignature) return;
         try {
@@ -245,6 +250,7 @@ public final class VoidBoostConfig {
                 restoreVanillaPerformanceOptions(client);
                 syncFog(false);
                 appliedOptionsSignature = signature;
+                optionsDirty = false;
                 return;
             }
 
@@ -278,6 +284,7 @@ public final class VoidBoostConfig {
             syncFog(INSTANCE.fogOptimization);
             if (!INSTANCE.dynamicRenderDistance && optionsCaptured) client.options.renderDistance().set(savedRenderDistance);
             appliedOptionsSignature = signature;
+            optionsDirty = false;
         } catch (Exception ignored) {
             appliedOptionsSignature = Long.MIN_VALUE;
         }
@@ -395,5 +402,5 @@ public final class VoidBoostConfig {
         } catch (Exception ignored) {}
     }
 
-    public static void markDirty() { appliedOptionsSignature = Long.MIN_VALUE; save(); }
+    public static void markDirty() { appliedOptionsSignature = Long.MIN_VALUE; optionsDirty = true; save(); }
 }
