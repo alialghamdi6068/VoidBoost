@@ -91,7 +91,6 @@ public final class VoidBoostScreen extends Screen {
         addSlider(x2, y, w, h, "Simulation Distance", simulationDistance, 4, 32, "Chunks", v -> {
             simulationDistance = v;
             Minecraft.getInstance().options.simulationDistance().set(v);
-            Minecraft.getInstance().options.save();
         });
         y += 36;
 
@@ -189,10 +188,7 @@ public final class VoidBoostScreen extends Screen {
     }
 
     private void addSlider(int x, int y, int w, int h, String name, int value, int min, int max, String unit, IntConsumer change) {
-        addRenderableWidget(new Slider(x, y, w, h, name, value, min, max, unit, v -> {
-            change.accept(v);
-            VoidBoostConfig.get().markDirty();
-        }));
+        addRenderableWidget(new Slider(x, y, w, h, name, value, min, max, unit, change));
     }
 
     private void syncFromConfig() {
