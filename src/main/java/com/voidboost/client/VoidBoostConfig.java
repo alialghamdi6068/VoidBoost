@@ -273,7 +273,7 @@ public final class VoidBoostConfig {
             client.options.entityShadows().set(INSTANCE.entityShadows);
             client.options.weatherRadius().set(INSTANCE.weatherEffects ? 32 : 0);
             if (!INSTANCE.cloudOptimization) client.options.cloudStatus().set(INSTANCE.weatherEffects ? CloudStatus.FANCY : CloudStatus.OFF);
-            client.options.particles().set(INSTANCE.disableParticles ? ParticleStatus.MINIMAL : (INSTANCE.reducedParticles ? ParticleStatus.DECREASED : ParticleStatus.ALL));
+            client.options.particles().set(INSTANCE.disableParticles ? ParticleStatus.MINIMAL : ParticleStatus.ALL);
             if (!INSTANCE.animationOptimization && !INSTANCE.competitiveMode) client.options.bobView().set(savedBobView);
             syncFog(INSTANCE.fogOptimization);
             if (!INSTANCE.dynamicRenderDistance && optionsCaptured) client.options.renderDistance().set(savedRenderDistance);
