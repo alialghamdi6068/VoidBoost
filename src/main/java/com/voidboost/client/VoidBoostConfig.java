@@ -389,7 +389,7 @@ public final class VoidBoostConfig {
         int current = client.options.renderDistance().get();
         int configuredMax = 4;
         int maxDistance = Math.max(4, Math.min(configuredMax, VoidBoostAI.renderDistanceLimit(configuredMax)));
-        int target = Math.max(60, Math.min(240, INSTANCE.dynamicTargetFps));
+        int target = 260;
         int fps = client.getFps();
         int desired = Math.min(current, maxDistance);
         if (current > maxDistance) desired = maxDistance;
