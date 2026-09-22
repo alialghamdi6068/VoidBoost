@@ -14,8 +14,8 @@ import java.lang.management.ManagementFactory;
  */
 public final class VoidBoostAI {
     private static final int LOCKED_TIER = 0;
-    private static final long FAST_INTERVAL_NS = 50_000_000L;
-    private static final long LOAD_SAMPLE_INTERVAL_NS = 250_000_000L;
+    private static final long FAST_INTERVAL_NS = 100_000_000L;
+    private static final long LOAD_SAMPLE_INTERVAL_NS = 500_000_000L;
 
     private static final OperatingSystemMXBean OS_BEAN = getOperatingSystemBean();
 
@@ -48,6 +48,7 @@ public final class VoidBoostAI {
             effectiveEntityDistance = clampInt(c.maxEntityDistance, 32, 128);
             effectiveParticleBudget = clampInt(c.particleLimitPercent, 1, 100);
             effectiveRenderDistance = clampInt(c.maxRenderDistance, 4, 32);
+            VoidBoostRuntime.update(false, false, effectiveEntityDistance, false, false, effectiveParticleBudget, c.performanceMonitor);
             return;
         }
 
@@ -99,6 +100,15 @@ public final class VoidBoostAI {
 
         updateEffectiveBudgets(c);
         applyTier0Options(client, c);
+        VoidBoostRuntime.update(
+                true,
+                c.entityRenderOptimization,
+                effectiveEntityDistance,
+                c.disableParticles,
+                c.reducedParticles,
+                effectiveParticleBudget,
+                c.performanceMonitor
+        );
     }
 
     private static void updateEffectiveBudgets(VoidBoostConfig c) {
