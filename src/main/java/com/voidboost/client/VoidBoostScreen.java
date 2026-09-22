@@ -91,7 +91,7 @@ public final class VoidBoostScreen extends Screen {
                 "Maximum world view distance.", c.maxRenderDistance, 4, 32,
                 v -> c.maxRenderDistance = v));
         addRenderableWidget(new SliderRow(l + w + 14, cy, w, 58, "Simulation Distance",
-                "Distance used for game simulation.", Minecraft.getInstance().options.simulationDistance().get(), 4, 32,
+                "Locked to 4 chunks while Tier 0 is active.", Minecraft.getInstance().options.simulationDistance().get(), 4, 32,
                 v -> Minecraft.getInstance().options.simulationDistance().set(v)));
         cy += 70;
 
@@ -108,7 +108,7 @@ public final class VoidBoostScreen extends Screen {
                 () -> c.entityRenderOptimization = !c.entityRenderOptimization);
         cy += 70;
 
-        addToggle(l, cy, w, "Particle Optimization", "Use reduced particle rendering.", c.disableParticles,
+        addToggle(l, cy, w, "Particle Culling", "Block particle creation for maximum FPS.", c.disableParticles,
                 () -> c.disableParticles = !c.disableParticles);
         addToggle(l + w + 14, cy, w, "Dynamic Distance", "Adapt render distance to current frame time.", c.dynamicRenderDistance,
                 () -> c.dynamicRenderDistance = !c.dynamicRenderDistance);
@@ -189,8 +189,8 @@ public final class VoidBoostScreen extends Screen {
         addRenderableWidget(new SliderRow(l, cy, w, 58, "Particle Budget",
                 "Percentage of particles allowed through.", c.particleLimitPercent, 1, 100,
                 v -> c.particleLimitPercent = v));
-        addToggle(l + w + 14, cy, w, "Ultimate Lock", "Keep the maximum-performance profile locked.", c.ultimateLocked,
-                () -> c.ultimateLocked = !c.ultimateLocked);
+        // Tier 0 is permanently locked in the controller; no user-facing
+        // toggle is exposed here that could imply a downgrade is possible.
     }
 
     private void heading(String title, String description, int x, int y) {
