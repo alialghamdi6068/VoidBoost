@@ -28,12 +28,12 @@ public abstract class ClientLevelMixin {
             double vz,
             CallbackInfo ci
     ) {
-        // Hot path: one primitive snapshot read; no config/AI work.
+        // Hot path: no config object or AI lookup.
         int mode = VoidBoostRuntime.particleMode();
         if (mode == 0) return;
 
-        if (mode == 2 || mode == 4) {
-            if (mode == 4) VoidBoostStats.particleAttempt();
+        if (mode == 2) {
+            VoidBoostStats.particleAttempt();
             ci.cancel();
             return;
         }
@@ -45,7 +45,7 @@ public abstract class ClientLevelMixin {
         }
 
         if (sample >= keep) {
-            if (mode == 3) VoidBoostStats.particleAttempt();
+            VoidBoostStats.particleAttempt();
             ci.cancel();
         }
     }
