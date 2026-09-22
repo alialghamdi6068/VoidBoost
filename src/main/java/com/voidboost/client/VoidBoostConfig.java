@@ -87,7 +87,7 @@ public final class VoidBoostConfig {
     private void sanitize() {
         particleLimitPercent = Math.max(1, Math.min(100, particleLimitPercent));
         dynamicTargetFps = Math.max(60, Math.min(240, dynamicTargetFps));
-        targetFps = Math.max(30, Math.min(1000, targetFps));
+        targetFps = Math.max(30, Math.min(10000, targetFps));
         maxEntityDistance = Math.max(32, Math.min(128, maxEntityDistance));
         maxRenderDistance = Math.max(4, Math.min(12, maxRenderDistance));
     }
@@ -134,7 +134,7 @@ public final class VoidBoostConfig {
         INSTANCE.competitiveMode = true;
         INSTANCE.maxFpsPreset = false;
         INSTANCE.ultimateLocked = true;
-        INSTANCE.targetFps = 1000;
+        INSTANCE.targetFps = 10000;
         INSTANCE.dynamicTargetFps = 240;
         INSTANCE.maxEntityDistance = 32;
         INSTANCE.maxRenderDistance = 4;
@@ -226,7 +226,7 @@ public final class VoidBoostConfig {
                 int configuredLimit = Math.max(4, Math.min(12, INSTANCE.maxRenderDistance));
                 int adaptiveLimit = Math.max(4, Math.min(configuredLimit, VoidBoostAI.renderDistanceLimit(configuredLimit)));
                 if (client.options.renderDistance().get() > adaptiveLimit) client.options.renderDistance().set(adaptiveLimit);
-                client.options.framerateLimit().set(Math.max(30, Math.min(1000, INSTANCE.targetFps)));
+                client.options.framerateLimit().set(Math.max(30, Math.min(10000, INSTANCE.targetFps)));
             } else {
                 restorePerformanceOnlyOptions(client);
             }
