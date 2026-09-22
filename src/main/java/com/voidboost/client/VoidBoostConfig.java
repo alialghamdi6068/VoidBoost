@@ -177,7 +177,7 @@ public final class VoidBoostConfig {
         INSTANCE.ultimateLocked = true;
         INSTANCE.targetFps = 260;
         INSTANCE.dynamicTargetFps = 240;
-        INSTANCE.maxEntityDistance = 32;
+        INSTANCE.maxEntityDistance = 24;
         INSTANCE.maxRenderDistance = 4;
         setSimulationDistance(4);
         save();
