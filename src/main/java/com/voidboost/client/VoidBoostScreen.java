@@ -153,7 +153,7 @@ public final class VoidBoostScreen extends Screen {
                 () -> c.entityRenderOptimization = !c.entityRenderOptimization);
         cy += 70;
         addRenderableWidget(new SliderRow(l, cy, w, 58, "Entity Distance",
-                "Maximum distance for non-critical entities.", c.maxEntityDistance, 32, 128,
+                "Maximum distance for non-critical entities.", c.maxEntityDistance, 24, 128,
                 v -> c.maxEntityDistance = v));
         addToggle(l + w + 14, cy, w, "Animation Optimization", "Reduce animation update overhead.", c.animationOptimization,
                 () -> c.animationOptimization = !c.animationOptimization);
