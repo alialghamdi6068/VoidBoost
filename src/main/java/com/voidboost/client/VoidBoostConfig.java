@@ -269,6 +269,9 @@ public final class VoidBoostConfig {
                 client.options.bobView().set(INSTANCE.viewBobOptimization ? false : savedBobView);
 
                 int configuredLimit = 4;
+                // Keep the simulation radius at the minimum while Tier 0 is active.
+                // This reduces client-side world ticking around the player.
+                client.options.simulationDistance().set(4);
                 int adaptiveLimit = Math.max(4, Math.min(configuredLimit, VoidBoostAI.renderDistanceLimit(configuredLimit)));
                 if (client.options.renderDistance().get() > adaptiveLimit) client.options.renderDistance().set(adaptiveLimit);
                 client.options.framerateLimit().set(Math.max(30, Math.min(260, INSTANCE.targetFps)));
