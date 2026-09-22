@@ -95,11 +95,7 @@ public final class VoidBoostScreen extends Screen {
         });
         y += 36;
 
-        addSlider(x1, y, w, h, "Max Framerate", fps, 30, 1000, "FPS", v -> {
-            fps = v;
-            c.targetFps = v;
-            c.maxFpsPreset = false;
-        });
+        addChoice(x1, y, w, h, "Max Framerate", fpsLabel(), this::cycleFpsLimit);
         addToggle(x2, y, w, h, "VSync", !c.vsyncOptimization, () -> c.vsyncOptimization = !c.vsyncOptimization);
         y += 36;
 
