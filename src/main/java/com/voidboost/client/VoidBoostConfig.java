@@ -40,7 +40,7 @@ public final class VoidBoostConfig {
     public boolean competitiveMode = false;
     public boolean maxFpsPreset = false;
     public boolean ultimateLocked = false;
-    public int targetFps = 240;
+    public int targetFps = 260;
     public int dynamicTargetFps = 240;
     public int maxEntityDistance = 32;
     public int maxRenderDistance = 4;
