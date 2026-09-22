@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft;
  * FPS drops while using smoothing/hysteresis to avoid oscillation.
  */
 public final class VoidBoostAI {
-    private static double smoothedFps = 120.0;
+    private static double smoothedFps = 144.0;
     private static double smoothedPressure;
     private static double smoothedRamPressure;
     private static double smoothedEntityPressure;
@@ -21,7 +21,7 @@ public final class VoidBoostAI {
 
     public static void tick(Minecraft client) {
         long now = System.nanoTime();
-        if (now - lastUpdate < 100_000_000L || client.level == null) return;
+        if (now - lastUpdate < 75_000_000L || client.level == null) return;
         lastUpdate = now;
 
         VoidBoostConfig c = VoidBoostConfig.get();
@@ -34,7 +34,7 @@ public final class VoidBoostAI {
         }
 
         int fps = Math.max(1, client.getFps());
-        smoothedFps = smoothedFps * 0.78 + fps * 0.22;
+        smoothedFps = smoothedFps * 0.70 + fps * 0.30;
 
         int target = Math.max(60, Math.min(240, c.dynamicTargetFps));
         double fpsPressure = clamp((target - smoothedFps) / Math.max(30.0, target), 0.0, 1.0);
@@ -46,13 +46,13 @@ public final class VoidBoostAI {
         smoothedRamPressure = smoothedRamPressure * 0.82 + ramPressure * 0.18;
 
         int entities = client.level.getEntityCount();
-        double entityPressure = clamp((entities - 60.0) / 260.0, 0.0, 1.0);
-        smoothedEntityPressure = smoothedEntityPressure * 0.82 + entityPressure * 0.18;
+        double entityPressure = clamp((entities - 40.0) / 180.0, 0.0, 1.0);
+        smoothedEntityPressure = smoothedEntityPressure * 0.72 + entityPressure * 0.28;
 
         double pressure = Math.max(fpsPressure,
                 Math.max(Math.max(0.0, smoothedRamPressure - 0.76) * 3.0,
                         smoothedEntityPressure * 0.80));
-        smoothedPressure = smoothedPressure * 0.84 + pressure * 0.16;
+        smoothedPressure = smoothedPressure * 0.72 + pressure * 0.28;
 
         int strength = c.ultimateLocked ? 5 : c.maxFpsPreset ? 5 : c.competitiveMode ? 4 : 3;
 
@@ -66,7 +66,7 @@ public final class VoidBoostAI {
         }
 
         // Severe frame spikes bypass hysteresis so sudden drops are handled fast.
-        if (fps < target * 0.55 || (smoothedFps > 20.0 && fps < smoothedFps * 0.60)) {
+        if (fps < target * 0.72 || (smoothedFps > 20.0 && fps < smoothedFps * 0.72)) {
             level = Math.min(4, Math.max(level + 1, strength >= 5 ? 3 : 2));
             stableTicks = 0;
             applyAdaptiveOptions(client, c, target);
@@ -74,10 +74,10 @@ public final class VoidBoostAI {
         }
 
         int desired;
-        if (smoothedPressure >= 0.82) desired = 4;
-        else if (smoothedPressure >= 0.60) desired = Math.min(4, Math.max(3, strength));
-        else if (smoothedPressure >= 0.38) desired = Math.min(3, Math.max(2, strength - 1));
-        else if (smoothedPressure >= 0.18) desired = Math.min(2, Math.max(1, strength - 2));
+        if (smoothedPressure >= 0.68) desired = 4;
+        else if (smoothedPressure >= 0.48) desired = Math.min(4, Math.max(3, strength));
+        else if (smoothedPressure >= 0.28) desired = Math.min(3, Math.max(2, strength - 1));
+        else if (smoothedPressure >= 0.10) desired = Math.min(2, Math.max(1, strength - 2));
         else desired = 0;
 
         if (desired > level) {
@@ -93,7 +93,7 @@ public final class VoidBoostAI {
         }
 
         // Twelve consecutive samples are required before reducing optimization.
-        if (++stableTicks < 12) return;
+        if (++stableTicks < 20) return;
         level = desired;
         stableTicks = 0;
         applyAdaptiveOptions(client, c, target);
@@ -103,7 +103,7 @@ public final class VoidBoostAI {
     private static void applyAdaptiveOptions(Minecraft client, VoidBoostConfig c, int target) {
         if (!c.dynamicRenderDistance) return;
         try {
-            int configured = Math.max(4, Math.min(12, c.maxRenderDistance));
+            int configured = Math.max(4, Math.min(32, c.maxRenderDistance));
             int render = renderDistanceLimit(configured);
             if (client.options.renderDistance().get() > render) {
                 client.options.renderDistance().set(render);
@@ -124,10 +124,9 @@ public final class VoidBoostAI {
                 client.options.simulationDistance().set(desiredSimulation);
             }
 
-            // Keep an uncapped render budget for MAX/ULTIMATE instead of adding
-            // an artificial FPS ceiling that could hide available headroom.
+            // Keep the user's configured FPS limit. Unlimited is represented by Minecraft's 260 sentinel.
             if (c.maxFpsPreset || c.ultimateLocked) {
-                client.options.framerateLimit().set(Math.max(target, 1000));
+                client.options.framerateLimit().set(Math.max(30, Math.min(260, c.targetFps)));
             }
         } catch (RuntimeException ignored) {
             // A version-specific option must never crash the client.
