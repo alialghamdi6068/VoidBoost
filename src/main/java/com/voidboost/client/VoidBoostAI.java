@@ -21,7 +21,6 @@ public final class VoidBoostAI {
     private static int level = LOCKED_TIER;
     private static long lastUpdate;
     private static long lastLoadSample;
-    private static int cachedEntityCount;
 
     private VoidBoostAI() {}
 
@@ -56,8 +55,8 @@ public final class VoidBoostAI {
             double ramPressure = max <= 0 ? 0.0 : clamp((double) used / max, 0.0, 1.0);
             smoothedRamPressure = smoothedRamPressure * 0.65 + ramPressure * 0.35;
 
-            cachedEntityCount = client.level.getEntityCount();
-            double entityPressure = clamp((cachedEntityCount - 40.0) / 180.0, 0.0, 1.0);
+            int entities = client.level.getEntityCount();
+            double entityPressure = clamp((entities - 40.0) / 180.0, 0.0, 1.0);
             smoothedEntityPressure = smoothedEntityPressure * 0.60 + entityPressure * 0.40;
         }
 
@@ -79,6 +78,7 @@ public final class VoidBoostAI {
                     client.options.renderDistance().set(render);
                 }
 
+                // Keep simulation work at the minimum while Tier 0 is active.
                 if (client.options.simulationDistance().get() > 4) {
                     client.options.simulationDistance().set(4);
                 }
@@ -104,19 +104,41 @@ public final class VoidBoostAI {
         return LOCKED_TIER;
     }
 
+    /**
+     * CPU/entity pressure dynamically tightens render distance for non-critical
+     * entities. Players and projectiles are exempt in EntityRenderMixin.
+     */
     public static int entityDistance(int configured) {
         if (!VoidBoostConfig.get().performanceMode) return configured;
-        return Math.max(32, configured - 24);
+
+        int base = Math.max(32, configured - 24);
+        if (smoothedPressure >= 0.70) return 32;
+        if (smoothedPressure >= 0.45) return Math.max(32, base - 8);
+        return base;
     }
 
+    /**
+     * Keep particle work tiny under Tier 0, with an emergency zero-particle path
+     * only when the frame/load pressure is very high.
+     */
     public static int particleBudget(int configured) {
         if (!VoidBoostConfig.get().performanceMode) return configured;
+        if (smoothedPressure >= 0.85) return 1;
         return Math.min(configured, 5);
     }
 
+    /**
+     * RAM/FPS pressure can lower chunk rendering automatically without changing
+     * the user's configured maximum permanently.
+     */
     public static int renderDistanceLimit(int configured) {
         if (!VoidBoostConfig.get().performanceMode) return configured;
-        return Math.max(4, configured - 2);
+
+        int base = Math.max(4, configured - 2);
+        if (smoothedPressure >= 0.75 || smoothedRamPressure >= 0.88) return 4;
+        if (smoothedPressure >= 0.55 || smoothedRamPressure >= 0.82) return Math.max(4, base - 2);
+        if (smoothedPressure >= 0.35 || smoothedRamPressure >= 0.76) return Math.max(4, base - 1);
+        return base;
     }
 
     public static double fps() { return smoothedFps; }
