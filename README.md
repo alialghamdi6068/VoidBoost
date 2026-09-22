@@ -18,7 +18,7 @@ Client-side performance and PvP rendering toolkit for Minecraft Java 1.21.11 on 
 - Dedicated VoidBoost menu opened with **O** from the title screen or while in-game.
 - Performance-mode vanilla options are restored when the mode is disabled.
 - No server-side installation or configuration synchronization.
-- Designed to run alongside Sodium on Fabric 1.21.11. VoidBoost avoids Sodium internals and disables its one potentially overlapping block-entity hook when Sodium is detected, while keeping the rest of its vanilla-side optimizations active.
+- Designed to run alongside Sodium on Fabric 1.21.11. VoidBoost avoids Sodium internals and uses vanilla rendering seams, including block-entity distance culling, so its optimizations can remain active when Sodium is installed.
 - Max Framerate uses the supported presets: 60, 120, 144, 165, 180, 240 and Unlimited.
 
 ## Requirements
