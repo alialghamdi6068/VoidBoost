@@ -14,12 +14,12 @@ import java.lang.management.ManagementFactory;
  */
 public final class VoidBoostAI {
     private static final int LOCKED_TIER = 0;
-    private static final long FAST_INTERVAL_NS = 25_000_000L;
-    private static final long LOAD_SAMPLE_INTERVAL_NS = 100_000_000L;
+    private static final long FAST_INTERVAL_NS = 50_000_000L;
+    private static final long LOAD_SAMPLE_INTERVAL_NS = 250_000_000L;
 
     private static final OperatingSystemMXBean OS_BEAN = getOperatingSystemBean();
 
-    private static double smoothedFps = 144.0;
+    private static double smoothedFps = 240.0;
     private static double smoothedPressure;
     private static double smoothedRamPressure;
     private static double smoothedCpuPressure;
@@ -51,14 +51,14 @@ public final class VoidBoostAI {
             return;
         }
 
-        // Tier 0 never downgrades. Load is measured only to tighten the active profile.
         int fps = Math.max(1, client.getFps());
-        smoothedFps = smoothedFps * 0.55 + fps * 0.45;
+        smoothedFps = smoothedFps * 0.70 + fps * 0.30;
 
-        int target = Math.max(60, Math.min(240, c.dynamicTargetFps));
+        // Tier 0 targets the full high-FPS range rather than settling around 120 FPS.
+        int target = Math.max(120, Math.min(240, c.dynamicTargetFps));
         double fpsPressure = clamp((target - smoothedFps) / Math.max(30.0, target), 0.0, 1.0);
 
-        // FPS reacts every 25 ms. More expensive load metrics are sampled every 100 ms.
+        // Expensive OS metrics are sampled less often; the FPS signal stays responsive.
         if (now - lastLoadSample >= LOAD_SAMPLE_INTERVAL_NS) {
             lastLoadSample = now;
 
@@ -103,30 +103,35 @@ public final class VoidBoostAI {
 
     private static void updateEffectiveBudgets(VoidBoostConfig c) {
         int configuredEntity = clampInt(c.maxEntityDistance, 32, 128);
-        if (smoothedPressure >= 0.70) {
+
+        // React before FPS becomes severely low. This lets Tier 0 recover FPS sooner.
+        if (smoothedPressure >= 0.35) {
             effectiveEntityDistance = 32;
-        } else if (smoothedPressure >= 0.45) {
+        } else if (smoothedPressure >= 0.20) {
+            effectiveEntityDistance = Math.max(32, configuredEntity - 16);
+        } else if (smoothedPressure >= 0.10) {
             effectiveEntityDistance = Math.max(32, configuredEntity - 8);
         } else {
             effectiveEntityDistance = configuredEntity;
         }
 
         int configuredParticles = clampInt(c.particleLimitPercent, 1, 100);
-        // Respect the user's particle limit. Only severe load can tighten it further.
-        if (smoothedPressure >= 0.85) {
-            effectiveParticleBudget = Math.min(configuredParticles, 5);
-        } else if (smoothedPressure >= 0.65) {
+        if (smoothedPressure >= 0.70) {
+            effectiveParticleBudget = Math.min(configuredParticles, 10);
+        } else if (smoothedPressure >= 0.45) {
             effectiveParticleBudget = Math.min(configuredParticles, 25);
+        } else if (smoothedPressure >= 0.20) {
+            effectiveParticleBudget = Math.min(configuredParticles, 50);
         } else {
             effectiveParticleBudget = configuredParticles;
         }
 
         int configuredRender = clampInt(c.maxRenderDistance, 4, 32);
-        if (smoothedPressure >= 0.75 || smoothedRamPressure >= 0.88 || smoothedCpuPressure >= 0.92) {
+        if (smoothedPressure >= 0.60 || smoothedRamPressure >= 0.88 || smoothedCpuPressure >= 0.92) {
             effectiveRenderDistance = 4;
-        } else if (smoothedPressure >= 0.55 || smoothedRamPressure >= 0.82 || smoothedCpuPressure >= 0.84) {
+        } else if (smoothedPressure >= 0.35 || smoothedRamPressure >= 0.82 || smoothedCpuPressure >= 0.84) {
             effectiveRenderDistance = Math.max(4, configuredRender - 2);
-        } else if (smoothedPressure >= 0.35 || smoothedRamPressure >= 0.76 || smoothedCpuPressure >= 0.76) {
+        } else if (smoothedPressure >= 0.20 || smoothedRamPressure >= 0.76 || smoothedCpuPressure >= 0.76) {
             effectiveRenderDistance = Math.max(4, configuredRender - 1);
         } else {
             effectiveRenderDistance = configuredRender;
