@@ -23,6 +23,7 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    productionRuntimeMods "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 }
 
 processResources {
@@ -43,6 +44,11 @@ java {
 jar {
     inputs.property 'archivesName', project.archives_base_name
     from('LICENSE') { rename { "${it}_${project.archives_base_name}" } }
+}
+
+tasks.register("prodClient", net.fabricmc.loom.task.prod.ClientProductionRunTask) {
+    useXVFB = true
+    mods.from remapJar
 }
 
 publishing {
