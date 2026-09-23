@@ -5,7 +5,7 @@
   "client": [
     "ClientLevelMixin",
     "EntityRenderMixin",
-    "BlockEntityRenderMixin",
+    "BlockEntityRenderMixin"
   ],
   "injectors": {
     "defaultRequire": 1
