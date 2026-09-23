@@ -7,8 +7,8 @@ Client-side maximum-performance and PvP rendering optimizer for Minecraft Java 1
 ## Features
 
 - **Always-on Tier 0**: the strongest VoidBoost performance profile is applied automatically on launch.
-- **No settings menu**: there are no user performance profiles or downgrade controls.
-- **No performance HUD**: VoidBoost does not add an FPS/RAM/CPU overlay.
+- **No settings menu**: there are no user performance profiles or downgrade controls. The **O** key toggles the optional performance monitor, and its keybind can be changed from Minecraft Controls settings.
+- **Optional performance HUD**: press **O** to toggle the FPS/RAM/CPU monitor when you want diagnostics.
 - Render distance locked to **4 chunks**.
 - Simulation distance locked to **4 chunks**.
 - FPS limit locked to **Unlimited**.
