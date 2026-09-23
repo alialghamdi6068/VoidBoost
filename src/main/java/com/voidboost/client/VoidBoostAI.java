@@ -58,7 +58,7 @@ public final class VoidBoostAI {
         // Tier 0 targets the full high-FPS range rather than settling around 120 FPS.
         // Tier 0 is a maximum-performance controller. Use the highest
         // supported target as the recovery target instead of settling at 120/240.
-        int target = clampInt(c.dynamicTargetFps, 60, 240);
+        int target = 240;
         double fpsPressure = clamp((target - smoothedFps) / Math.max(30.0, target), 0.0, 1.0);
 
         // Expensive OS metrics are sampled less often; the FPS signal stays responsive.
@@ -141,7 +141,7 @@ public final class VoidBoostAI {
             effectiveParticleBudget = configuredParticles;
         }
 
-        int configuredRender = clampInt(c.maxRenderDistance, 4, 32);
+        int configuredRender = 4;
         if (smoothedPressure >= 0.60 || smoothedRamPressure >= 0.88 || smoothedCpuPressure >= 0.92) {
             effectiveRenderDistance = 4;
         } else if (smoothedPressure >= 0.35 || smoothedRamPressure >= 0.82 || smoothedCpuPressure >= 0.84) {
@@ -161,13 +161,8 @@ public final class VoidBoostAI {
     /** Applies the permanent Tier 0 performance profile. */
     private static void applyTier0Options(Minecraft client, VoidBoostConfig c) {
         try {
-            if (c.dynamicRenderDistance && client.options.renderDistance().get() != effectiveRenderDistance) {
-                client.options.renderDistance().set(effectiveRenderDistance);
-            } else if (!c.dynamicRenderDistance) {
-                int configured = clampInt(c.maxRenderDistance, 4, 32);
-                if (client.options.renderDistance().get() != configured) {
-                    client.options.renderDistance().set(configured);
-                }
+            if (client.options.renderDistance().get() != 4) {
+                client.options.renderDistance().set(4);
             }
             // Tier 0 keeps simulation work at the minimum and removes VSync/FPS
             // limiter drift caused by changes in the vanilla video settings screen.
