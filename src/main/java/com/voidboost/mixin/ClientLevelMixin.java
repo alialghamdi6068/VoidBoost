@@ -12,9 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientLevel.class)
 public abstract class ClientLevelMixin {
     /**
-     * Reject particles before Minecraft allocates the particle instance or
-     * schedules it for rendering. This is deliberately earlier and cheaper
-     * than creating particles and hiding them later.
+     * Reject ordinary particles before Minecraft allocates the particle instance.
+     *
+     * Forced/always-visible particles are preserved so gameplay-critical visual
+     * feedback is not silently removed by VoidBoost.
      */
     @Inject(method = "doAddParticle", at = @At("HEAD"), cancellable = true)
     private void voidboost$filterParticles(
@@ -29,7 +30,7 @@ public abstract class ClientLevelMixin {
             double vz,
             CallbackInfo ci
     ) {
-        if (!VoidBoostRuntime.maximumPerformance()) {
+        if (!VoidBoostRuntime.maximumPerformance() || overrideLimiter || alwaysShow) {
             return;
         }
 
