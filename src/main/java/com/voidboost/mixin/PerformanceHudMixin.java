@@ -17,6 +17,8 @@ import com.sun.management.OperatingSystemMXBean;
 
 @Mixin(Gui.class)
 public abstract class PerformanceHudMixin {
+    @Unique private static final OperatingSystemMXBean OS_BEAN =
+            ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
     @Unique private static String cachedFrameText = "0.0 ms";
     @Unique private static String cachedRamText = "0 / 0 MB";
     @Unique private static String cachedCpuText = "CPU: --";
@@ -50,9 +52,7 @@ public abstract class PerformanceHudMixin {
 
             cachedParticlesText = "Blocked/s: " + VoidBoostStats.particlesPerSecond();
 
-            OperatingSystemMXBean osBean =
-                    ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
-            double cpu = osBean == null ? -1.0D : osBean.getProcessCpuLoad();
+            double cpu = OS_BEAN == null ? -1.0D : OS_BEAN.getProcessCpuLoad();
             cachedCpuText = "CPU: " + (cpu < 0.0D ? "--" : Math.round(cpu * 100.0D) + "%");
 
             nextHudUpdateNanos = now + 500_000_000L;
