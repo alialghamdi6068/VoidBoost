@@ -1,6 +1,5 @@
 package com.voidboost.mixin;
 
-import com.voidboost.client.VoidBoostAI;
 import com.voidboost.client.VoidBoostConfig;
 import com.voidboost.client.VoidBoostStats;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -13,9 +12,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientLevel.class)
 public abstract class ClientLevelMixin {
     /**
-     * In normal mode VoidBoost does not alter particle behavior at all.
-     * In emergency mode it rejects only particles that are neither forced
-     * nor explicitly allowed to bypass the particle limiter.
+     * VoidBoost removes normal client-side particle spawning to reduce rendering work.
+     * This covers block, water, bubble, smoke, damage, and other normal particles.
+     * Forced/always-show particles still use Minecraft's normal override path.
      */
     @Inject(method = "doAddParticle", at = @At("HEAD"), cancellable = true)
     private void voidboost$filterParticles(
@@ -30,7 +29,7 @@ public abstract class ClientLevelMixin {
             double vz,
             CallbackInfo ci
     ) {
-        if (!VoidBoostAI.emergencyMode() || overrideLimiter || alwaysShow) {
+        if (overrideLimiter || alwaysShow) {
             return;
         }
 
