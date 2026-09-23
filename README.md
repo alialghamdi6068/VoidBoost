@@ -1,5 +1,9 @@
 # VoidBoost
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/alialghamdi6068/VoidBoost/main/voidboost-cover.svg" alt="VoidBoost — VoidFlame performance and PvP optimization">
+</p>
+
 **Client-side performance & PvP optimization mod for Minecraft Java 1.21.11 + Fabric.**
 
 VoidBoost is built around one rule: **improve client performance without becoming another source of CPU, RAM, or rendering overhead.**
