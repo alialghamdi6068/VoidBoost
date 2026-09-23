@@ -34,14 +34,17 @@ The emergency action has a direct purpose: reduce client particle workload when 
 
 ### Particle optimization
 
-VoidBoost intercepts particle creation before the particle instance is created:
+VoidBoost intercepts particle creation before the particle instance is created.
 
-- Normal mode rejects particles Minecraft marks for the normal limiter.
-- Emergency mode additionally rejects non-forced particles that bypass that limiter.
-- `alwaysShow` particles are never blocked by VoidBoost.
+- **Normal mode:** VoidBoost does not change particle behavior.
+- **Emergency mode:** VoidBoost rejects only particles that are not marked "alwaysShow" and do not explicitly request "overrideLimiter".
+- Particles marked "alwaysShow" are never blocked by VoidBoost.
+- Particles using "overrideLimiter" are never blocked by VoidBoost.
 - Optional particle statistics are collected only while the monitor is enabled.
 
-### Optional monitor
+This deliberately preserves Minecraft's explicit particle-priority signals while still providing a workload-reduction path under sustained frame pressure.
+
+## Optional monitor
 
 Press **O** to show/hide the diagnostic monitor.
 
@@ -68,9 +71,9 @@ GitHub Actions builds the project with Java 21 and uploads the resulting JAR art
 
 A local Gradle installation with Java 21 can build the project with:
 
-`gradle build`
+'gradle build'
 
-The production JAR is generated under `build/libs/`.
+The production JAR is generated under 'build/libs/'.
 
 ## Verification checklist
 
