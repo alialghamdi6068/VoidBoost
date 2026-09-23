@@ -4,7 +4,6 @@ public final class VoidBoostStats {
     private static long windowStartNanos;
     private static int particles;
     private static int particlesPerSecond;
-    private static long lastFrameNanos;
     private static double smoothedFrameMs;
 
     private VoidBoostStats() {}
@@ -42,7 +41,6 @@ public final class VoidBoostStats {
         windowStartNanos = System.nanoTime();
         particles = 0;
         particlesPerSecond = 0;
-        lastFrameNanos = 0L;
         smoothedFrameMs = 0.0D;
     }
 
