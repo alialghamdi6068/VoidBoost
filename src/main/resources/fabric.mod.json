@@ -3,7 +3,7 @@
   "id": "voidboost",
   "version": "${version}",
   "name": "VoidBoost",
-  "description": "Client-side performance and PvP rendering optimizer for Minecraft 1.21.11.",
+  "description": "A lightweight performance optimizer built for smoother Minecraft gameplay, higher FPS, and cleaner PvP rendering.",
   "authors": [
     "VoidFlame"
   ],
