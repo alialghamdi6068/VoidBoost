@@ -57,14 +57,8 @@ jobs:
       - name: Production client smoke test
         shell: bash
         run: |
-          set +e
+          set -euo pipefail
           timeout 90s gradle prodClient --no-daemon --stacktrace
-          status=$?
-          if [ "$status" -eq 124 ]; then
-            echo "Production client remained running for the smoke-test window; no startup failure was reported."
-            exit 0
-          fi
-          exit "$status"
 
       - name: Upload production JAR
         uses: actions/upload-artifact@v4
