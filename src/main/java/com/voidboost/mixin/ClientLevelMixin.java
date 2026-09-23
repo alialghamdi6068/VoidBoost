@@ -1,5 +1,6 @@
 package com.voidboost.mixin;
 
+import com.voidboost.client.VoidBoostAI;
 import com.voidboost.client.VoidBoostRuntime;
 import com.voidboost.client.VoidBoostStats;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -14,8 +15,9 @@ public abstract class ClientLevelMixin {
     /**
      * Reject ordinary particles before Minecraft allocates the particle instance.
      *
-     * Forced/always-visible particles are preserved so gameplay-critical visual
-     * feedback is not silently removed by VoidBoost.
+     * During sustained low-FPS pressure, VoidBoost also rejects non-forced
+     * visual particles that bypass the normal limiter. Forced/always-visible
+     * particles remain protected so important gameplay feedback is preserved.
      */
     @Inject(method = "doAddParticle", at = @At("HEAD"), cancellable = true)
     private void voidboost$filterParticles(
@@ -30,11 +32,13 @@ public abstract class ClientLevelMixin {
             double vz,
             CallbackInfo ci
     ) {
-        if (!VoidBoostRuntime.maximumPerformance() || overrideLimiter || alwaysShow) {
+        if (!VoidBoostRuntime.maximumPerformance() || alwaysShow) {
             return;
         }
 
-        VoidBoostStats.particleAttempt();
-        ci.cancel();
+        if (!overrideLimiter || VoidBoostAI.emergencyMode()) {
+            VoidBoostStats.particleAttempt();
+            ci.cancel();
+        }
     }
 }
