@@ -1,7 +1,7 @@
 package com.voidboost.client;
 
 public final class VoidBoostStats {
-    private static long windowStart = System.nanoTime();
+    private static long windowStartNanos;
     private static int particles;
     private static int particlesPerSecond;
     private static long lastFrameNanos;
@@ -9,14 +9,17 @@ public final class VoidBoostStats {
 
     private VoidBoostStats() {}
 
+    /**
+     * This method is called only while the optional monitor is enabled.
+     */
     public static void particleAttempt() {
-        if (!VoidBoostConfig.get().performanceMonitor) return;
         particles++;
     }
 
+    /**
+     * This method is called only while the optional monitor is enabled.
+     */
     public static void frame() {
-        if (!VoidBoostConfig.get().performanceMonitor) return;
-
         long now = System.nanoTime();
 
         if (lastFrameNanos != 0L) {
@@ -27,15 +30,15 @@ public final class VoidBoostStats {
         }
         lastFrameNanos = now;
 
-        if (now - windowStart >= 1_000_000_000L) {
+        if (now - windowStartNanos >= 1_000_000_000L) {
             particlesPerSecond = particles;
             particles = 0;
-            windowStart = now;
+            windowStartNanos = now;
         }
     }
 
     public static void reset() {
-        windowStart = System.nanoTime();
+        windowStartNanos = System.nanoTime();
         particles = 0;
         particlesPerSecond = 0;
         lastFrameNanos = 0L;
