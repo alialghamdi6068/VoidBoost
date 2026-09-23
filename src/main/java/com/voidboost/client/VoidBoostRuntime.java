@@ -1,20 +1,16 @@
 package com.voidboost.client;
 
 /**
- * Immutable-style hot-path snapshot for VoidBoost's rendering hooks.
+ * Small immutable-style runtime snapshot used by VoidBoost's render hooks.
  *
- * The snapshot is refreshed from the client tick thread. Rendering hooks only
- * read primitive volatile fields, avoiding config lookups and adaptive-controller
- * work inside per-entity/per-particle paths.
+ * The hot paths only read volatile primitives. VoidBoost never writes
+ * Minecraft or Sodium video settings.
  */
 public final class VoidBoostRuntime {
     private static volatile boolean entityCullingEnabled;
-    private static volatile double entityDistanceSquared = 128.0 * 128.0;
-
-    // 0 = no particle filtering, 1 = adaptive sampling, 2 = block all particles.
+    private static volatile double entityDistanceSquared = 24.0D * 24.0D;
     private static volatile int particleMode;
     private static volatile int particleKeepPercent = 100;
-    private static volatile boolean statsEnabled;
 
     private VoidBoostRuntime() {}
 
@@ -24,10 +20,10 @@ public final class VoidBoostRuntime {
             int entityDistance,
             boolean disableParticles,
             boolean reducedParticles,
-            int particleBudget,
-            boolean performanceMonitor
+            int particleBudget
     ) {
         entityCullingEnabled = performanceEnabled && entityOptimization;
+
         int distance = Math.max(24, Math.min(128, entityDistance));
         entityDistanceSquared = (double) distance * distance;
 
@@ -42,7 +38,6 @@ public final class VoidBoostRuntime {
         }
 
         particleKeepPercent = Math.max(1, Math.min(100, particleBudget));
-        statsEnabled = performanceMonitor;
     }
 
     public static boolean entityCullingEnabled() {
@@ -59,9 +54,5 @@ public final class VoidBoostRuntime {
 
     public static int particleKeepPercent() {
         return particleKeepPercent;
-    }
-
-    public static boolean statsEnabled() {
-        return statsEnabled;
     }
 }
