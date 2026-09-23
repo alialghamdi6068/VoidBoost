@@ -388,6 +388,10 @@ public final class VoidBoostConfig {
         } catch (Exception ignored) {}
     }
 
+    public static void togglePerformanceMonitor() {
+        INSTANCE.performanceMonitor = !INSTANCE.performanceMonitor;
+    }
+
     public static void markDirty() {
         // Kept for source compatibility with older integrations; no user settings exist.
         applyMaximumPerformanceState();
