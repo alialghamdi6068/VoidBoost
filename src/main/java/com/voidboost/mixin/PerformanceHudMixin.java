@@ -27,11 +27,6 @@ public abstract class PerformanceHudMixin {
     @Unique private static String cachedParticlesText = "Blocked/s: 0";
     @Unique private static long nextHudUpdateNanos;
 
-    @Inject(method = "render", at = @At("HEAD"))
-    private void voidboost$measureFrame(GuiGraphics graphics, DeltaTracker tickCounter, CallbackInfo ci) {
-        if (VoidBoostConfig.isPerformanceMonitorEnabled()) VoidBoostStats.frame();
-    }
-
     @Inject(method = "render", at = @At("TAIL"))
     private void voidboost$renderMonitor(GuiGraphics graphics, DeltaTracker tickCounter, CallbackInfo ci) {
         if (!VoidBoostConfig.isPerformanceMonitorEnabled()) return;
