@@ -6,7 +6,6 @@
     "ClientLevelMixin",
     "EntityRenderMixin",
     "BlockEntityRenderMixin",
-    "PerformanceHudMixin"
   ],
   "injectors": {
     "defaultRequire": 1
