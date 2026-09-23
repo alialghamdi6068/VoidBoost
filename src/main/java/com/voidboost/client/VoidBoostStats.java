@@ -2,6 +2,7 @@ package com.voidboost.client;
 
 public final class VoidBoostStats {
     private static long windowStartNanos;
+    private static long lastFrameNanos;
     private static int particles;
     private static int particlesPerSecond;
     private static double smoothedFrameMs;
@@ -16,19 +17,20 @@ public final class VoidBoostStats {
     }
 
     /**
-     * Records one frame interval while the optional monitor is enabled.
+     * Records one completed frame and rolls the particle counter into its
+     * one-second display window. Called only while the optional monitor is on.
      */
-    public static void recordFrameMs(double ms) {
-        if (ms <= 0.0D || ms > 1000.0D) return;
-        smoothedFrameMs = smoothedFrameMs == 0.0D
-                ? ms
-                : smoothedFrameMs * 0.9D + ms * 0.1D;
-    }
+    public static void frame(long now) {
+        if (lastFrameNanos != 0L) {
+            double ms = (now - lastFrameNanos) / 1_000_000.0D;
+            if (ms > 0.0D && ms <= 1000.0D) {
+                smoothedFrameMs = smoothedFrameMs == 0.0D
+                        ? ms
+                        : smoothedFrameMs * 0.9D + ms * 0.1D;
+            }
+        }
+        lastFrameNanos = now;
 
-    /**
-     * Rolls the particle counter into its one-second display window.
-     */
-    public static void updateParticleWindow(long now) {
         if (windowStartNanos == 0L) windowStartNanos = now;
         if (now - windowStartNanos >= 1_000_000_000L) {
             particlesPerSecond = particles;
@@ -41,6 +43,7 @@ public final class VoidBoostStats {
         windowStartNanos = System.nanoTime();
         particles = 0;
         particlesPerSecond = 0;
+        lastFrameNanos = 0L;
         smoothedFrameMs = 0.0D;
     }
 
