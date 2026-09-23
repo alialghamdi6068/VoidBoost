@@ -19,12 +19,13 @@ import com.sun.management.OperatingSystemMXBean;
 public abstract class PerformanceHudMixin {
     @Unique private static final OperatingSystemMXBean OS_BEAN =
             ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
+
     @Unique private static String cachedFrameText = "0.0 ms";
     @Unique private static String cachedRamText = "0 / 0 MB";
-    @Unique private static String cachedCpuText = "CPU: --";
-    @Unique private static String cachedFpsText = "FPS: 0";
-    @Unique private static String cachedEntitiesText = "Entities: 0";
-    @Unique private static String cachedParticlesText = "Blocked/s: 0";
+    @Unique private static String cachedCpuText = "--";
+    @Unique private static String cachedFpsText = "0";
+    @Unique private static String cachedEntitiesText = "0";
+    @Unique private static String cachedParticlesText = "0/s";
     @Unique private static long nextHudUpdateNanos;
 
     @Inject(method = "render", at = @At("TAIL"))
@@ -34,37 +35,49 @@ public abstract class PerformanceHudMixin {
         Minecraft client = Minecraft.getInstance();
         long now = System.nanoTime();
         VoidBoostStats.frame(now);
+
         if (now >= nextHudUpdateNanos) {
-            cachedFpsText = "FPS: " + client.getFps();
-            cachedFrameText = "Frame: " + formatFrameMs(VoidBoostStats.frameMs());
+            cachedFpsText = Integer.toString(client.getFps());
+            cachedFrameText = formatFrameMs(VoidBoostStats.frameMs());
 
             int entities = client.level == null ? 0 : client.level.getEntityCount();
-            cachedEntitiesText = "Entities: " + entities;
+            cachedEntitiesText = Integer.toString(entities);
 
             Runtime runtime = Runtime.getRuntime();
             long used = runtime.totalMemory() - runtime.freeMemory();
             long max = runtime.maxMemory();
-            cachedRamText = "RAM: " + (used / 1048576L) + " / " + (max / 1048576L) + " MB";
+            cachedRamText = (used / 1048576L) + " / " + (max / 1048576L) + " MB";
 
-            cachedParticlesText = "Blocked/s: " + VoidBoostStats.particlesPerSecond();
+            cachedParticlesText = VoidBoostStats.particlesPerSecond() + "/s";
 
             double cpu = OS_BEAN == null ? -1.0D : OS_BEAN.getProcessCpuLoad();
-            cachedCpuText = "CPU: " + (cpu < 0.0D ? "--" : Math.round(cpu * 100.0D) + "%");
+            cachedCpuText = cpu < 0.0D ? "--" : Math.round(cpu * 100.0D) + "%";
 
             nextHudUpdateNanos = now + 500_000_000L;
         }
 
-        int x = 8;
-        int y = 8;
-        graphics.fill(x - 5, y - 5, x + 168, y + 94, 0xB0101014);
-        graphics.fill(x - 5, y - 5, x + 168, y - 3, 0xFF9A7CFF);
-        graphics.drawString(client.font, "VoidBoost Monitor", x, y + 2, 0xFFFFFFFF, false);
-        graphics.drawString(client.font, cachedFpsText, x, y + 15, 0xFFFFFFFF, false);
-        graphics.drawString(client.font, cachedFrameText, x, y + 28, 0xFFD0D0D0, false);
-        graphics.drawString(client.font, cachedRamText, x, y + 41, 0xFFD0D0D0, false);
-        graphics.drawString(client.font, cachedCpuText, x, y + 54, 0xFFD0D0D0, false);
-        graphics.drawString(client.font, cachedEntitiesText, x, y + 67, 0xFFD0D0D0, false);
-        graphics.drawString(client.font, cachedParticlesText, x, y + 80, 0xFFD0D0D0, false);
+        final int x = 8;
+        final int y = 8;
+        final int width = 150;
+        final int height = 70;
+
+        // Compact PvP-style panel: readable, low visual noise, and cheap to draw.
+        graphics.fill(x, y, x + width, y + height, 0xB80A0C10);
+        graphics.fill(x, y, x + 2, y + height, 0xFF9A7CFF);
+
+        graphics.drawString(client.font, "VOIDBOOST", x + 8, y + 6, 0xFFFFFFFF, false);
+        graphics.drawString(client.font, "MONITOR", x + width - 48, y + 6, 0xFFB8B8C8, false);
+
+        graphics.drawString(client.font, cachedFpsText, x + 8, y + 18, 0xFFFFFFFF, false);
+        graphics.drawString(client.font, "FPS", x + 30, y + 18, 0xFFB8B8C8, false);
+        graphics.drawString(client.font, cachedFrameText, x + 8, y + 31, 0xFFD8D8E0, false);
+        graphics.drawString(client.font, "FRAME", x + 42, y + 31, 0xFF8E8E9A, false);
+
+        graphics.drawString(client.font, "CPU " + cachedCpuText, x + 8, y + 47, 0xFFD0D0D8, false);
+        graphics.drawString(client.font, "RAM " + cachedRamText, x + 68, y + 47, 0xFFD0D0D8, false);
+
+        graphics.drawString(client.font, "ENT " + cachedEntitiesText, x + 8, y + 59, 0xFFAAAAB8, false);
+        graphics.drawString(client.font, "PART " + cachedParticlesText, x + 72, y + 59, 0xFFAAAAB8, false);
     }
 
     @Unique
