@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "ClientLevelMixin",
-    "PerformanceHudMixin"
+    "PerformanceHudMixin",
+    "EntityRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
