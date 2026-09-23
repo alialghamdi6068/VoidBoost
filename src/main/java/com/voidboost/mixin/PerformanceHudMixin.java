@@ -1,6 +1,5 @@
 package com.voidboost.mixin;
 
-import com.voidboost.client.VoidBoostAI;
 import com.voidboost.client.VoidBoostConfig;
 import com.voidboost.client.VoidBoostStats;
 import net.minecraft.client.DeltaTracker;
@@ -43,8 +42,9 @@ public abstract class PerformanceHudMixin {
             DeltaTracker tickCounter,
             CallbackInfo ci
     ) {
-        VoidBoostAI.sampleFrame();
-        VoidBoostStats.frame();
+        if (VoidBoostConfig.isPerformanceMonitorEnabled()) {
+            VoidBoostStats.frame();
+        }
     }
 
     @Inject(method = "render", at = @At("TAIL"))
@@ -53,7 +53,9 @@ public abstract class PerformanceHudMixin {
             DeltaTracker tickCounter,
             CallbackInfo ci
     ) {
-        if (!VoidBoostConfig.get().performanceMonitor) return;
+        if (!VoidBoostConfig.isPerformanceMonitorEnabled()) {
+            return;
+        }
 
         Minecraft client = Minecraft.getInstance();
         long now = System.nanoTime();
