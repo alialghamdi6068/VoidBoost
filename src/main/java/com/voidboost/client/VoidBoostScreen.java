@@ -98,7 +98,7 @@ public final class VoidBoostScreen extends Screen {
         addRenderableWidget(new SliderRow(l, cy, w, 58, "Max Framerate",
                 "Target frame-rate limit.", c.targetFps, 60, 260,
                 v -> c.targetFps = snapFps(v)));
-        addToggle(l + w + 14, cy, w, "VSync", "Synchronize frames to the display.", !c.vsyncOptimization,
+        addToggle(l + w + 14, cy, w, "Disable VSync", "Disable display synchronization for lower input latency.", c.vsyncOptimization,
                 () -> c.vsyncOptimization = !c.vsyncOptimization);
         cy += 70;
 
@@ -110,7 +110,7 @@ public final class VoidBoostScreen extends Screen {
 
         addToggle(l, cy, w, "Particle Culling", "Block particle creation for maximum FPS.", c.disableParticles,
                 () -> c.disableParticles = !c.disableParticles);
-        addToggle(l + w + 14, cy, w, "Dynamic Distance", "Adapt render distance to current frame time.", c.dynamicRenderDistance,
+        addToggle(l + w + 14, cy, w, "Dynamic Distance", "Adapt view distance to FPS and system pressure.", c.dynamicRenderDistance,
                 () -> c.dynamicRenderDistance = !c.dynamicRenderDistance);
     }
 
