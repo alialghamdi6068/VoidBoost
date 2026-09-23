@@ -3,12 +3,11 @@ package com.voidboost.client;
 import net.minecraft.client.Minecraft;
 
 /**
- * Permanent maximum-performance controller.
+ * Lightweight always-on controller.
  *
- * There is no adaptive downgrade path: VoidBoost always enforces its
- * maximum-performance budgets. Keeping this controller deterministic also
- * avoids spending CPU time measuring the system just to decide whether to
- * reduce performance settings.
+ * VoidBoost deliberately does not modify Minecraft/Sodium video settings.
+ * Users keep full control of render distance, simulation distance, FPS,
+ * VSync, quality, and every other renderer option.
  */
 public final class VoidBoostAI {
     private static final int LOCKED_TIER = 0;
@@ -21,25 +20,7 @@ public final class VoidBoostAI {
         if (now - lastUpdate < 100_000_000L || client.level == null) return;
         lastUpdate = now;
 
-        // Tier 0 is permanently locked: minimum simulation/render distance,
-        // maximum framerate, aggressive particle/entity culling, no VSync.
-        try {
-            if (client.options.renderDistance().get() != 4) {
-                client.options.renderDistance().set(4);
-            }
-            if (client.options.simulationDistance().get() != 4) {
-                client.options.simulationDistance().set(4);
-            }
-            if (client.options.framerateLimit().get() != 260) {
-                client.options.framerateLimit().set(260);
-            }
-            if (client.options.enableVsync().get()) {
-                client.options.enableVsync().set(false);
-            }
-        } catch (RuntimeException ignored) {
-            // Never let a version-specific option change crash the client.
-        }
-
+        // Only apply VoidBoost's independent runtime culling.
         VoidBoostRuntime.update(
                 true,
                 true,
@@ -47,7 +28,7 @@ public final class VoidBoostAI {
                 true,
                 false,
                 1,
-                false
+                VoidBoostConfig.get().performanceMonitor
         );
     }
 
@@ -64,7 +45,8 @@ public final class VoidBoostAI {
     }
 
     public static int renderDistanceLimit(int configured) {
-        return 4;
+        // Informational only. VoidBoost never changes the user's render distance.
+        return configured;
     }
 
     public static double fps() {
