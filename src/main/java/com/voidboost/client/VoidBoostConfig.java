@@ -1,10 +1,13 @@
 package com.voidboost.client;
 
+import net.minecraft.client.Minecraft;
+
 /**
- * Minimal runtime state for VoidBoost.
+ * Minimal VoidBoost runtime state.
  *
- * VoidBoost never owns Minecraft/Sodium video settings. The only user-facing
- * state is the optional diagnostic monitor.
+ * VoidBoost intentionally has no settings screen and never overwrites
+ * Minecraft/Sodium video options. The player's renderer settings remain
+ * completely under their control.
  */
 public final class VoidBoostConfig {
     private static final VoidBoostConfig INSTANCE = new VoidBoostConfig();
@@ -19,17 +22,22 @@ public final class VoidBoostConfig {
 
     public static void load() {
         INSTANCE.performanceMonitor = false;
+        VoidBoostStats.reset();
     }
 
-    public static void tick(net.minecraft.client.Minecraft client) {
-        // Intentionally empty: VoidBoost must not overwrite Sodium settings.
+    public static void tick(Minecraft client) {
+        // Deliberately empty. Never fight Sodium or vanilla video settings.
     }
 
     public static void togglePerformanceMonitor() {
         INSTANCE.performanceMonitor = !INSTANCE.performanceMonitor;
+        VoidBoostStats.reset();
     }
 
+    /**
+     * Kept as a harmless compatibility hook for older integrations.
+     */
     public static void markDirty() {
-        // Kept for compatibility with older integrations.
+        // No persistent settings exist.
     }
 }
