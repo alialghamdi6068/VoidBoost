@@ -51,6 +51,7 @@ public abstract class PerformanceHudMixin {
             long max = runtime.maxMemory();
             cachedRamText = "RAM: " + (used / 1048576L) + " / " + (max / 1048576L) + " MB";
 
+            VoidBoostStats.updateParticleWindow(now);
             cachedParticlesText = "Blocked/s: " + VoidBoostStats.particlesPerSecond();
 
             double cpu = OS_BEAN == null ? -1.0D : OS_BEAN.getProcessCpuLoad();
