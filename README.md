@@ -50,7 +50,7 @@ Press **O** to show/hide the diagnostic monitor.
 
 When the monitor is hidden, VoidBoost does not collect frame statistics, CPU statistics, RAM statistics, entity counts, or particle counters. The monitor is disabled by default.
 
-When visible, diagnostic values are refreshed only four times per second.
+When visible, diagnostic values are refreshed at most twice per second.
 
 ## Sodium compatibility
 
