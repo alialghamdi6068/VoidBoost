@@ -8,6 +8,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import com.sun.management.OperatingSystemMXBean;
+import java.lang.management.ManagementFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,6 +24,8 @@ public abstract class PerformanceHudMixin {
     @Unique private static int cachedParticles;
     @Unique private static String cachedRamText = "0 / 0 MB";
     @Unique private static String cachedCpuText = "CPU: 0%";
+    @Unique private static final OperatingSystemMXBean OS_BEAN =
+            ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
     @Unique private static String cachedAiText = "AI: TIER 0";
     @Unique private static long nextHudUpdateNanos;
 
@@ -46,7 +50,8 @@ public abstract class PerformanceHudMixin {
             long max = runtime.maxMemory();
             cachedRamText = (used / (1024L * 1024L)) + " / " + (max / (1024L * 1024L)) + " MB";
             cachedParticles = VoidBoostStats.particlesPerSecond();
-            cachedCpuText = "CPU: " + Math.round(VoidBoostAI.cpuPressure() * 100.0) + "%";
+            double cpu = OS_BEAN == null ? -1.0 : OS_BEAN.getProcessCpuLoad();
+            cachedCpuText = "CPU: " + (cpu < 0.0 ? "--" : Math.round(cpu * 100.0) + "%");
             cachedAiText = "AI: TIER 0";
             nextHudUpdateNanos = now + 250_000_000L;
         }
