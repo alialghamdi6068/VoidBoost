@@ -17,19 +17,20 @@ public final class VoidBoostStats {
     }
 
     /**
-     * This method is called only while the optional monitor is enabled.
+     * Records one frame interval while the optional monitor is enabled.
      */
-    public static void frame() {
-        long now = System.nanoTime();
+    public static void recordFrameMs(double ms) {
+        if (ms <= 0.0D || ms > 1000.0D) return;
+        smoothedFrameMs = smoothedFrameMs == 0.0D
+                ? ms
+                : smoothedFrameMs * 0.9D + ms * 0.1D;
+    }
 
-        if (lastFrameNanos != 0L) {
-            double ms = (now - lastFrameNanos) / 1_000_000.0D;
-            smoothedFrameMs = smoothedFrameMs == 0.0D
-                    ? ms
-                    : smoothedFrameMs * 0.9D + ms * 0.1D;
-        }
-        lastFrameNanos = now;
-
+    /**
+     * Rolls the particle counter into its one-second display window.
+     */
+    public static void updateParticleWindow(long now) {
+        if (windowStartNanos == 0L) windowStartNanos = now;
         if (now - windowStartNanos >= 1_000_000_000L) {
             particlesPerSecond = particles;
             particles = 0;
