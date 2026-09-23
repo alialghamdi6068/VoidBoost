@@ -13,7 +13,8 @@ public final class VoidBoostClient implements ClientModInitializer {
     private static final KeyMapping.Category VOIDBOOST_CATEGORY = KeyMapping.Category.register(
             Identifier.fromNamespaceAndPath(MOD_ID, "keybindings")
     );
-    private static KeyMapping toggleMonitorKey;
+
+    private KeyMapping toggleMonitorKey;
 
     @Override
     public void onInitializeClient() {
@@ -25,7 +26,6 @@ public final class VoidBoostClient implements ClientModInitializer {
                 VOIDBOOST_CATEGORY
         ));
 
-        ClientTickEvents.END_CLIENT_TICK.register(VoidBoostConfig::tick);
         ClientTickEvents.END_CLIENT_TICK.register(VoidBoostAI::tick);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (toggleMonitorKey.consumeClick()) {
