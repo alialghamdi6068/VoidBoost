@@ -4,31 +4,56 @@ Client-side performance and PvP rendering optimizer for Minecraft Java 1.21.11 o
 
 **Developer:** VoidFlame
 
-## Performance profile
+## Performance design
 
-VoidBoost is an **always-on Tier 0** optimizer focused on removing avoidable client work without taking ownership of Minecraft or Sodium video settings.
+VoidBoost is an **always-on Tier 0** optimizer. Its core rule is simple: VoidBoost must not spend meaningful CPU/RAM unless that work has a direct performance purpose.
 
 - **No settings menu.**
 - **No FPS/VSync/render-distance overrides.**
 - **No Sodium settings overrides.**
-- **Early ordinary-particle rejection:** normal particles are rejected before Minecraft creates the particle instance.
-- **Low-FPS emergency mode:** a tiny local controller samples performance every 500 ms and temporarily expands particle filtering only while sustained FPS pressure is detected. It uses no ML model, allocations, network calls, or background worker.
-- **Gameplay-safe particle handling:** always-visible particles remain protected.
-- **Zero network dependency:** no external AI/API is used.
-- **Optional monitor:** press **O** to show/hide diagnostics; when hidden, the monitor does not collect its statistics.
-- **Client-only:** no server installation is required.
+- **No Sodium-internal mixins.**
+- **No background worker.**
+- **No external AI/API/network dependency.**
+- **No per-entity renderer hook.**
+- **No render-loop AI sampling.**
+- **No statistics collection while the monitor is hidden.**
 
-## CPU/RAM protection
+### Adaptive controller
 
-The adaptive controller is intentionally not a heavyweight machine-learning system. A real model would consume CPU/RAM and compete with Minecraft for the resources VoidBoost is supposed to preserve. Instead, the controller uses hysteresis: it enters emergency filtering below 45 FPS and leaves it at 58 FPS, preventing constant switching around the threshold.
+The local controller is intentionally lightweight instead of using a real machine-learning model. A heavyweight ML loop would consume CPU/RAM and compete with Minecraft for the resources VoidBoost is supposed to preserve.
 
-The controller never changes Minecraft or Sodium video options, render distance, VSync, FPS limit, or simulation settings.
+The controller:
+
+1. Runs on the client tick, not the render loop.
+2. Makes a real performance decision only twice per second.
+3. Reads Minecraft's existing FPS value instead of timing every rendered frame.
+4. Enters emergency particle filtering below **45 FPS**.
+5. Leaves emergency filtering at **58 FPS** to avoid rapid switching.
+
+The emergency action has a direct purpose: reduce client particle workload when sustained frame pressure is detected. There is no entity scan, prediction model, large cache, or background task running only to make the AI look more advanced.
+
+### Particle optimization
+
+VoidBoost intercepts particle creation before the particle instance is created:
+
+- Normal mode rejects particles Minecraft marks for the normal limiter.
+- Emergency mode additionally rejects non-forced particles that bypass that limiter.
+- `alwaysShow` particles are never blocked by VoidBoost.
+- Optional particle statistics are collected only while the monitor is enabled.
+
+### Optional monitor
+
+Press **O** to show/hide the diagnostic monitor.
+
+When the monitor is hidden, VoidBoost does not collect frame statistics, CPU statistics, RAM statistics, entity counts, or particle counters. The monitor is disabled by default.
+
+When visible, diagnostic values are refreshed only four times per second.
 
 ## Sodium compatibility
 
-VoidBoost does not inject into Sodium internals and does not take ownership of Sodium's video settings. You can freely change Sodium options while playing.
+VoidBoost does not inject into Sodium internals and never writes Minecraft/Sodium video options. The player's renderer configuration remains fully under their control.
 
-Minecraft 1.21.11 is on Sodium's maintained 0.8.x branch. Sodium 0.8.14 is a stable release for 1.21.11.
+Sodium is a high-performance rendering engine focused on improving frame rates and reducing micro-stutter.
 
 ## Requirements
 
@@ -41,25 +66,29 @@ Minecraft 1.21.11 is on Sodium's maintained 0.8.x branch. Sodium 0.8.14 is a sta
 
 GitHub Actions builds the project with Java 21 and uploads the resulting JAR artifact.
 
-A local Gradle installation with Java 21 can build the project with `gradle build`.
+A local Gradle installation with Java 21 can build the project with:
+
+`gradle build`
 
 The production JAR is generated under `build/libs/`.
 
 ## Verification checklist
 
-- Java 21 compilation/build.
-- Fabric metadata and client entrypoint validation through the Gradle build.
-- Mixin configuration included in the production build.
-- Clean client-only architecture.
-- No Sodium-internal mixins.
-- No renderer-setting ownership.
-- No external network/API dependency.
-- Adaptive controller uses a single lightweight client-thread sample path.
-- Optional monitor is disabled by default.
-- Latest CI build must finish successfully before release.
+Before release, verify:
+
+- Java 21 compilation/build succeeds.
+- Fabric metadata loads as a client-only mod.
+- The mixin configuration contains only the required client hooks.
+- No Sodium-internal mixins exist.
+- No renderer-setting ownership exists.
+- No network/API dependency exists.
+- The adaptive controller is tick-based.
+- The optional monitor performs no statistics work while hidden.
+- The production JAR is generated successfully.
+- The resulting game client starts with VoidBoost installed alongside Sodium.
 
 ## Performance note
 
 VoidBoost does not promise a fixed FPS number. Actual performance depends on hardware, resolution, Sodium settings, shaders, resource packs, world complexity and other installed mods.
 
-The goal is to remove avoidable client work while leaving the player's renderer configuration under their control.
+The goal is to remove avoidable VoidBoost overhead first, then apply only workload reductions with a direct rendering/performance purpose.
