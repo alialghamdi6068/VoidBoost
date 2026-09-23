@@ -58,7 +58,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          timeout 90s gradle prodClient --no-daemon --stacktrace
+          set +e
+          timeout 90s gradle prodClient --no-daemon --stacktrace 2>&1 | tee production-client.log
+          status=${PIPESTATUS[0]}
+          set -e
+
+          # Minecraft is a long-running client, so a timeout is expected after
+          # successful startup. Fail only when an actual fatal startup error
+          # occurred or the startup checkpoint was never reached.
+          if grep -Eq 'FATAL|Mixin apply failed|InvalidInjectionException|NoSuchMethodError|NoClassDefFoundError|Exception in thread "main"' production-client.log; then
+            echo "Production client reported a fatal startup error."
+            exit 1
+          fi
+
+          if grep -Fq 'Reloading ResourceManager:' production-client.log; then
+            echo "Production client reached resource loading successfully."
+            exit 0
+          fi
+
+          if [ "$status" -eq 124 ]; then
+            echo "Production client timed out before the startup checkpoint."
+          else
+            echo "Production client exited before the startup checkpoint (status $status)."
+          fi
+          exit 1
 
       - name: Upload production JAR
         uses: actions/upload-artifact@v4
