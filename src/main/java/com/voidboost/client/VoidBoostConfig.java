@@ -241,11 +241,10 @@ public final class VoidBoostConfig {
         long signature = optionsSignature();
         if (signature == appliedOptionsSignature) return;
         try {
-            boolean controlVanilla = INSTANCE.performanceMode || INSTANCE.disableParticles || INSTANCE.reducedParticles
-                    || !INSTANCE.entityShadows || !INSTANCE.weatherEffects || INSTANCE.animationOptimization || INSTANCE.fogOptimization
-                    || INSTANCE.cloudOptimization || INSTANCE.vignetteOptimization || INSTANCE.ambientOcclusionOptimization
-                    || INSTANCE.mipmapOptimization || INSTANCE.biomeBlendOptimization || INSTANCE.viewBobOptimization || INSTANCE.vsyncOptimization;
-            if (!controlVanilla) {
+            // All VoidBoost video-option overrides are owned by Performance Mode.
+            // Turning FPS Boost off must restore the exact pre-VoidBoost state even
+            // if old optimization toggles remain enabled in the saved config.
+            if (!INSTANCE.performanceMode) {
                 restoreVanillaPerformanceOptions(client);
                 syncFog(false);
                 appliedOptionsSignature = signature;
