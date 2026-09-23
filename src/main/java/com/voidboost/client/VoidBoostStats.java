@@ -18,9 +18,12 @@ public final class VoidBoostStats {
         if (!VoidBoostConfig.get().performanceMonitor) return;
 
         long now = System.nanoTime();
+
         if (lastFrameNanos != 0L) {
-            double ms = (now - lastFrameNanos) / 1_000_000.0;
-            smoothedFrameMs = smoothedFrameMs == 0.0 ? ms : smoothedFrameMs * 0.9 + ms * 0.1;
+            double ms = (now - lastFrameNanos) / 1_000_000.0D;
+            smoothedFrameMs = smoothedFrameMs == 0.0D
+                    ? ms
+                    : smoothedFrameMs * 0.9D + ms * 0.1D;
         }
         lastFrameNanos = now;
 
@@ -31,6 +34,19 @@ public final class VoidBoostStats {
         }
     }
 
-    public static int particlesPerSecond() { return particlesPerSecond; }
-    public static double frameMs() { return smoothedFrameMs; }
+    public static void reset() {
+        windowStart = System.nanoTime();
+        particles = 0;
+        particlesPerSecond = 0;
+        lastFrameNanos = 0L;
+        smoothedFrameMs = 0.0D;
+    }
+
+    public static int particlesPerSecond() {
+        return particlesPerSecond;
+    }
+
+    public static double frameMs() {
+        return smoothedFrameMs;
+    }
 }
