@@ -14,9 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class ClientLevelMixin {
     /**
      * In normal mode VoidBoost does not alter particle behavior at all.
-     * In emergency mode it rejects non-forced particles before Minecraft
-     * allocates the particle instance, reducing particle workload only when
-     * frame pressure is sustained.
+     * In emergency mode it rejects only particles that are neither forced
+     * nor explicitly allowed to bypass the particle limiter.
      */
     @Inject(method = "doAddParticle", at = @At("HEAD"), cancellable = true)
     private void voidboost$filterParticles(
@@ -31,7 +30,7 @@ public abstract class ClientLevelMixin {
             double vz,
             CallbackInfo ci
     ) {
-        if (!VoidBoostAI.emergencyMode() || alwaysShow) {
+        if (!VoidBoostAI.emergencyMode() || overrideLimiter || alwaysShow) {
             return;
         }
 
