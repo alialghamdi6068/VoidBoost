@@ -12,9 +12,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientLevel.class)
 public abstract class ClientLevelMixin {
     /**
-     * VoidBoost removes normal client-side particle spawning to reduce rendering work.
-     * This covers block, water, bubble, smoke, damage, and other normal particles.
-     * Forced/always-show particles still use Minecraft's normal override path.
+     * VoidBoost removes all client-side particle spawning to minimize rendering work.
+     * This includes normal and forced particles such as block, water, bubble, smoke,
+     * damage, and other particle effects.
      */
     @Inject(method = "doAddParticle", at = @At("HEAD"), cancellable = true)
     private void voidboost$filterParticles(
@@ -29,10 +29,6 @@ public abstract class ClientLevelMixin {
             double vz,
             CallbackInfo ci
     ) {
-        if (overrideLimiter || alwaysShow) {
-            return;
-        }
-
         if (VoidBoostConfig.isPerformanceMonitorEnabled()) {
             VoidBoostStats.particleAttempt();
         }
