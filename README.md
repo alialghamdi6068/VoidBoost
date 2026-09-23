@@ -1,6 +1,6 @@
 # VoidBoost
 
-Client-side performance and PvP rendering optimizer for Minecraft Java 1.21.11 on Fabric.
+Client-side performance and PvP rendering optimizer for Minecraft Java 1.21.11 on Fabric. **1000 FPS target.**
 
 **Developer:** VoidFlame
 
@@ -91,4 +91,4 @@ Before release, verify:
 
 VoidBoost does not promise a fixed FPS number. Actual performance depends on hardware, resolution, Sodium settings, shaders, resource packs, world complexity and other installed mods.
 
-The goal is to remove avoidable VoidBoost overhead first, then apply only workload reductions with a direct rendering/performance purpose.
+The goal is a **1000 FPS target**: remove avoidable VoidBoost overhead first, then apply only workload reductions with a direct rendering/performance purpose. 1000 FPS is a target, not a hardware-independent guarantee.
