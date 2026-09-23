@@ -17,15 +17,13 @@ import com.sun.management.OperatingSystemMXBean;
 
 @Mixin(Gui.class)
 public abstract class PerformanceHudMixin {
-    @Unique private static final OperatingSystemMXBean OS_BEAN =
-            ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
+    @Unique private static OperatingSystemMXBean osBean;
 
     @Unique private static String cachedFrameText = "0.0 ms";
     @Unique private static String cachedRamText = "0 / 0 MB";
     @Unique private static String cachedCpuText = "--";
     @Unique private static String cachedFpsText = "0";
     @Unique private static String cachedEntitiesText = "0";
-    @Unique private static String cachedParticlesText = "0/s";
     @Unique private static long nextHudUpdateNanos;
 
     @Inject(method = "render", at = @At("TAIL"))
@@ -48,20 +46,15 @@ public abstract class PerformanceHudMixin {
             long max = runtime.maxMemory();
             cachedRamText = (used / 1048576L) + " / " + (max / 1048576L) + " MB";
 
-            cachedParticlesText = VoidBoostStats.particlesPerSecond() + "/s";
-
-            double cpu = OS_BEAN == null ? -1.0D : OS_BEAN.getProcessCpuLoad();
-            cachedCpuText = cpu < 0.0D ? "--" : Math.round(cpu * 100.0D) + "%";
-
+            cachedCpuText = processCpuText();
             nextHudUpdateNanos = now + 500_000_000L;
         }
 
         final int x = 8;
         final int y = 8;
         final int width = 150;
-        final int height = 70;
+        final int height = 62;
 
-        // Compact PvP-style panel: readable, low visual noise, and cheap to draw.
         graphics.fill(x, y, x + width, y + height, 0xB80A0C10);
         graphics.fill(x, y, x + 2, y + height, 0xFF9A7CFF);
 
@@ -75,9 +68,16 @@ public abstract class PerformanceHudMixin {
 
         graphics.drawString(client.font, "CPU " + cachedCpuText, x + 8, y + 47, 0xFFD0D0D8, false);
         graphics.drawString(client.font, "RAM " + cachedRamText, x + 68, y + 47, 0xFFD0D0D8, false);
-
         graphics.drawString(client.font, "ENT " + cachedEntitiesText, x + 8, y + 59, 0xFFAAAAB8, false);
-        graphics.drawString(client.font, "PART " + cachedParticlesText, x + 72, y + 59, 0xFFAAAAB8, false);
+    }
+
+    @Unique
+    private static String processCpuText() {
+        if (osBean == null) {
+            osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
+        }
+        double cpu = osBean == null ? -1.0D : osBean.getProcessCpuLoad();
+        return cpu < 0.0D ? "--" : Math.round(cpu * 100.0D) + "%";
     }
 
     @Unique
