@@ -1,7 +1,5 @@
 package com.voidboost.client;
 
-import net.minecraft.client.Minecraft;
-
 /**
  * Minimal VoidBoost runtime state.
  *
@@ -25,19 +23,8 @@ public final class VoidBoostConfig {
         VoidBoostStats.reset();
     }
 
-    public static void tick(Minecraft client) {
-        // Deliberately empty. Never fight Sodium or vanilla video settings.
-    }
-
     public static void togglePerformanceMonitor() {
         INSTANCE.performanceMonitor = !INSTANCE.performanceMonitor;
         VoidBoostStats.reset();
-    }
-
-    /**
-     * Kept as a harmless compatibility hook for older integrations.
-     */
-    public static void markDirty() {
-        // No persistent settings exist.
     }
 }
