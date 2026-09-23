@@ -28,7 +28,7 @@ Client-side performance and PvP rendering optimizer for Minecraft Java 1.21.11 o
 
 VoidBoost does not inject into Sodium internals and does not take ownership of Sodium's settings. You can change Sodium options normally while playing; VoidBoost's independent culling hooks continue to run without resetting those options.
 
-Minecraft 1.21.11 is currently a supported branched Sodium version, with the 0.8.x branch maintained by Sodium. citeturn0search4
+Minecraft 1.21.11 is supported by Sodium's maintained 0.8.x branch.
 
 ## Build
 
