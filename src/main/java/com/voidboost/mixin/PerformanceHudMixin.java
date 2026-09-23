@@ -26,7 +26,6 @@ public abstract class PerformanceHudMixin {
     @Unique private static String cachedEntitiesText = "Entities: 0";
     @Unique private static String cachedParticlesText = "Blocked/s: 0";
     @Unique private static long nextHudUpdateNanos;
-    @Unique private static long lastFrameNanos;
 
     @Inject(method = "render", at = @At("TAIL"))
     private void voidboost$renderMonitor(GuiGraphics graphics, DeltaTracker tickCounter, CallbackInfo ci) {
@@ -34,11 +33,7 @@ public abstract class PerformanceHudMixin {
 
         Minecraft client = Minecraft.getInstance();
         long now = System.nanoTime();
-        if (lastFrameNanos != 0L) {
-            double ms = (now - lastFrameNanos) / 1_000_000.0D;
-            VoidBoostStats.recordFrameMs(ms);
-        }
-        lastFrameNanos = now;
+        VoidBoostStats.frame(now);
         if (now >= nextHudUpdateNanos) {
             cachedFpsText = "FPS: " + client.getFps();
             cachedFrameText = "Frame: " + formatFrameMs(VoidBoostStats.frameMs());
@@ -51,7 +46,6 @@ public abstract class PerformanceHudMixin {
             long max = runtime.maxMemory();
             cachedRamText = "RAM: " + (used / 1048576L) + " / " + (max / 1048576L) + " MB";
 
-            VoidBoostStats.updateParticleWindow(now);
             cachedParticlesText = "Blocked/s: " + VoidBoostStats.particlesPerSecond();
 
             double cpu = OS_BEAN == null ? -1.0D : OS_BEAN.getProcessCpuLoad();
