@@ -146,37 +146,6 @@ public final class VoidBoostConfig {
     public static void applyCompetitivePreset() { applyPreset("Competitive"); }
     public static void applyMaxFpsPreset() { applyPreset("MAX FPS"); }
 
-    public static void applyUltimateLockedPreset() {
-        INSTANCE.performanceMode = true;
-        INSTANCE.performanceMonitor = false;
-        INSTANCE.disableParticles = true;
-        INSTANCE.reducedParticles = false;
-        INSTANCE.entityShadows = false;
-        INSTANCE.weatherEffects = false;
-        INSTANCE.animationOptimization = true;
-        INSTANCE.fogOptimization = true;
-        INSTANCE.entityRenderOptimization = true;
-        INSTANCE.dynamicRenderDistance = true;
-        INSTANCE.cloudOptimization = true;
-        INSTANCE.vignetteOptimization = true;
-        INSTANCE.ambientOcclusionOptimization = true;
-        INSTANCE.mipmapOptimization = true;
-        INSTANCE.biomeBlendOptimization = true;
-        INSTANCE.viewBobOptimization = true;
-        INSTANCE.vsyncOptimization = true;
-        INSTANCE.competitiveMode = true;
-        INSTANCE.maxFpsPreset = false;
-        INSTANCE.ultimateLocked = true;
-        INSTANCE.targetFps = 260;
-        INSTANCE.dynamicTargetFps = 240;
-        INSTANCE.maxEntityDistance = 24;
-        INSTANCE.maxRenderDistance = 4;
-        setSimulationDistance(4);
-        save();
-        appliedOptionsSignature = Long.MIN_VALUE;
-        optionsDirty = true;
-    }
-
     public static void applyPreset(String preset) {
         switch (preset) {
             case "Balanced" -> {
