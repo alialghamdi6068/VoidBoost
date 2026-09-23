@@ -31,9 +31,6 @@ public abstract class PerformanceHudMixin {
     @Unique
     private static String cachedCpuText = "CPU: --";
     @Unique
-    private static final OperatingSystemMXBean OS_BEAN =
-            ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
-    @Unique
     private static long nextHudUpdateNanos;
 
     @Inject(method = "render", at = @At("HEAD"))
@@ -76,7 +73,9 @@ public abstract class PerformanceHudMixin {
 
             cachedParticles = VoidBoostStats.particlesPerSecond();
 
-            double cpu = OS_BEAN == null ? -1.0D : OS_BEAN.getProcessCpuLoad();
+            OperatingSystemMXBean osBean =
+                    ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
+            double cpu = osBean == null ? -1.0D : osBean.getProcessCpuLoad();
             cachedCpuText = "CPU: " + (cpu < 0.0D ? "--" : Math.round(cpu * 100.0D) + "%");
 
             nextHudUpdateNanos = now + 250_000_000L;
