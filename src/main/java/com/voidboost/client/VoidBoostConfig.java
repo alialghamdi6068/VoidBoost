@@ -60,21 +60,19 @@ public final class VoidBoostConfig {
         try {
             captureVanillaPerformanceOptions(client);
 
+            // Do not overwrite Sodium's own render-distance/quality controls.
+            // VoidBoost only enforces its independent vanilla performance hooks.
             client.options.entityDistanceScaling().set(0.25D);
             client.options.entityShadows().set(false);
             client.options.weatherRadius().set(0);
             client.options.cloudStatus().set(CloudStatus.OFF);
             client.options.particles().set(ParticleStatus.MINIMAL);
-            client.options.mipmapLevels().set(0);
-            client.options.biomeBlendRadius().set(0);
-            client.options.vignette().set(false);
-            client.options.ambientOcclusion().set(false);
+            // Sodium owns these renderer quality settings when installed.
+            // Leave them untouched so changing Sodium options always wins.
             client.options.chunkSectionFadeInTime().set(0.0D);
             client.options.bobView().set(false);
-            client.options.enableVsync().set(false);
-            client.options.framerateLimit().set(260);
-            client.options.renderDistance().set(4);
-            client.options.simulationDistance().set(4);
+            // Respect Minecraft/Sodium's own FPS, render-distance and VSync controls.
+            // VoidBoost must never fight the user's Sodium settings.
 
             syncFog(true);
             optionsDirty = false;
