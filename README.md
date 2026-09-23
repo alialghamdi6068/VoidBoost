@@ -1,97 +1,170 @@
 # VoidBoost
 
-Client-side performance and PvP rendering optimizer for Minecraft Java 1.21.11 on Fabric. **1000 FPS target.**
+**Client-side performance & PvP optimization mod for Minecraft Java 1.21.11 + Fabric.**
 
-**Developer:** VoidFlame
+VoidBoost is built around one rule: **improve client performance without becoming another source of CPU, RAM, or rendering overhead.**
 
-## Performance design
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-3b3b3b?logo=minecraft)](https://www.minecraft.net/)
+[![Fabric](https://img.shields.io/badge/Fabric-Client--side-DBD0B8?logo=fabric)](https://fabricmc.net/)
+[![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)](https://www.oracle.com/java/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-VoidBoost is an **always-on Tier 0** optimizer. Its core rule is simple: VoidBoost must not spend meaningful CPU/RAM unless that work has a direct performance purpose.
+---
 
-- **No settings menu.**
-- **No FPS/VSync/render-distance overrides.**
-- **No Sodium settings overrides.**
-- **No Sodium-internal mixins.**
-- **No background worker.**
-- **No external AI/API/network dependency.**
-- **No per-entity renderer hook.**
-- **No render-loop AI sampling.**
-- **No statistics collection while the monitor is hidden.**
+## What VoidBoost does
 
-### Adaptive controller
+- **Tier 0 is permanently locked.**
+- Uses lightweight local rules instead of an external AI service.
+- Keeps the normal particle pipeline untouched until sustained low FPS is detected.
+- Can reduce particle workload during emergency performance pressure.
+- Includes an optional, low-overhead performance monitor.
+- Does not modify Sodium settings or inject into Sodium internals.
+- Does not use network requests, external APIs, background workers, or per-entity renderer hooks.
+- Keeps diagnostic collection disabled while the monitor is hidden.
 
-The local controller is intentionally lightweight instead of using a real machine-learning model. A heavyweight ML loop would consume CPU/RAM and compete with Minecraft for the resources VoidBoost is supposed to preserve.
+## Performance controller
 
-The controller:
+VoidBoost checks Minecraft's existing FPS value from the client tick.
 
-1. Runs on the client tick, not the render loop.
-2. Makes a real performance decision only twice per second.
-3. Reads Minecraft's existing FPS value instead of timing every rendered frame.
-4. Enters emergency particle filtering below **45 FPS**.
-5. Leaves emergency filtering at **58 FPS** to avoid rapid switching.
+| State | Behavior |
+| --- | --- |
+| Normal | Minecraft's normal particle behavior |
+| Low FPS | Counts consecutive low-FPS samples |
+| Emergency | Filters non-priority particles to reduce workload |
+| Recovery | Returns to normal after sustained recovery |
 
-The emergency action has a direct purpose: reduce client particle workload when sustained frame pressure is detected. There is no entity scan, prediction model, large cache, or background task running only to make the AI look more advanced.
+Current thresholds:
 
-### Particle optimization
+- Sample interval: **10 client ticks**
+- Enter emergency: **below 45 FPS for 3 samples**
+- Leave emergency: **58+ FPS for 4 samples**
 
-VoidBoost intercepts particle creation before the particle instance is created.
+The controller is intentionally conservative about when it activates. It does not run a machine-learning model or continuously analyze the render loop.
 
-- **Normal mode:** VoidBoost does not change particle behavior.
-- **Emergency mode:** VoidBoost rejects only particles that are not marked "alwaysShow" and do not explicitly request "overrideLimiter".
-- Particles marked "alwaysShow" are never blocked by VoidBoost.
-- Particles using "overrideLimiter" are never blocked by VoidBoost.
-- Optional particle statistics are collected only while the monitor is enabled.
+## Performance Monitor
 
-This deliberately preserves Minecraft's explicit particle-priority signals while still providing a workload-reduction path under sustained frame pressure.
+The monitor is **OFF by default**.
 
-## Optional monitor
+Press **O**:
 
-Press **O** to show/hide the diagnostic monitor.
+- First press → **ON**
+- Second press → **OFF**
+- Repeat whenever needed
 
-When the monitor is hidden, VoidBoost does not collect frame statistics, CPU statistics, RAM statistics, entity counts, or particle counters. The monitor is disabled by default.
+When enabled, it displays:
 
-When visible, diagnostic values are refreshed at most twice per second.
+- FPS
+- Frame time
+- CPU usage
+- Java RAM usage
+- Entity count
+- Particle activity
 
-## Sodium compatibility
+Diagnostic values are refreshed at most every **500 ms**. File I/O is only used when loading or changing the monitor preference.
 
-VoidBoost does not inject into Sodium internals and never writes Minecraft/Sodium video options. The player's renderer configuration remains fully under their control.
+## Design goals
 
-Sodium is a high-performance rendering engine focused on improving frame rates and reducing micro-stutter.
+### Zero unnecessary overhead
+
+VoidBoost avoids:
+
+- Network/API calls
+- External AI services
+- Background threads
+- Continuous render-loop AI logic
+- Per-entity renderer hooks
+- Sodium-internal mixins
+- Automatic video-setting changes
+- Automatic Sodium-setting changes
+
+### Sodium-friendly
+
+VoidBoost does not take ownership of the player's renderer configuration.
+
+Your Sodium and Minecraft video settings remain yours to control.
 
 ## Requirements
 
-- Minecraft Java 1.21.11
-- Fabric Loader 0.18.5 or newer
-- Fabric API
-- Java 21
+- Minecraft Java **1.21.11**
+- Fabric Loader **0.18.5+**
+- Fabric API **0.141.6+1.21.11**
+- Java **21**
+
+## Project structure
+
+```text
+VoidBoost/
+├── .github/
+│   └── workflows/
+│       └── build.yml
+├── src/
+│   ├── main/
+│   │   ├── java/com/voidboost/
+│   │   │   ├── client/
+│   │   │   │   ├── VoidBoostAI.java
+│   │   │   │   ├── VoidBoostClient.java
+│   │   │   │   ├── VoidBoostConfig.java
+│   │   │   │   └── VoidBoostStats.java
+│   │   │   └── mixin/
+│   │   │       ├── ClientLevelMixin.java
+│   │   │       └── PerformanceHudMixin.java
+│   │   └── resources/
+│   │       ├── fabric.mod.json
+│   │       └── voidboost.mixins.json
+├── build.gradle
+├── gradle.properties
+├── LICENSE
+└── README.md
+```
 
 ## Build
 
-GitHub Actions builds the project with Java 21 and uploads the resulting JAR artifact.
+With Java 21 installed:
 
-A local Gradle installation with Java 21 can build the project with:
+```bash
+gradle build
+```
 
-'gradle build'
+The production JAR is generated in:
 
-The production JAR is generated under 'build/libs/'.
+```text
+build/libs/
+```
 
-## Verification checklist
+For the production client smoke test:
 
-Before release, verify:
+```bash
+gradle prodClient
+```
 
-- Java 21 compilation/build succeeds.
-- Fabric metadata loads as a client-only mod.
-- The mixin configuration contains only the required client hooks.
-- No Sodium-internal mixins exist.
-- No renderer-setting ownership exists.
-- No network/API dependency exists.
-- The adaptive controller is tick-based.
-- The optional monitor performs no statistics work while hidden.
-- The production JAR is generated successfully.
-- The resulting game client starts with VoidBoost installed alongside Sodium.
+GitHub Actions also builds and verifies the project automatically.
 
-## Performance note
+## Verification
 
-VoidBoost does not promise a fixed FPS number. Actual performance depends on hardware, resolution, Sodium settings, shaders, resource packs, world complexity and other installed mods.
+The project is checked for:
 
-The goal is a **1000 FPS target**: remove avoidable VoidBoost overhead first, then apply only workload reductions with a direct rendering/performance purpose. 1000 FPS is a target, not a hardware-independent guarantee.
+- Java 21 compilation
+- Correct Fabric metadata
+- Client-only environment
+- Required mixins only
+- No Sodium-internal mixins
+- No renderer-setting ownership
+- No external network/API dependency
+- Tick-based performance controller
+- Disabled monitor statistics when hidden
+- Production JAR generation
+- Client startup with VoidBoost installed
+
+## Important note
+
+VoidBoost has a **1000 FPS target**, not a 1000 FPS guarantee.
+
+Actual FPS depends on hardware, resolution, Sodium configuration, shaders, resource packs, world complexity, Java runtime behavior, and other installed mods.
+
+The target is to remove avoidable overhead first and only apply workload reductions that have a direct performance purpose.
+
+## License
+
+VoidBoost is released under the **MIT License**.
+
+Copyright © 2026 VoidFlame.
