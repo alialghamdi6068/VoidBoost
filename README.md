@@ -6,21 +6,22 @@ Client-side performance and PvP rendering optimizer for Minecraft Java 1.21.11 o
 
 ## Performance profile
 
-VoidBoost is an always-on Tier 0 optimizer. It uses a deliberately small hot path and focuses on work that can be removed before Minecraft creates or render-schedules the expensive object.
+VoidBoost is an **always-on Tier 0** optimizer focused on removing avoidable client work without taking ownership of Minecraft or Sodium video settings.
 
-- No settings menu.
-- No FPS/VSync/render-distance overrides.
-- No Sodium settings overrides.
-- Early particle rejection: particle creation is cancelled before Minecraft creates the particle instance.
-- Zero network dependency: no external AI/API is used.
-- Optional monitor: press O to show/hide diagnostics; when hidden, the monitor does not collect per-frame statistics.
-- Client-only: no server installation is required.
+- **No settings menu.**
+- **No FPS/VSync/render-distance overrides.**
+- **No Sodium settings overrides.**
+- **Early ordinary-particle rejection:** normal particles are rejected before Minecraft creates the particle instance.
+- **Gameplay-safe particle handling:** forced/always-visible particles are preserved.
+- **Zero network dependency:** no external AI/API is used.
+- **Optional monitor:** press **O** to show/hide diagnostics; when hidden, the monitor does not collect its statistics.
+- **Client-only:** no server installation is required.
 
 ## Sodium compatibility
 
 VoidBoost does not inject into Sodium internals and does not take ownership of Sodium's video settings. You can freely change Sodium options while playing.
 
-Minecraft 1.21.11 is on Sodium's maintained 0.8.x branch.
+Minecraft 1.21.11 is on Sodium's maintained 0.8.x branch. Sodium 0.8.14 is a stable release for 1.21.11, and 0.8.15-beta.1 is also available.
 
 ## Requirements
 
@@ -31,27 +32,26 @@ Minecraft 1.21.11 is on Sodium's maintained 0.8.x branch.
 
 ## Build
 
-The repository includes a GitHub Actions build workflow.
+GitHub Actions builds the project with Java 21 and uploads the resulting JAR artifact.
 
-A local Gradle installation with Java 21 can build the project with:
-gradle build
+A local Gradle installation with Java 21 can build the project with `gradle build`.
 
-The production JAR is generated under build/libs/.
+The production JAR is generated under `build/libs/`.
 
-## Release checklist
+## Verification checklist
 
-Before publishing:
-
-1. Build the production JAR successfully.
-2. Test a clean Fabric 1.21.11 instance.
-3. Test with Sodium installed.
-4. Change Sodium video settings and confirm VoidBoost never resets them.
-5. Test normal gameplay and PvP visibility.
-6. Press O and verify the monitor opens/closes.
-7. Inspect the generated JAR before upload.
+- Java 21 compilation/build.
+- Fabric metadata and client entrypoint validation through the Gradle build.
+- Mixin configuration included in the production build.
+- Clean client-side architecture: no server entrypoint.
+- No Sodium-internal mixins.
+- No renderer-setting ownership.
+- No external network/API dependency.
+- Optional monitor is disabled by default.
+- Latest CI build must finish successfully before release.
 
 ## Performance note
 
 VoidBoost does not promise a fixed FPS number. Actual performance depends on hardware, resolution, Sodium settings, shaders, resource packs, world complexity and other installed mods.
 
-The goal is to remove avoidable client work without taking control away from the player's renderer settings.
+The goal is to remove avoidable client work while leaving the player's renderer configuration under their control.
