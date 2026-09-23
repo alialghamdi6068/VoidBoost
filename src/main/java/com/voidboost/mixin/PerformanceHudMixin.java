@@ -6,7 +6,6 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -30,6 +29,12 @@ public abstract class PerformanceHudMixin {
     private static String cachedRamText = "0 / 0 MB";
     @Unique
     private static String cachedCpuText = "CPU: --";
+    @Unique
+    private static String cachedFpsText = "FPS: 0";
+    @Unique
+    private static String cachedEntitiesText = "Entities: 0";
+    @Unique
+    private static String cachedParticlesText = "Blocked/s: 0";
     @Unique
     private static long nextHudUpdateNanos;
 
@@ -59,12 +64,11 @@ public abstract class PerformanceHudMixin {
 
         if (now >= nextHudUpdateNanos) {
             cachedFps = client.getFps();
-            cachedFrameText = String.format(
-                    java.util.Locale.ROOT,
-                    "%.1f ms",
-                    VoidBoostStats.frameMs()
-            );
+            cachedFrameText = formatFrameMs(VoidBoostStats.frameMs());
+            cachedFpsText = "FPS: " + cachedFps;
+
             cachedEntities = client.level == null ? 0 : client.level.getEntityCount();
+            cachedEntitiesText = "Entities: " + cachedEntities;
 
             Runtime runtime = Runtime.getRuntime();
             long used = runtime.totalMemory() - runtime.freeMemory();
@@ -72,6 +76,7 @@ public abstract class PerformanceHudMixin {
             cachedRamText = (used / (1024L * 1024L)) + " / " + (max / (1024L * 1024L)) + " MB";
 
             cachedParticles = VoidBoostStats.particlesPerSecond();
+            cachedParticlesText = "Blocked/s: " + cachedParticles;
 
             OperatingSystemMXBean osBean =
                     ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
@@ -87,12 +92,22 @@ public abstract class PerformanceHudMixin {
         graphics.fill(x - 5, y - 5, x + 168, y + 94, 0xB0101014);
         graphics.fill(x - 5, y - 5, x + 168, y - 3, 0xFF9A7CFF);
 
-        graphics.drawString(client.font, Component.literal("VoidBoost Monitor"), x, y + 2, 0xFFFFFFFF, false);
-        graphics.drawString(client.font, Component.literal("FPS: " + cachedFps), x, y + 15, 0xFFFFFFFF, false);
-        graphics.drawString(client.font, Component.literal("Frame: " + cachedFrameText), x, y + 28, 0xFFD0D0D0, false);
-        graphics.drawString(client.font, Component.literal("RAM: " + cachedRamText), x, y + 41, 0xFFD0D0D0, false);
-        graphics.drawString(client.font, Component.literal(cachedCpuText), x, y + 54, 0xFFD0D0D0, false);
-        graphics.drawString(client.font, Component.literal("Entities: " + cachedEntities), x, y + 67, 0xFFD0D0D0, false);
-        graphics.drawString(client.font, Component.literal("Blocked/s: " + cachedParticles), x, y + 80, 0xFFD0D0D0, false);
+        graphics.drawString(client.font, "VoidBoost Monitor", x, y + 2, 0xFFFFFFFF, false);
+        graphics.drawString(client.font, cachedFpsText, x, y + 15, 0xFFFFFFFF, false);
+        graphics.drawString(client.font, "Frame: " + cachedFrameText, x, y + 28, 0xFFD0D0D0, false);
+        graphics.drawString(client.font, "RAM: " + cachedRamText, x, y + 41, 0xFFD0D0D0, false);
+        graphics.drawString(client.font, cachedCpuText, x, y + 54, 0xFFD0D0D0, false);
+        graphics.drawString(client.font, cachedEntitiesText, x, y + 67, 0xFFD0D0D0, false);
+        graphics.drawString(client.font, cachedParticlesText, x, y + 80, 0xFFD0D0D0, false);
+    }
+
+    @Unique
+    private static String formatFrameMs(double frameMs) {
+        if (frameMs <= 0.0D) {
+            return "0.0 ms";
+        }
+
+        int tenths = (int) Math.round(frameMs * 10.0D);
+        return (tenths / 10) + "." + (tenths % 10) + " ms";
     }
 }
