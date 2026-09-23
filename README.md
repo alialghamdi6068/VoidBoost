@@ -1,25 +1,21 @@
 # VoidBoost
 
-Client-side maximum-performance and PvP rendering optimizer for Minecraft Java 1.21.11 on Fabric.
+Client-side performance and PvP rendering optimizer for Minecraft Java 1.21.11 on Fabric.
 
 **Developer:** VoidFlame
 
 ## Features
 
-- **Always-on Tier 0**: the strongest VoidBoost performance profile is applied automatically on launch.
-- **No settings menu**: there are no user performance profiles or downgrade controls. The **O** key toggles the optional performance monitor, and its keybind can be changed from Minecraft Controls settings.
-- **Optional performance HUD**: press **O** to toggle the FPS/RAM/CPU monitor when you want diagnostics.
-- Render distance locked to **4 chunks**.
-- Simulation distance locked to **4 chunks**.
-- FPS limit locked to **Unlimited**.
-- VSync disabled for lower frame pacing/input latency overhead.
+- **Always-on Tier 0** performance optimizations.
+- **No settings menu.** VoidBoost is intentionally automatic.
+- **Sodium-safe video settings.** VoidBoost never changes Render Distance, Simulation Distance, FPS limit, VSync, graphics quality, mipmaps, ambient occlusion, biome blend, or other Sodium/vanilla video options.
+- **Optional performance monitor.** Press **O** to show or hide the diagnostic HUD. The key can be changed from Minecraft Controls.
 - Aggressive particle culling.
-- Aggressive non-critical entity culling while players and projectiles remain visible.
-- Entity shadows, weather, clouds, vignette and ambient-occlusion work reduced where supported.
-- Animation and fog optimization.
-- No external AI service or network dependency.
-- Designed to run alongside Sodium without injecting into Sodium internals.
-- No server-side installation or configuration synchronization.
+- Distance-based culling for non-critical entities.
+- Players and projectiles are preserved for PvP visibility.
+- Item drops and XP orbs use a tighter culling distance.
+- No external AI service and no network dependency at runtime.
+- Client-only. No server installation is required.
 
 ## Requirements
 
@@ -28,40 +24,35 @@ Client-side maximum-performance and PvP rendering optimizer for Minecraft Java 1
 - Fabric API
 - Java 21
 
+## Compatibility
+
+VoidBoost does not inject into Sodium internals and does not take ownership of Sodium's settings. You can change Sodium options normally while playing; VoidBoost's independent culling hooks continue to run without resetting those options.
+
+Minecraft 1.21.11 is currently a supported branched Sodium version, with the 0.8.x branch maintained by Sodium. citeturn0search4
+
 ## Build
 
-Use Java 21 and run:
+The repository includes a GitHub Actions build workflow. A local Gradle installation with Java 21 can build the project with:
 
-```text
-./gradlew build
-```
+`gradle build`
 
-On Windows:
+The production JAR is generated under `build/libs/`. Publish the remapped production JAR, not the sources JAR.
 
-```text
-gradlew.bat build
-```
+## Release checklist
 
-The production JAR is generated under `build/libs/`. For a release upload, use the remapped JAR rather than the sources JAR.
+Before publishing a release, verify on a clean Minecraft 1.21.11 Fabric instance:
 
-## Runtime behavior
+1. Start with Fabric API and VoidBoost.
+2. Confirm the game reaches the title screen and a world without crashes.
+3. Change Sodium Render Distance, Simulation Distance, FPS limit, VSync and quality settings.
+4. Confirm VoidBoost does not reset any of them.
+5. Enter a world with normal particles and entities.
+6. Confirm non-critical distant entities are culled while players/projectiles remain visible.
+7. Press **O** and verify the monitor opens and closes.
+8. Test with Sodium installed.
+9. Test with the intended Sodium/Iris combination if you plan to list it as supported.
+10. Build the production remapped JAR and inspect the generated artifact before upload.
 
-VoidBoost intentionally does not expose tuning controls. Every launch starts with the maximum-performance profile, and the controller continuously re-enforces the critical FPS/rendering limits during gameplay.
+## Important
 
-VoidBoost is client-only and does not require installation on a server.
-
-## Release verification
-
-Before publishing a build, verify on a clean Minecraft 1.21.11 Fabric instance:
-
-1. Launch with Fabric API and VoidBoost only.
-2. Confirm there is no VoidBoost settings screen or performance HUD.
-3. Confirm render distance stays at 4 chunks.
-4. Confirm simulation distance stays at 4 chunks.
-5. Confirm the FPS limit remains Unlimited and VSync remains disabled.
-6. Confirm particles are aggressively culled.
-7. Confirm players and projectiles remain visible while distant non-critical entities are culled.
-8. Launch with a supported Sodium 0.8.x build and verify rendering remains stable.
-9. Build with the Gradle wrapper and publish only the production remapped JAR.
-
-VoidBoost does not claim a guaranteed FPS number; actual performance depends on hardware, Minecraft settings, world complexity and the other installed mods.
+VoidBoost does not promise a fixed FPS number. Actual performance varies with hardware, resolution, Sodium settings, shaders, resource packs, world complexity and other installed mods.
