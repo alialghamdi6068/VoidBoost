@@ -1,21 +1,20 @@
 package com.voidboost.client;
 
 /**
- * Immutable runtime switches for VoidBoost's hot-path hooks.
+ * Fixed VoidBoost performance profile used by the hot-path hooks.
  *
- * The profile is configured once at client startup. Hot paths read simple
- * static primitives and never allocate or touch Minecraft/Sodium video options.
+ * The profile never changes Minecraft or Sodium video settings.
  */
 public final class VoidBoostRuntime {
-    private static boolean maximumPerformance;
+    private static final boolean MAXIMUM_PERFORMANCE = true;
 
     private VoidBoostRuntime() {}
 
     public static void enableMaximumPerformanceProfile() {
-        maximumPerformance = true;
+        // Intentionally empty: the maximum profile is immutable after class load.
     }
 
     public static boolean maximumPerformance() {
-        return maximumPerformance;
+        return MAXIMUM_PERFORMANCE;
     }
 }
