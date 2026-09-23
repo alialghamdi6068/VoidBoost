@@ -5,31 +5,22 @@ import net.minecraft.client.Minecraft;
 /**
  * Always-on VoidBoost controller.
  *
- * This controller owns only VoidBoost's independent optimizations. It never
- * changes Minecraft or Sodium video settings.
+ * VoidBoost owns only its independent optimization switches. It never changes
+ * Minecraft or Sodium video settings.
  */
 public final class VoidBoostAI {
     private static final int LOCKED_TIER = 0;
-    private static long lastUpdateNanos;
+    private static boolean initialized;
 
     private VoidBoostAI() {}
 
-    public static void tick(Minecraft client) {
-        long now = System.nanoTime();
-        if (client.level == null || now - lastUpdateNanos < 250_000_000L) {
+    public static void initialize(Minecraft client) {
+        if (initialized || client == null) {
             return;
         }
 
-        lastUpdateNanos = now;
-
-        VoidBoostRuntime.update(
-                true,
-                true,
-                24,
-                true,
-                false,
-                1
-        );
+        initialized = true;
+        VoidBoostRuntime.enableMaximumPerformanceProfile();
     }
 
     public static int level() {
