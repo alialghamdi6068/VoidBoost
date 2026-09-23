@@ -70,83 +70,76 @@ public final class VoidBoostConfig {
     public static VoidBoostConfig get() { return INSTANCE; }
 
     public static void load() {
-        try {
-            Files.createDirectories(FILE.getParent());
-            if (Files.exists(FILE)) {
-                try (Reader reader = Files.newBufferedReader(FILE)) {
-                    VoidBoostConfig loaded = GSON.fromJson(reader, VoidBoostConfig.class);
-                    if (loaded != null) INSTANCE = loaded;
-                }
-            } else save();
-        } catch (Exception ignored) {
-            INSTANCE = new VoidBoostConfig();
-        }
-        INSTANCE.sanitize();
+        // No user settings are loaded. VoidBoost is permanently locked to its
+        // maximum-performance profile so an old config cannot weaken it.
+        applyMaximumPerformanceState();
         appliedOptionsSignature = Long.MIN_VALUE;
         optionsDirty = true;
     }
 
+    private static void applyMaximumPerformanceState() {
+        INSTANCE.performanceMode = true;
+        INSTANCE.performanceMonitor = false;
+        INSTANCE.disableParticles = true;
+        INSTANCE.reducedParticles = false;
+        INSTANCE.particleLimitPercent = 1;
+        INSTANCE.entityShadows = false;
+        INSTANCE.weatherEffects = false;
+        INSTANCE.animationOptimization = true;
+        INSTANCE.fogOptimization = true;
+        INSTANCE.entityRenderOptimization = true;
+        INSTANCE.dynamicRenderDistance = true;
+        INSTANCE.cloudOptimization = true;
+        INSTANCE.vignetteOptimization = true;
+        INSTANCE.ambientOcclusionOptimization = true;
+        INSTANCE.mipmapOptimization = true;
+        INSTANCE.biomeBlendOptimization = true;
+        INSTANCE.viewBobOptimization = true;
+        INSTANCE.vsyncOptimization = true;
+        INSTANCE.competitiveMode = true;
+        INSTANCE.maxFpsPreset = true;
+        INSTANCE.ultimateLocked = true;
+        INSTANCE.targetFps = 260;
+        INSTANCE.dynamicTargetFps = 240;
+        INSTANCE.maxEntityDistance = 24;
+        INSTANCE.maxRenderDistance = 4;
+    }
+
     private void sanitize() {
-        particleLimitPercent = Math.max(1, Math.min(100, particleLimitPercent));
-        dynamicTargetFps = Math.max(60, Math.min(240, dynamicTargetFps));
-        targetFps = Math.max(30, Math.min(260, targetFps));
-        maxEntityDistance = Math.max(24, Math.min(128, maxEntityDistance));
-        maxRenderDistance = Math.max(4, Math.min(32, maxRenderDistance));
+        particleLimitPercent = 1;
+        dynamicTargetFps = 240;
+        targetFps = 260;
+        maxEntityDistance = 24;
+        maxRenderDistance = 4;
+        performanceMode = true;
+        performanceMonitor = false;
+        disableParticles = true;
+        reducedParticles = false;
+        entityShadows = false;
+        weatherEffects = false;
+        animationOptimization = true;
+        fogOptimization = true;
+        entityRenderOptimization = true;
+        dynamicRenderDistance = true;
+        cloudOptimization = true;
+        vignetteOptimization = true;
+        ambientOcclusionOptimization = true;
+        mipmapOptimization = true;
+        biomeBlendOptimization = true;
+        viewBobOptimization = true;
+        vsyncOptimization = true;
+        competitiveMode = true;
+        maxFpsPreset = true;
+        ultimateLocked = true;
     }
 
     public static void save() {
-        try {
-            INSTANCE.sanitize();
-            Files.createDirectories(FILE.getParent());
-            try (Writer writer = Files.newBufferedWriter(FILE)) {
-                GSON.toJson(INSTANCE, writer);
-            }
-        } catch (IOException ignored) {}
+        // Settings persistence is intentionally disabled.
     }
 
     public static void tick(Minecraft client) {
         if (client.level == null) return;
-        tickCounter++;
         if (optionsDirty) applyVanillaPerformanceOptions(client);
-    }
-
-    public static void resetToVanilla() {
-        Minecraft client = Minecraft.getInstance();
-        if (optionsCaptured) {
-            INSTANCE.targetFps = savedMaxFps;
-            INSTANCE.maxRenderDistance = Math.max(4, Math.min(32, savedRenderDistance));
-        } else {
-            INSTANCE.targetFps = Math.max(30, Math.min(260, client.options.framerateLimit().get()));
-            INSTANCE.maxRenderDistance = Math.max(4, Math.min(32, client.options.renderDistance().get()));
-        }
-        INSTANCE.performanceMode = false;
-        INSTANCE.performanceMonitor = false;
-        INSTANCE.disableParticles = false;
-        INSTANCE.reducedParticles = false;
-        INSTANCE.particleLimitPercent = 100;
-        INSTANCE.entityShadows = true;
-        INSTANCE.weatherEffects = true;
-        INSTANCE.animationOptimization = false;
-        INSTANCE.fogOptimization = false;
-        INSTANCE.entityRenderOptimization = false;
-        INSTANCE.dynamicRenderDistance = false;
-        INSTANCE.cloudOptimization = false;
-        INSTANCE.vignetteOptimization = false;
-        INSTANCE.ambientOcclusionOptimization = false;
-        INSTANCE.mipmapOptimization = false;
-        INSTANCE.biomeBlendOptimization = false;
-        INSTANCE.viewBobOptimization = false;
-        INSTANCE.vsyncOptimization = false;
-        INSTANCE.competitiveMode = false;
-        INSTANCE.maxFpsPreset = false;
-        INSTANCE.ultimateLocked = false;
-        INSTANCE.dynamicTargetFps = 120;
-        INSTANCE.maxEntityDistance = 64;
-        INSTANCE.markDirty();
-        applyVanillaPerformanceOptions(client);
-        INSTANCE.targetFps = Math.max(30, Math.min(260, client.options.framerateLimit().get()));
-        INSTANCE.maxRenderDistance = Math.max(4, Math.min(32, client.options.renderDistance().get()));
-        INSTANCE.markDirty();
     }
 
     public static void applyBalancedPreset() { applyPreset("Balanced"); }
@@ -395,5 +388,10 @@ public final class VoidBoostConfig {
         } catch (Exception ignored) {}
     }
 
-    public static void markDirty() { appliedOptionsSignature = Long.MIN_VALUE; optionsDirty = true; save(); }
+    public static void markDirty() {
+        // Kept for source compatibility with older integrations; no user settings exist.
+        applyMaximumPerformanceState();
+        appliedOptionsSignature = Long.MIN_VALUE;
+        optionsDirty = true;
+    }
 }
