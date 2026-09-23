@@ -19,6 +19,7 @@ public final class VoidBoostClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        VoidBoostConfig.load();
         VoidBoostAI.initialize(Minecraft.getInstance());
 
         toggleMonitorKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
