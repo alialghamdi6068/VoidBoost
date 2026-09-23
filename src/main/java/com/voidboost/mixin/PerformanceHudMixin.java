@@ -1,5 +1,6 @@
 package com.voidboost.mixin;
 
+import com.voidboost.client.VoidBoostAI;
 import com.voidboost.client.VoidBoostConfig;
 import com.voidboost.client.VoidBoostStats;
 import net.minecraft.client.DeltaTracker;
@@ -42,6 +43,7 @@ public abstract class PerformanceHudMixin {
             DeltaTracker tickCounter,
             CallbackInfo ci
     ) {
+        VoidBoostAI.sampleFrame();
         VoidBoostStats.frame();
     }
 
