@@ -7,6 +7,7 @@ package com.voidboost.client;
  */
 public final class VoidBoostRuntime {
     private static final boolean MAXIMUM_PERFORMANCE = true;
+    private static boolean emergencyPerformance;
 
     private VoidBoostRuntime() {}
 
@@ -16,5 +17,13 @@ public final class VoidBoostRuntime {
 
     public static boolean maximumPerformance() {
         return MAXIMUM_PERFORMANCE;
+    }
+
+    public static boolean emergencyPerformance() {
+        return emergencyPerformance;
+    }
+
+    public static void setEmergencyPerformance(boolean enabled) {
+        emergencyPerformance = enabled;
     }
 }
