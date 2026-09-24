@@ -17,33 +17,31 @@ VoidBoost is built around one rule: **improve client performance without becomin
 
 ## What VoidBoost does
 
-- **Tier 0 is permanently locked.**
-- Uses lightweight local rules instead of an external AI service.
-- Keeps the normal particle pipeline untouched until sustained low FPS is detected.
-- Can reduce particle workload during emergency performance pressure.
+- Enables aggressive client-side culling by default to reduce particle and entity rendering work.
+- Suppresses all world particles, dropped items beyond 48 blocks, experience orbs beyond 32 blocks, and other non-player entities beyond 96 blocks.
+- Never distance-culls player entities.
+- Allows aggressive culling to be disabled in the local config if the missing visual effects or distant entities are undesirable.
 - Includes an optional, low-overhead performance monitor.
 - Does not modify Sodium settings or inject into Sodium internals.
-- Does not use network requests, external APIs, background workers, or per-entity renderer hooks.
+- Does not use network requests, external APIs, or background workers.
 - Keeps diagnostic collection disabled while the monitor is hidden.
 
-## Performance controller
+## Aggressive performance mode
 
-VoidBoost checks Minecraft's existing FPS value from the client tick.
+Aggressive culling is enabled by default. It applies fixed, low-cost rendering limits; it does not poll FPS or wait for a low-FPS threshold.
 
-| State | Behavior |
+| Content | Render limit |
 | --- | --- |
-| Normal | Minecraft's normal particle behavior |
-| Low FPS | Counts consecutive low-FPS samples |
-| Emergency | Filters non-priority particles to reduce workload |
-| Recovery | Returns to normal after sustained recovery |
+| World particles | Suppressed |
+| Dropped items | 48 blocks |
+| Experience orbs | 32 blocks |
+| Other non-player entities | 96 blocks |
 
-Current thresholds:
+The distances are measured from the camera, not from the world's origin. Player entities are exempt from the general entity limit so distant players remain visible.
 
-- Sample interval: **10 client ticks**
-- Enter emergency: **below 45 FPS for 3 samples**
-- Leave emergency: **58+ FPS for 4 samples**
+To restore particles and uncapped entity rendering, set `aggressive_culling=false` in `config/voidboost.properties` and restart Minecraft. Disabling culling also restores particle effects such as impacts and ambient visuals.
 
-The controller is intentionally conservative about when it activates. It does not run a machine-learning model or continuously analyze the render loop.
+FPS gains depend on the scene and hardware. These limits can help when particle or entity rendering is the bottleneck; they do not guarantee a specific FPS or a large gain in every world.
 
 ## Performance Monitor
 
@@ -62,7 +60,6 @@ When enabled, it displays:
 - CPU usage
 - Java RAM usage
 - Entity count
-- Particle activity
 
 Diagnostic values are refreshed at most every **500 ms**. File I/O is only used when loading or changing the monitor preference.
 
@@ -75,8 +72,8 @@ VoidBoost avoids:
 - Network/API calls
 - External AI services
 - Background threads
-- Continuous render-loop AI logic
-- Per-entity renderer hooks
+- FPS polling in the render loop
+- One entity render-admission hook for distance culling
 - Sodium-internal mixins
 - Automatic video-setting changes
 - Automatic Sodium-setting changes
@@ -111,6 +108,7 @@ VoidBoost/
 │   │   │   │   └── VoidBoostStats.java
 │   │   │   └── mixin/
 │   │   │       ├── ClientLevelMixin.java
+│   │   │       ├── EntityRenderDispatcherMixin.java
 │   │   │       └── PerformanceHudMixin.java
 │   │   └── resources/
 │   │       ├── fabric.mod.json
@@ -141,23 +139,17 @@ For the production client smoke test:
 gradle prodClient
 ```
 
-GitHub Actions also builds and verifies the project automatically.
+GitHub Actions builds the project, checks that the production JAR contains its required metadata/classes/icon, and starts a production client with Sodium 0.8.11 through resource loading. Sodium is only included in the development smoke-test runtime; it is not required or bundled with VoidBoost. The workflow does not benchmark FPS.
 
 ## Verification
 
-The project is checked for:
+The GitHub Actions workflow checks:
 
-- Java 21 compilation
-- Correct Fabric metadata
-- Client-only environment
-- Required mixins only
-- No Sodium-internal mixins
-- No renderer-setting ownership
-- No external network/API dependency
-- Tick-based performance controller
-- Disabled monitor statistics when hidden
-- Production JAR generation
-- Client startup with VoidBoost installed
+- Java 21 compilation and production JAR generation
+- Required mod metadata, mixin config, client entrypoint, and icon in the JAR
+- Production client startup through resource loading without fatal mixin errors
+
+The workflow does not benchmark FPS or automatically test culling distances.
 
 ## Important note
 

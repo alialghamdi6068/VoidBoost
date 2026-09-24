@@ -6,6 +6,17 @@ plugins {
 repositories {
     maven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }
     mavenCentral()
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Modrinth'
+                url = 'https://api.modrinth.com/maven'
+            }
+        }
+        filter {
+            includeGroup 'maven.modrinth'
+        }
+    }
 }
 
 loom {
@@ -24,6 +35,8 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
     productionRuntimeMods "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    // Exercise optional Sodium compatibility in the production-client smoke test only.
+    productionRuntimeMods 'maven.modrinth:AANobbMI:CL53p97Z'
 }
 
 processResources {
@@ -47,7 +60,7 @@ jar {
 }
 
 tasks.register("prodClient", net.fabricmc.loom.task.prod.ClientProductionRunTask) {
-    useXVFB = true
+    useXVFB = System.getProperty('os.name').toLowerCase().contains('linux')
     mods.from remapJar
 }
 
