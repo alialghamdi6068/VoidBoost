@@ -9,7 +9,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.lang.management.ManagementFactory;
@@ -52,23 +51,50 @@ public abstract class PerformanceHudMixin {
 
         final int x = 8;
         final int y = 8;
-        final int width = 150;
-        final int height = 62;
+        final int width = 194;
+        final int height = 84;
 
-        graphics.fill(x, y, x + width, y + height, 0xB80A0C10);
-        graphics.fill(x, y, x + 2, y + height, 0xFF9A7CFF);
+        // Solid, high-contrast panel so text stays readable over any world.
+        graphics.fill(x, y, x + width, y + height, 0xEC080A10);
+        graphics.fill(x, y, x + width, y + 2, 0xFF9A7CFF);
+        graphics.fill(x, y + 2, x + 3, y + height, 0xFF9A7CFF);
+        graphics.fill(x + width - 1, y + 2, x + width, y + height, 0xFF242632);
+        graphics.fill(x, y + height - 1, x + width, y + height, 0xFF242632);
 
-        graphics.drawString(client.font, "VOIDBOOST", x + 8, y + 6, 0xFFFFFFFF, false);
-        graphics.drawString(client.font, "MONITOR", x + width - 48, y + 6, 0xFFB8B8C8, false);
+        int textX = x + 10;
+        int valueX = x + 66;
 
-        graphics.drawString(client.font, cachedFpsText, x + 8, y + 18, 0xFFFFFFFF, false);
-        graphics.drawString(client.font, "FPS", x + 30, y + 18, 0xFFB8B8C8, false);
-        graphics.drawString(client.font, cachedFrameText, x + 8, y + 31, 0xFFD8D8E0, false);
-        graphics.drawString(client.font, "FRAME", x + 42, y + 31, 0xFF8E8E9A, false);
+        graphics.drawString(client.font, "VOIDBOOST", textX, y + 7, 0xFFFFFFFF, false);
+        int monitorWidth = client.font.width("MONITOR");
+        graphics.drawString(
+                client.font,
+                "MONITOR",
+                x + width - monitorWidth - 10,
+                y + 7,
+                0xFFE0E0EA,
+                false
+        );
 
-        graphics.drawString(client.font, "CPU " + cachedCpuText, x + 8, y + 47, 0xFFD0D0D8, false);
-        graphics.drawString(client.font, "RAM " + cachedRamText, x + 68, y + 47, 0xFFD0D0D8, false);
-        graphics.drawString(client.font, "ENT " + cachedEntitiesText, x + 8, y + 59, 0xFFAAAAB8, false);
+        drawRow(graphics, client, "FPS", cachedFpsText, textX, valueX, y + 23, 0xFFFFFFFF);
+        drawRow(graphics, client, "FRAME", cachedFrameText, textX, valueX, y + 36, 0xFFE8E8F0);
+        drawRow(graphics, client, "CPU", cachedCpuText, textX, valueX, y + 49, 0xFFE8E8F0);
+        drawRow(graphics, client, "RAM", cachedRamText, textX, valueX, y + 62, 0xFFE8E8F0);
+        drawRow(graphics, client, "ENTITIES", cachedEntitiesText, textX, valueX, y + 75, 0xFFCACAD6);
+    }
+
+    @Unique
+    private static void drawRow(
+            GuiGraphics graphics,
+            Minecraft client,
+            String label,
+            String value,
+            int labelX,
+            int valueX,
+            int y,
+            int valueColor
+    ) {
+        graphics.drawString(client.font, label, labelX, y, 0xFF8F91A0, false);
+        graphics.drawString(client.font, value, valueX, y, valueColor, false);
     }
 
     @Unique
